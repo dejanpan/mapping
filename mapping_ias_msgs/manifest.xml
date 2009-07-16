@@ -1,0 +1,21 @@
+<package>
+  <description brief="mapping_ias_msgs">
+
+     mapping_ias_msgs
+
+  </description>
+  <author>Dejan Pangercic</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>todo</url>
+
+  <depend package="robot_msgs" />
+  <depend package="std_msgs"/>
+  
+  <export>
+    <cpp cflags="-I${prefix}/msg/cpp"/>
+  </export>
+  
+</package>
+
+
