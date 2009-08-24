@@ -9,7 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>todo</url>
 
-  <depend package="robot_msgs" />
+  <depend package="sensor_msgs" />
   <depend package="std_msgs"/>
   
   <export>
