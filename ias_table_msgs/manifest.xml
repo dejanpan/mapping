@@ -1,0 +1,14 @@
+<package>
+  <description brief="ias_table_msgs">
+     Messages for table perception applications at TUM.
+  </description>
+  <license>BSD</license>
+
+  <depend package="std_msgs" />
+  <depend package="geometry_msgs" />
+  <depend package="sensor_msgs" />
+  <export>
+    <cpp cflags="-I${prefix}/msg/cpp"/>
+  </export>
+</package>
+
