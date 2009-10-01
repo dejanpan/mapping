@@ -1,0 +1,15 @@
+<package>
+  <description brief="ias_table_srvs">
+    Services for table perception applications at TUM.
+  </description>
+  <license>BSD</license>
+
+  <depend package="std_msgs" />
+  <depend package="sensor_msgs" />
+  <depend package="geometry_msgs" />
+  <depend package="perception_msgs" />
+  <export>
+    <cpp cflags="-I${prefix}/srv/cpp"/>
+  </export>
+</package>
+
