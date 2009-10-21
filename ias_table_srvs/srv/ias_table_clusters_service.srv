@@ -1,1 +1,6 @@
 ---
+uint64 tableId
+time stamp
+float64[] object_centers
+string[] object_colors
+string[] object_semantic_types
