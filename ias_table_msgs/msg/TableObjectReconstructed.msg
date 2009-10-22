@@ -13,4 +13,3 @@ float64 score # quality of fit
 geometry_msgs/Point32[] vertices
 int32[] triangles # indices into vertices list 
 
-
