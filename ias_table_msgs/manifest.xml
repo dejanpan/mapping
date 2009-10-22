@@ -2,6 +2,7 @@
   <description brief="ias_table_msgs">
      Messages for table perception applications at TUM.
   </description>
+  <author name="Nico Blodow"/>
   <license>BSD</license>
 
   <depend package="std_msgs" />
