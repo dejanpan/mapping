@@ -2,6 +2,7 @@
   <description brief="ias_table_srvs">
     Services for table perception applications at TUM.
   </description>
+  <author>Nico Blodow, Dejan Pangercic</author>
   <license>BSD</license>
 
   <depend package="std_msgs" />
