@@ -1,5 +1,5 @@
-std_msgs/Int32 i
-std_msgs/Int32 j
-std_msgs/Int32 k
+int32 i
+int32 j
+int32 k
 
 
