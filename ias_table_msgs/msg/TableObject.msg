@@ -8,4 +8,6 @@ sensor_msgs/Image roi
 string perception_method
 string sensor_type
 string object_type
+string object_color
+string object_geometric_type
 
