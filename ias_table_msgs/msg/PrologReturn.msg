@@ -1,8 +1,11 @@
 uint64 table_id
 uint64 stamp_int
-time stamp
-geometry_msgs/Point32 cluster_center
 geometry_msgs/Point32 table_center
-string[] cluster_colors
-string[] cluster_semantic_types
-uint64 cluster_id
+time stamp
+geometry_msgs/Point32 object_center
+uint64 object_id
+string object_type
+string object_color
+string object_geometric_type
+string perception_method
+string sensor_type
