@@ -1,5 +1,5 @@
 uint64 table_id
-uint64 stamp_int
+time first_stamp
 geometry_msgs/Point32 table_center
 time stamp
 geometry_msgs/Point32 object_center
