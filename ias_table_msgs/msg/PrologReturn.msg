@@ -10,3 +10,5 @@ string object_color
 string object_geometric_type
 string perception_method
 string sensor_type
+uint64 lo_id
+uint64 object_tracking_id
