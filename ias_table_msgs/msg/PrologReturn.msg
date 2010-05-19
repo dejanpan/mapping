@@ -1,4 +1,5 @@
 uint64 table_id
+float64[] coeff
 time first_stamp
 geometry_msgs/Point32 table_center
 time stamp
