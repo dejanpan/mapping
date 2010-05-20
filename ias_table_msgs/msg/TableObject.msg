@@ -13,4 +13,5 @@ string sensor_type
 string object_type
 string object_color
 string object_geometric_type
-
+uint64 table_id
+ 
