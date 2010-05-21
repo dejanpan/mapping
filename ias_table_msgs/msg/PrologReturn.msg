@@ -1,6 +1,5 @@
 uint64 table_id
 float64[] coeff
-time first_stamp
 geometry_msgs/Point32 table_center
 time stamp
 geometry_msgs/Point32 object_center
@@ -11,4 +10,4 @@ string object_geometric_type
 string perception_method
 string sensor_type
 uint64 lo_id
-uint64 object_tracking_id
+uint64 object_cop_id
