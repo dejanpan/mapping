@@ -1,0 +1,29 @@
+<package>
+  <description>
+    A collection of point cloud related tools.
+  </description>
+
+  <author>Nico Blodow, Zoltan-Csaba Marton, Dejan Pangercic</author>
+  <license>BSD</license>
+  <review status="experimental" notes="beta"/>
+
+  <depend package="joy" />
+  <depend package="roscpp" />
+  <depend package="std_msgs" />
+  <depend package="angles" />
+  <depend package="pcl" />
+  <depend package="geometry_msgs" />
+  <depend package="sensor_msgs" />
+  <depend package="mapping_msgs" />
+  <depend package="triangle_mesh" />
+  <depend package="ias_table_msgs" />
+  <depend package="yaml_cpp" />
+  <depend package="opencv2" /> 
+  <depend package="cv_bridge" />
+  <depend package="image_transport"/>
+  <depend package="compressed_image_transport"/>
+  <!--See http://octomap.sourceforge.net/ -->
+  <depend package="octomap"/>
+  <depend package="octomap_server"/>
+  <depend package="visualization_msgs" />
+</package>
