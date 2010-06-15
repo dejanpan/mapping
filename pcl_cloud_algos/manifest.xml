@@ -27,6 +27,7 @@
   <depend package="ias_descriptors_3d"/>
   <depend package="libsvm"/>
   <depend package="eigen"/>
+  <depend package="pcl"/>
 
   <export>
     <cpp cflags="-I${prefix}/include/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lcloud_algos"/>
