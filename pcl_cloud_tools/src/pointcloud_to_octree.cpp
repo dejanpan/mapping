@@ -10,7 +10,7 @@
 #include <visualization_msgs/MarkerArray.h>
 
 #define laser_offset 1.5
-#define octree_res 0.1
+#define octree_res 0.5
 #define octree_maxrange -1
 
 class plocto
@@ -35,7 +35,7 @@ plocto::plocto() : n("~")
 {
     plocto_pub = n.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
     plocto_marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 100);
-    plocto_sub = n.subscribe("/point_cloud", 100, &plocto::ploctoCallback, this);
+    plocto_sub = n.subscribe("/cloud_pcd", 100, &plocto::ploctoCallback, this);
 }
 
 void plocto::ploctoCallback(const sensor_msgs::PointCloud& msg)
@@ -78,7 +78,7 @@ void plocto::ploctoCallback(const sensor_msgs::PointCloud& msg)
    ROS_INFO("Octree built");
    
    octomap_server::OctomapBinary octobin_msg;
-   octobin_msg.header.frame_id = "/map";
+   octobin_msg.header.frame_id = "/base_link";
    octobin_msg.header.stamp = ros::Time::now();
    octomap_server::octomapMapToMsg(*tree, octobin_msg);
 
@@ -106,16 +106,17 @@ void plocto::ploctoCallback(const sensor_msgs::PointCloud& msg)
 		cubeCenter.x = it->first.x();
 		cubeCenter.y = it->first.y();
 		cubeCenter.z = it->first.z();
-
-		m_occupiedCellsVis.markers[0].points.push_back(cubeCenter);
+		m_occupiedCellsVis.markers[idx].points.push_back(cubeCenter);
 	}
 
 	for (unsigned i= 0; i < m_occupiedCellsVis.markers.size(); ++i){
 		double size = lowestRes * pow(2,i);
 
-		m_occupiedCellsVis.markers[i].header.frame_id = "/map";
+		m_occupiedCellsVis.markers[i].header.frame_id = "/base_link";
 		m_occupiedCellsVis.markers[i].header.stamp = ros::Time::now();
-		//m_occupiedCellsVis.markers[i].ns = "map";
+    std::stringstream ss;
+    ss << i;
+		m_occupiedCellsVis.markers[i].ns = ss.str();
 		m_occupiedCellsVis.markers[i].id = i;
 		m_occupiedCellsVis.markers[i].type = visualization_msgs::Marker::CUBE_LIST;
 		m_occupiedCellsVis.markers[i].scale.x = size;
@@ -134,10 +135,17 @@ void plocto::ploctoCallback(const sensor_msgs::PointCloud& msg)
 		//plocto_marker_pub.publish(m_occupiedCellsVis.markers[i]);
 	}
 
-	//ROS_INFO("m_occupiedCellsVis size: %ld",m_occupiedCellsVis.markers.size());
 	plocto_pub.publish(m_occupiedCellsVis);
-	m_occupiedCellsVis.markers[0].points.clear();
-    	ROS_INFO("Octomap Published");
+  for (int i = 0; i < m_occupiedCellsVis.markers.size(); i++)
+  {
+    if (!m_occupiedCellsVis.markers[i].points.empty())
+    {
+      m_occupiedCellsVis.markers[i].points.clear();
+      ROS_INFO("m_occupiedCellsVis array %d", i);
+    }
+  }
+
+  ROS_INFO("Octomap Published");
 	ROS_INFO("Octomap file published (%d nodes).",tree->size());
 }
 
