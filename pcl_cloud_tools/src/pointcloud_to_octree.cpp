@@ -151,7 +151,7 @@ void plocto::ploctoCallback(const sensor_msgs::PointCloud& msg)
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "simple_plocto");
+    ros::init(argc, argv, "pointcloud_to_octree");
     
     plocto pr;
     ros::spin();
