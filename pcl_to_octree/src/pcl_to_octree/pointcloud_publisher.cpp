@@ -28,13 +28,12 @@ int main(int argc, char** argv)
     cloud.points[i].z = 1024 * rand () / (RAND_MAX + 1.0);
   }
 
-
   sensor_msgs::PointCloud2 mycloud2;
   sensor_msgs::PointCloud mycloud1;
   point_cloud::toMsg(cloud, mycloud2);
   sensor_msgs::convertPointCloud2ToPointCloud(mycloud2, mycloud1);
   
-  ros::Publisher pointcloud_pub = n.advertise<sensor_msgs::PointCloud>("point_cloud", 100);
+  ros::Publisher pointcloud_pub = n.advertise<sensor_msgs::PointCloud>("point_cloud", 1);
   ros::Rate loop_rate(atof(argv[1]));
   while (ros::ok())
   {
