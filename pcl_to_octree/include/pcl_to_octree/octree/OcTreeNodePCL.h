@@ -19,6 +19,7 @@ namespace octomap {
   public:
 
     std::string label;
+    point3d centroid;
 
   public:
 
@@ -43,6 +44,16 @@ namespace octomap {
      * @return Label of node
      */
     std::string getLabel() const;
+
+
+    /**
+     * set a centroid
+     */
+    void setCentroid(point3d c);
+    /**
+     * @return centroid of node
+     */
+    point3d getCentroid() const;
 
   };
 

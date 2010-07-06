@@ -1,10 +1,10 @@
 <launch>
 <node pkg="pcl_to_octree" type="pcl_to_octree" name="pcl_to_octree" output="screen" respawn="false">
     <param name="laser_offset" value="1.5"/>
-    <param name="octree_resolution" value="0.05"/>
+    <param name="octree_resolution" value="0.5"/>
     <param name="octree_maxrange" value="-1"/>
-    <param name="point_cloud_topic" value="/shoulder_cloud"/>
-    <param name="level" value="7" />
+    <param name="point_cloud_topic" value="/point_cloud"/>
+    <param name="level" value="0" />
     <param name="frame_id" value="/map"/>
 </node>
 </launch>

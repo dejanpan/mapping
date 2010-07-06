@@ -9,6 +9,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud_conversion.h>
 #include "octomap/octomap.h"
+#include "pcl_to_octree/octree/OcTreeNodePCL.h"
 #include "pcl_to_octree/octree/OcTreePCL.h"
 #include "pcl_to_octree/octree/OcTreeServerPCL.h"
 //#include "octomap_server/octomap_server.h"
@@ -132,11 +133,44 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
   octomap_server::octomapMapToMsg(*octree, octree_msg);
   octree_binary_publisher_.publish(octree_msg);
   ROS_INFO("Octree built and published");
-   
 
+  std::list<octomap::OcTreeVolume> voxels, leaves;
+  //octree->getLeafNodes(leaves, level_);
+  octree->getLeafNodes(leaves);
+  std::list<octomap::OcTreeVolume>::iterator it1, it2;
+  int cnt = 0;
+  
+  std::vector < octomap::OcTreeNodePCL *> octree_node_list;
+  //debug outputs
+  for( it1 = leaves.begin(); it1 != leaves.end(); ++it1)
+  {
+    //    ROS_INFO("Leaf Node %d : x = %f y = %f z = %f side length = %f ", cnt, it1->first.x(), it1->first.y(), it1->first.z(), it1->second);
+    //cnt++;
+    octomap::point3d centroid;
+    centroid(0) = it1->first.x(),  centroid(1) = it1->first.y(),  centroid(2) = it1->first.z();
+    octomap::OcTreeNodePCL *octree_node = new octomap::OcTreeNodePCL();
+    octree_node->setCentroid(centroid);
+    octree_node_list.push_back(octree_node);
+  }
+  
+  for (unsigned int ii = 0; ii < octree_node_list.size(); ii++)
+  {
+    cnt++;
+    ROS_INFO("Leaf Node %d : x = %f y = %f z = %f", cnt, octree_node_list[ii]->getCentroid().x(), 
+             octree_node_list[ii]->getCentroid().y(), octree_node_list[ii]->getCentroid().z());
+  }
+  octree_node_list.clear();
+
+  ROS_INFO("Octree published %d nodes at resolution %f m.",octree->size(), octree->getResolution());
+  double sx, sy, sz;
+  octree->getMetricSize(sx, sy, sz);
+  ROS_INFO("Octree metric size x: %f, y: %f, z: %f", sx, sy, sz);
+  
+  
+  //OcTreeNode * on = octree->search ();
   // ---------------------- TEST CODE (TO BE REMOVED)------------------------
   /*
-    std::list<octomap::OcTreeVolume> voxels, leaves;
+
     
     octomap::point3d p1(pointcloud2_pcl.points[34].x, pointcloud2_pcl.points[34].y, pointcloud2_pcl.points[34].z);
     octomap::point3d p2 (pointcloud2_pcl.points[52].x, pointcloud2_pcl.points[52].y, pointcloud2_pcl.points[52].z);
@@ -165,9 +199,9 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
     ROS_INFO("Level = %d", level_);
     sleep(1);
     octree->getVoxels(voxels, level_);
-    // octree->getLeafNodes(leaves, level_);
-    int cnt = 0;
-    std::list<octomap::OcTreeVolume>::iterator it1, it2;
+
+  
+
     for( it1 = voxels.begin(); it1 != voxels.end(); ++it1)
     {
       
@@ -194,11 +228,11 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
 
   for(unsigned int i = 0; i < 16; i++)
   {
-    std::list<octomap::OcTreeVolume> occupied_cells;
+    std::list<octomap::OcTreeVolume> all_cells;
     //getting the occupied cells at different depths of the octree
-    octree->getOccupied(occupied_cells, i);
-   
-    for (it = occupied_cells.begin(); it != occupied_cells.end(); ++it)
+    //    octree->getOccupied(all_cells, i);
+    octree->getLeafNodes(all_cells, i);
+    for (it = all_cells.begin(); it != all_cells.end(); ++it)
     {
       // which array to store cubes in?
       int idx = int(log2(it->second / lowestRes) +0.5);  
@@ -251,8 +285,6 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
     }
   }
   octree_marker_array_msg_.markers.clear();
-    
-  ROS_INFO("Octomap published (%d nodes).",octree->size());
     
 }
 
