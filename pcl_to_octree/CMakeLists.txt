@@ -33,3 +33,5 @@ rosbuild_add_executable(pcl_to_octree src/pcl_to_octree/pcl_to_octree.cpp
                                       src/pcl_to_octree/octree/OcTreeNodePCL.cpp)
 
 target_link_libraries(pcl_to_octree octomap pcl_io)
+
+rosbuild_add_executable(pointcloud_publisher src/pcl_to_octree/pointcloud_publisher.cpp) 
