@@ -7,6 +7,8 @@
 */
 
 #include "octomap/OcTreeNode.h"
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
 
 namespace octomap {
 
@@ -21,6 +23,7 @@ namespace octomap {
     std::string label;
     point3d centroid;
     double resolution;
+    std::vector <int> inliers;
 
   public:
 
@@ -64,6 +67,15 @@ namespace octomap {
      * @return resolution of node
      */
     double getResolution() const;
+
+    /**
+     * set a Leaf Node inliers
+     */
+    void set3DPointInliers(int inlier_index);
+    /**
+     * @return Leaf Node inliers
+     */
+    std::vector<int> get3DPointInliers() const;
 
   };
 
