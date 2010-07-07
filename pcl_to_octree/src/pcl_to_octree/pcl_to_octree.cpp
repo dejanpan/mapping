@@ -130,9 +130,9 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
   {
     octree->insertScan(**scan_it, octree_maxrange_, false);
   }
-  octomap_server::octomapMapToMsg(*octree, octree_msg);
-  octree_binary_publisher_.publish(octree_msg);
-  ROS_INFO("Octree built and published");
+  //octomap_server::octomapMapToMsg(*octree, octree_msg);
+  //octree_binary_publisher_.publish(octree_msg);
+  //ROS_INFO("Octree built and published");
 
   std::list<octomap::OcTreeVolume> voxels, leaves;
   //octree->getLeafNodes(leaves, level_);
@@ -140,14 +140,12 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
   std::list<octomap::OcTreeVolume>::iterator it1, it2;
   int cnt = 0;
   
-  std::vector < octomap::OcTreeNodePCL *> octree_node_list;
-  
 
   //find Leaf Nodes' centroids, assign controid coordinates to Leaf Node and
   //push into octree_node_list
   for( it1 = leaves.begin(); it1 != leaves.end(); ++it1)
   {
-    //    ROS_INFO("Leaf Node %d : x = %f y = %f z = %f side length = %f ", cnt, it1->first.x(), it1->first.y(), it1->first.z(), it1->second);
+    //ROS_INFO("Leaf Node %d : x = %f y = %f z = %f side length = %f ", cnt, it1->first.x(), it1->first.y(), it1->first.z(), it1->second);
     //cnt++;
     octomap::point3d centroid;
     centroid(0) = it1->first.x(),  centroid(1) = it1->first.y(),  centroid(2) = it1->first.z();
@@ -156,56 +154,44 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
     //octree_node_list.push_back(octree_node);
     octomap::OcTreeNodePCL *octree_node = octree->search(centroid);
     octree_node->setCentroid(centroid);
-    octree_node_list.push_back(octree_node);
-  }
-  
-  //debug output
-  for (unsigned int ii = 0; ii < octree_node_list.size(); ii++)
-  {
-    cnt++;
-    //    ROS_INFO("Leaf Node %d : x = %f y = %f z = %f", cnt, octree_node_list[ii]->getCentroid().x(), 
-    //       octree_node_list[ii]->getCentroid().y(), octree_node_list[ii]->getCentroid().z());
-  }
-
-  //assign points to Leaf Nodes
-  for(unsigned int i =0; i < pointcloud2_pcl.points.size(); i++)
-  {
-	  octomap_3d_point(0) = pointcloud2_pcl.points[i].x;
-	  octomap_3d_point(1) = pointcloud2_pcl.points[i].y;
-	  octomap_3d_point(2) = pointcloud2_pcl.points[i].z;
-    octomap::OcTreeNodePCL *octree_node = octree->search(octomap_3d_point);
-    //check if we found node for the point
-    bool node_found = false;
-    for (unsigned int ii = 0; ii < octree_node_list.size(); ii++)
+    
+    //assign points to Leaf Nodes
+    for(unsigned int i = 0; i < pointcloud2_pcl.points.size(); i++)
     {
-      if (octree_node_list[ii] == octree_node)
+      octomap_3d_point(0) = pointcloud2_pcl.points[i].x;
+      octomap_3d_point(1) = pointcloud2_pcl.points[i].y;
+      octomap_3d_point(2) = pointcloud2_pcl.points[i].z;
+      octomap::OcTreeNodePCL * octree_node1 = octree->search(octomap_3d_point);
+      if (octree_node1 == octree_node)
       {
-        octree_node_list[ii]->set3DPointInliers(i);
-        node_found = true;
+        octree_node->set3DPointInliers(i);
       }
-      if (node_found)
-        break;
     }
-
-    if (!node_found)
-      ROS_WARN("Leaf Node for point %f, %f, %f not found", pointcloud2_pcl.points[i].x, pointcloud2_pcl.points[i].y, 
-               pointcloud2_pcl.points[i].z);
+    octree->insertOcTreeNodePCL(octree_node);
   }
 
+  std::cerr << "ocnl size: " << octree->octree_node_list.size() << std::endl;
 
-  //*****************************************************************
-  //ZOLI your code
-  //****************************************************************
+  octomap::point3d centroid1;
+  centroid1(0) = 0.250000,  centroid1(1) = 0.750000,  centroid1(2) = 0.750000;
+  octomap::OcTreeNodePCL *octree_node_test = octree->getOcTreeNodePCL(centroid1);
+  //if ( octree_node_test != NULL)
+  //     std::vector <int> tmp = octree_node_test->get3DPointInliers();
+  //   else
+  //     std::cerr << "node NULL" << std::endl;
+  //std::cerr << "size: " << tmp.size() << std::endl;
+  for (int i = 0; i < octree_node_test->get3DPointInliers().size(); i++)
+    std::cerr << "inliers" << octree_node_test->get3DPointInliers()[i] << std::endl;
 
-
-  octree_node_list.clear();
 
   ROS_INFO("Octree published %d nodes at resolution %f m.",octree->size(), octree->getResolution());
   double sx, sy, sz;
   octree->getMetricSize(sx, sy, sz);
   ROS_INFO("Octree metric size x: %f, y: %f, z: %f", sx, sy, sz);
   
-  
+  octomap_server::octomapMapToMsg(*octree, octree_msg);
+  octree_binary_publisher_.publish(octree_msg);
+  ROS_INFO("Octree built and published");
   //OcTreeNode * on = octree->search ();
   // ---------------------- TEST CODE (TO BE REMOVED)------------------------
   /*
