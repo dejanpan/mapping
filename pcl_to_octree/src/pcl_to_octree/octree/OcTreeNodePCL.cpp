@@ -68,6 +68,7 @@ std::string OcTreeNodePCL::getLabel() const
 {
   return (label);
 }
+
 void OcTreeNodePCL::setCentroid(point3d c) 
 {
   centroid = c;
@@ -76,6 +77,16 @@ void OcTreeNodePCL::setCentroid(point3d c)
 point3d OcTreeNodePCL::getCentroid() const
 {
   return (centroid);
+}
+
+void OcTreeNodePCL::setResolution(double res) 
+{
+  resolution = res;
+}
+
+double OcTreeNodePCL::getResolution() const
+{
+  return (resolution);
 }
 
 } // end namespace
