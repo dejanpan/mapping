@@ -94,7 +94,7 @@ void OcTreeNodePCL::set3DPointInliers(int inlier_index)
   inliers.push_back(inlier_index);
 }
 
-std::vector<int> OcTreeNodePCL::get3DPointInliers() const
+std::vector<int> OcTreeNodePCL::get3DPointInliers()
 {
   return (inliers);
 }

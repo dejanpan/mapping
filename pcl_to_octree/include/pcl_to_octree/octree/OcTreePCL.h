@@ -15,7 +15,7 @@ namespace octomap {
 
   public:
     static const int TREETYPE=3;
-
+    std::vector < octomap::OcTreeNodePCL *> octree_node_list;
   public:
 
     /**
@@ -75,6 +75,11 @@ namespace octomap {
     /// The OcTree is not changed, in particular not pruned first.
     void writeBinaryConst(const std::string& filename) const;
 
+    /// inserts new OcTreeNodePCL into octree_node_list
+    void insertOcTreeNodePCL(octomap::OcTreeNodePCL *);
+
+    /// return OcTreeNodePCL given centroid c
+    octomap::OcTreeNodePCL * getOcTreeNodePCL(point3d c) const;
 
   protected:
 

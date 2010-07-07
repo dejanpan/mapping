@@ -75,7 +75,7 @@ namespace octomap {
     /**
      * @return Leaf Node inliers
      */
-    std::vector<int> get3DPointInliers() const;
+    std::vector<int> get3DPointInliers();
 
   };
 
