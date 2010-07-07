@@ -141,24 +141,63 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
   int cnt = 0;
   
   std::vector < octomap::OcTreeNodePCL *> octree_node_list;
-  //debug outputs
+  
+
+  //find Leaf Nodes' centroids, assign controid coordinates to Leaf Node and
+  //push into octree_node_list
   for( it1 = leaves.begin(); it1 != leaves.end(); ++it1)
   {
     //    ROS_INFO("Leaf Node %d : x = %f y = %f z = %f side length = %f ", cnt, it1->first.x(), it1->first.y(), it1->first.z(), it1->second);
     //cnt++;
     octomap::point3d centroid;
     centroid(0) = it1->first.x(),  centroid(1) = it1->first.y(),  centroid(2) = it1->first.z();
-    octomap::OcTreeNodePCL *octree_node = new octomap::OcTreeNodePCL();
+    //    octomap::OcTreeNodePCL *octree_node = new octomap::OcTreeNodePCL();
+    //octree_node->setCentroid(centroid);
+    //octree_node_list.push_back(octree_node);
+    octomap::OcTreeNodePCL *octree_node = octree->search(centroid);
     octree_node->setCentroid(centroid);
     octree_node_list.push_back(octree_node);
   }
   
+  //debug output
   for (unsigned int ii = 0; ii < octree_node_list.size(); ii++)
   {
     cnt++;
-    ROS_INFO("Leaf Node %d : x = %f y = %f z = %f", cnt, octree_node_list[ii]->getCentroid().x(), 
-             octree_node_list[ii]->getCentroid().y(), octree_node_list[ii]->getCentroid().z());
+    //    ROS_INFO("Leaf Node %d : x = %f y = %f z = %f", cnt, octree_node_list[ii]->getCentroid().x(), 
+    //       octree_node_list[ii]->getCentroid().y(), octree_node_list[ii]->getCentroid().z());
   }
+
+  //assign points to Leaf Nodes
+  for(unsigned int i =0; i < pointcloud2_pcl.points.size(); i++)
+  {
+	  octomap_3d_point(0) = pointcloud2_pcl.points[i].x;
+	  octomap_3d_point(1) = pointcloud2_pcl.points[i].y;
+	  octomap_3d_point(2) = pointcloud2_pcl.points[i].z;
+    octomap::OcTreeNodePCL *octree_node = octree->search(octomap_3d_point);
+    //check if we found node for the point
+    bool node_found = false;
+    for (unsigned int ii = 0; ii < octree_node_list.size(); ii++)
+    {
+      if (octree_node_list[ii] == octree_node)
+      {
+        octree_node_list[ii]->set3DPointInliers(i);
+        node_found = true;
+      }
+      if (node_found)
+        break;
+    }
+
+    if (!node_found)
+      ROS_WARN("Leaf Node for point %f, %f, %f not found", pointcloud2_pcl.points[i].x, pointcloud2_pcl.points[i].y, 
+               pointcloud2_pcl.points[i].z);
+  }
+
+
+  //*****************************************************************
+  //ZOLI your code
+  //****************************************************************
+
+
   octree_node_list.clear();
 
   ROS_INFO("Octree published %d nodes at resolution %f m.",octree->size(), octree->getResolution());
