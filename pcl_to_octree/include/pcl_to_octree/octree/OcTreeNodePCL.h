@@ -20,6 +20,7 @@ namespace octomap {
 
     std::string label;
     point3d centroid;
+    double resolution;
 
   public:
 
@@ -54,6 +55,15 @@ namespace octomap {
      * @return centroid of node
      */
     point3d getCentroid() const;
+
+    /**
+     * set a resolution
+     */
+    void setResolution(double res);
+    /**
+     * @return resolution of node
+     */
+    double getResolution() const;
 
   };
 
