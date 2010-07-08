@@ -20,7 +20,7 @@ namespace octomap {
 
   public:
 
-    std::string label;
+    int label;
     point3d centroid;
     double resolution;
     std::vector <int> inliers;
@@ -43,11 +43,11 @@ namespace octomap {
     /**
      * set a label
      */
-    void setLabel(std::string l);
+    void setLabel(int l);
     /**
      * @return Label of node
      */
-    std::string getLabel() const;
+    int getLabel() const;
 
 
     /**
