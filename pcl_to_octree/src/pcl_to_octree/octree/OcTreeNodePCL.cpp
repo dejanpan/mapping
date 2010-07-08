@@ -16,7 +16,7 @@ namespace octomap
 OcTreeNodePCL::OcTreeNodePCL()
   : OcTreeNode() 
 {
-  setLabel("empty");
+  setLabel(-1);
 }
 
 OcTreeNodePCL::~OcTreeNodePCL()
@@ -59,12 +59,12 @@ const OcTreeNodePCL* OcTreeNodePCL::getChild(unsigned int i) const
 // =  data              =======================================
 // ============================================================
 
-void OcTreeNodePCL::setLabel(std::string l) 
+void OcTreeNodePCL::setLabel(int l) 
 {
   label = l;
 }
 
-std::string OcTreeNodePCL::getLabel() const
+int OcTreeNodePCL::getLabel() const
 {
   return (label);
 }
