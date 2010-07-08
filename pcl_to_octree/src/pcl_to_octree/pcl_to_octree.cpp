@@ -34,6 +34,7 @@ private:
   double laser_offset_, octree_res_; 
   int octree_maxrange_, level_;
   std::string point_cloud_topic_, frame_id_;	
+  bool visualize_octree_;
 	// Publishes the octree in MarkerArray format so that it can be visualized in rviz
   ros::Publisher octree_marker_array_publisher_;
 	
@@ -63,6 +64,7 @@ PclToOctree::PclToOctree() : nh_("~")
   nh_.param("point_cloud_topic", point_cloud_topic_, std::string("/shoulder_cloud")); 
   nh_.param("frame_id", frame_id_, std::string("/map"));
   nh_.param("level", level_, 0);
+  nh_.param("visualize_octree", visualize_octree_, false); 
   ROS_INFO("pcl_to_octree node is up and running.");
   run();   
 }
@@ -149,11 +151,9 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
     //cnt++;
     octomap::point3d centroid;
     centroid(0) = it1->first.x(),  centroid(1) = it1->first.y(),  centroid(2) = it1->first.z();
-    //    octomap::OcTreeNodePCL *octree_node = new octomap::OcTreeNodePCL();
-    //octree_node->setCentroid(centroid);
-    //octree_node_list.push_back(octree_node);
     octomap::OcTreeNodePCL *octree_node = octree->search(centroid);
     octree_node->setCentroid(centroid);
+    //octree_node->setLabel(0);
     
     //assign points to Leaf Nodes
     for(unsigned int i = 0; i < pointcloud2_pcl.points.size(); i++)
@@ -167,150 +167,110 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
         octree_node->set3DPointInliers(i);
       }
     }
-    octree->insertOcTreeNodePCL(octree_node);
   }
 
-  std::cerr << "ocnl size: " << octree->octree_node_list.size() << std::endl;
+  //test if inliers stored correctly
+  for( it1 = leaves.begin(); it1 != leaves.end(); ++it1)
+  {
+    //ROS_INFO("Leaf Node %d : x = %f y = %f z = %f side length = %f ", cnt, it1->first.x(), it1->first.y(), it1->first.z(), it1->second);
+    //cnt++;
+    octomap::point3d centroid1;
+    centroid1(0) = it1->first.x(),  centroid1(1) = it1->first.y(),  centroid1(2) = it1->first.z();
+    octomap::OcTreeNodePCL *octree_node_test = octree->search(centroid1);
+    if (octree_node_test->get3DPointInliers().size() != 0)
+    {
+      std::stringstream inliers_stream;
+      for (unsigned long i = 0; i < octree_node_test->get3DPointInliers().size(); i++)
+      {
+        inliers_stream << octree_node_test->get3DPointInliers()[i] << ", ";
+      }
+      ROS_INFO("inliers: %s", inliers_stream.str().c_str());
+      ROS_INFO("label: %d",  octree_node_test->getLabel());
+      ROS_INFO("centroid: %f, %f, %f",  octree_node_test->getCentroid().x(),  octree_node_test->getCentroid().y(),  
+               octree_node_test->getCentroid().z());
+    }
+  }
 
-  octomap::point3d centroid1;
-  centroid1(0) = 0.250000,  centroid1(1) = 0.750000,  centroid1(2) = 0.750000;
-  octomap::OcTreeNodePCL *octree_node_test = octree->getOcTreeNodePCL(centroid1);
-  //if ( octree_node_test != NULL)
-  //     std::vector <int> tmp = octree_node_test->get3DPointInliers();
-  //   else
-  //     std::cerr << "node NULL" << std::endl;
-  //std::cerr << "size: " << tmp.size() << std::endl;
-  for (int i = 0; i < octree_node_test->get3DPointInliers().size(); i++)
-    std::cerr << "inliers" << octree_node_test->get3DPointInliers()[i] << std::endl;
-
-
-  ROS_INFO("Octree published %d nodes at resolution %f m.",octree->size(), octree->getResolution());
+  //print metric size of octree
   double sx, sy, sz;
   octree->getMetricSize(sx, sy, sz);
   ROS_INFO("Octree metric size x: %f, y: %f, z: %f", sx, sy, sz);
   
+  //convert octree to OctreeBinary (serialization)
   octomap_server::octomapMapToMsg(*octree, octree_msg);
   octree_binary_publisher_.publish(octree_msg);
-  ROS_INFO("Octree built and published");
-  //OcTreeNode * on = octree->search ();
-  // ---------------------- TEST CODE (TO BE REMOVED)------------------------
-  /*
-
-    
-    octomap::point3d p1(pointcloud2_pcl.points[34].x, pointcloud2_pcl.points[34].y, pointcloud2_pcl.points[34].z);
-    octomap::point3d p2 (pointcloud2_pcl.points[52].x, pointcloud2_pcl.points[52].y, pointcloud2_pcl.points[52].z);
-    std::vector < octomap::point3d> ray;
-    octree->computeRay(p1, p2, ray);
+  ROS_INFO("OctreeBinary built and published");
    
-    std::vector<octomap::point3d>::iterator iter;
-    for(iter = ray.begin(); iter != ray.end(); iter++)
-    {
-    std::cout<< iter->x() <<" " << iter->y()<<" " <<iter->z()<<std::endl;
-    }
-    
-    octomap::OcTreeNode* normalNode=NULL;
-    octomap::OcTreeNodeLabeled* labeledNode=NULL;
-    std::vector< octomap::OcTreeNode*> normalNodeVector;
-    for(unsigned int i =0; i < pointcloud2_pcl.points.size(); i++)
-    {
-    normalNode = octree->search(pointcloud2_pcl.points[i].x, pointcloud2_pcl.points[i].y, pointcloud2_pcl.points[i].z);
-    if(normalNode != NULL)
-	  normalNodeVector.push_back(normalNode);
-    }
-    
-    ROS_INFO("Number of Nodes: %d", normalNodeVector.size());
-  */
-  /*
-    ROS_INFO("Level = %d", level_);
-    sleep(1);
-    octree->getVoxels(voxels, level_);
-
-  
-
-    for( it1 = voxels.begin(); it1 != voxels.end(); ++it1)
-    {
-      
-    someNode = octree->search(it1->first.x(), it1->first.y(), it1->first.z());
-    if(someNode != NULL)
-    ROS_INFO("Node value %f", someNode->getValue());
-    //ROS_INFO("Voxel %d : x = %f y = %f z = %f side length = %f ", cnt, it1->first.x(), it1->first.y(), it1->first.z(), it1->second);
-    cnt++;
-    }
-    cnt = 0;
-    for(it2 = leaves.begin(); it2 != leaves.end(); ++it2)
-    {
-    ROS_INFO("Leaf %d : x = %f y = %f z = %f ", cnt, it2->first.x(), it2->first.y(), it2->first.z());
-    cnt++; 
-    }
-  */
-  //-----------------------TEST CODE ENDS--------------------------
-   
-
-  // each array stores all cubes of a different size, one for each depth level:
-  octree_marker_array_msg_.markers.resize(16);
-  double lowestRes = octree->getResolution();
-  std::list<octomap::OcTreeVolume>::iterator it;
-
-  for(unsigned int i = 0; i < 16; i++)
+  //**********************************************************************************
+  //Visualization of Octree
+  //**********************************************************************************
+  if (visualize_octree_)
   {
-    std::list<octomap::OcTreeVolume> all_cells;
-    //getting the occupied cells at different depths of the octree
-    //    octree->getOccupied(all_cells, i);
-    octree->getLeafNodes(all_cells, i);
-    for (it = all_cells.begin(); it != all_cells.end(); ++it)
+    // each array stores all cubes of a different size, one for each depth level:
+    octree_marker_array_msg_.markers.resize(16);
+    double lowestRes = octree->getResolution();
+    std::list<octomap::OcTreeVolume>::iterator it;
+
+    for(unsigned int i = 0; i < 16; i++)
     {
-      // which array to store cubes in?
-      int idx = int(log2(it->second / lowestRes) +0.5);  
-      assert (idx >= 0 && unsigned(idx) < octree_marker_array_msg_.markers.size());
-      geometry_msgs::Point cube_center;
-      cube_center.x = it->first.x();
-      cube_center.y = it->first.y();
-      cube_center.z = it->first.z();
-      octree_marker_array_msg_.markers[idx].points.push_back(cube_center);
+      std::list<octomap::OcTreeVolume> all_cells;
+      //getting the occupied cells at different depths of the octree
+      //    octree->getOccupied(all_cells, i);
+      octree->getLeafNodes(all_cells, i);
+      for (it = all_cells.begin(); it != all_cells.end(); ++it)
+      {
+        // which array to store cubes in?
+        int idx = int(log2(it->second / lowestRes) +0.5);  
+        assert (idx >= 0 && unsigned(idx) < octree_marker_array_msg_.markers.size());
+        geometry_msgs::Point cube_center;
+        cube_center.x = it->first.x();
+        cube_center.y = it->first.y();
+        cube_center.z = it->first.z();
+        octree_marker_array_msg_.markers[idx].points.push_back(cube_center);
+      }
     }
-  }
 
-  for (unsigned i = 0; i < octree_marker_array_msg_.markers.size(); ++i)
-  {
-    octree_marker_array_msg_.markers[i].header.frame_id = frame_id_;
-    octree_marker_array_msg_.markers[i].header.stamp = ros::Time::now();
+    for (unsigned i = 0; i < octree_marker_array_msg_.markers.size(); ++i)
+    {
+      octree_marker_array_msg_.markers[i].header.frame_id = frame_id_;
+      octree_marker_array_msg_.markers[i].header.stamp = ros::Time::now();
 	
-    double size = lowestRes * pow(2,i);
+      double size = lowestRes * pow(2,i);
 
-    std::stringstream ss;
-    ss <<"Level "<<i;
-    octree_marker_array_msg_.markers[i].ns = ss.str();
-    octree_marker_array_msg_.markers[i].id = i;
-    octree_marker_array_msg_.markers[i].lifetime = ros::Duration::Duration();
-    octree_marker_array_msg_.markers[i].type = visualization_msgs::Marker::CUBE_LIST;
-    octree_marker_array_msg_.markers[i].scale.x = size;
-    octree_marker_array_msg_.markers[i].scale.y = size;
-    octree_marker_array_msg_.markers[i].scale.z = size;
-    octree_marker_array_msg_.markers[i].color.r = 1.0f;
-    octree_marker_array_msg_.markers[i].color.g = 0.0f;
-    octree_marker_array_msg_.markers[i].color.b = 0.0f;
-    octree_marker_array_msg_.markers[i].color.a = 0.5f;
+      std::stringstream ss;
+      ss <<"Level "<<i;
+      octree_marker_array_msg_.markers[i].ns = ss.str();
+      octree_marker_array_msg_.markers[i].id = i;
+      octree_marker_array_msg_.markers[i].lifetime = ros::Duration::Duration();
+      octree_marker_array_msg_.markers[i].type = visualization_msgs::Marker::CUBE_LIST;
+      octree_marker_array_msg_.markers[i].scale.x = size;
+      octree_marker_array_msg_.markers[i].scale.y = size;
+      octree_marker_array_msg_.markers[i].scale.z = size;
+      octree_marker_array_msg_.markers[i].color.r = 1.0f;
+      octree_marker_array_msg_.markers[i].color.g = 0.0f;
+      octree_marker_array_msg_.markers[i].color.b = 0.0f;
+      octree_marker_array_msg_.markers[i].color.a = 0.5f;
 	
 	
-    if (octree_marker_array_msg_.markers[i].points.size() > 0)
-	    octree_marker_array_msg_.markers[i].action = visualization_msgs::Marker::ADD;
-    else
-	    octree_marker_array_msg_.markers[i].action = visualization_msgs::Marker::DELETE;
+      if (octree_marker_array_msg_.markers[i].points.size() > 0)
+        octree_marker_array_msg_.markers[i].action = visualization_msgs::Marker::ADD;
+      else
+        octree_marker_array_msg_.markers[i].action = visualization_msgs::Marker::DELETE;
 		
-  }
+    }
 
-  octree_marker_array_publisher_.publish(octree_marker_array_msg_);
+    octree_marker_array_publisher_.publish(octree_marker_array_msg_);
     
      
-  for (unsigned int i = 0; i < octree_marker_array_msg_.markers.size(); i++)
-  {
-    if (!octree_marker_array_msg_.markers[i].points.empty())
+    for (unsigned int i = 0; i < octree_marker_array_msg_.markers.size(); i++)
     {
-	    octree_marker_array_msg_.markers[i].points.clear();
+      if (!octree_marker_array_msg_.markers[i].points.empty())
+      {
+        octree_marker_array_msg_.markers[i].points.clear();
+      }
     }
-  }
-  octree_marker_array_msg_.markers.clear();
-    
+    octree_marker_array_msg_.markers.clear();
+  } 
 }
 
 int main(int argc, char** argv)
