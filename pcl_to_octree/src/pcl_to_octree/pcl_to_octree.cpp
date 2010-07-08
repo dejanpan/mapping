@@ -17,7 +17,6 @@
 #include <pcl/io/pcd_io.h>
 #include <visualization_msgs/MarkerArray.h>
 
-
 #include <vector>
 #include <iostream>
 
@@ -115,7 +114,7 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
 	  octomap_pointcloud.push_back(octomap_3d_point);
   }
     
-  /* Converting from octomap point cloud to octomap graph */
+  // Converting from octomap point cloud to octomap graph
   octomap::pose6d offset_trans(0,0,-laser_offset_,0,0,0);
   octomap::pose6d laser_pose(0,0,laser_offset_,0,0,0);
   octomap_pointcloud.transform(offset_trans);
@@ -126,7 +125,7 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
     
   ROS_INFO("Number of points in graph: %d", octomap_graph->getNumPoints());
     
-  /*Converting from octomap graph to octomap tree (octree) */
+  // Converting from octomap graph to octomap tree (octree)
   octomap::OcTreePCL* octree = new octomap::OcTreePCL(octree_res_);
   for (octomap::ScanGraph::iterator scan_it = octomap_graph->begin(); scan_it != octomap_graph->end(); scan_it++)
   {
@@ -139,34 +138,28 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
   std::list<octomap::OcTreeVolume> voxels, leaves;
   //octree->getLeafNodes(leaves, level_);
   octree->getLeafNodes(leaves);
-  std::list<octomap::OcTreeVolume>::iterator it1, it2;
-  int cnt = 0;
+  std::list<octomap::OcTreeVolume>::iterator it1;
+  //int cnt = 0;
   
-
-  //find Leaf Nodes' centroids, assign controid coordinates to Leaf Node and
-  //push into octree_node_list
+  //find Leaf Nodes' centroids, assign controid coordinates to Leaf Node
   for( it1 = leaves.begin(); it1 != leaves.end(); ++it1)
   {
-    //ROS_INFO("Leaf Node %d : x = %f y = %f z = %f side length = %f ", cnt, it1->first.x(), it1->first.y(), it1->first.z(), it1->second);
-    //cnt++;
+    //ROS_INFO("Leaf Node %d : x = %f y = %f z = %f side length = %f ", cnt++, it1->first.x(), it1->first.y(), it1->first.z(), it1->second);
     octomap::point3d centroid;
     centroid(0) = it1->first.x(),  centroid(1) = it1->first.y(),  centroid(2) = it1->first.z();
     octomap::OcTreeNodePCL *octree_node = octree->search(centroid);
     octree_node->setCentroid(centroid);
     //octree_node->setLabel(0);
-    
-    //assign points to Leaf Nodes
-    for(unsigned int i = 0; i < pointcloud2_pcl.points.size(); i++)
-    {
-      octomap_3d_point(0) = pointcloud2_pcl.points[i].x;
-      octomap_3d_point(1) = pointcloud2_pcl.points[i].y;
-      octomap_3d_point(2) = pointcloud2_pcl.points[i].z;
-      octomap::OcTreeNodePCL * octree_node1 = octree->search(octomap_3d_point);
-      if (octree_node1 == octree_node)
-      {
-        octree_node->set3DPointInliers(i);
-      }
-    }
+  }
+
+  //assign points to Leaf Nodes
+  for(unsigned int i = 0; i < pointcloud2_pcl.points.size(); i++)
+  {
+    octomap_3d_point(0) = pointcloud2_pcl.points[i].x;
+    octomap_3d_point(1) = pointcloud2_pcl.points[i].y;
+    octomap_3d_point(2) = pointcloud2_pcl.points[i].z;
+    octomap::OcTreeNodePCL * octree_node1 = octree->search(octomap_3d_point);
+    octree_node1->set3DPointInliers(i);
   }
 
   //test if inliers stored correctly
