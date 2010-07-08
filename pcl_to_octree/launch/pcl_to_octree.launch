@@ -7,4 +7,8 @@
     <param name="level" value="0" />
     <param name="frame_id" value="/map"/>
 </node>
+
+<!-- <node pkg="pcl_to_octree" type="octree_client" name="octree_client" output="screen" respawn="false"> -->
+<!--     <param name="octree_topic" value="/pcl_to_octree/octree_binary"/> -->
+<!-- </node> -->
 </launch>
