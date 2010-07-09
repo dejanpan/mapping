@@ -50,7 +50,7 @@ private:
 OctreeClient::OctreeClient() : nh_("~")
 {
   nh_.param("octree_topic", octree_topic_, std::string("/pcl_to_octree/octree_binary")); 
-  nh_.param("visualize_octree", visualize_octree_, false); 
+  nh_.param("visualize_octree", visualize_octree_, true); 
   ROS_INFO("octree_client node is up and running.");
   run();   
 }
@@ -77,7 +77,7 @@ OctreeClient::~OctreeClient()
 void OctreeClient::OctreeCallback(const octomap_server::OctomapBinary& mapMsg)
 {
   ROS_INFO("Received an octree.");
-  octomap::OcTreePCL* octree;
+  octomap::OcTreePCL* octree = new octomap::OcTreePCL (0.5);
   octomap_server::octomapMsgToMap(mapMsg, *octree);
   ROS_INFO("OctomapBinary converted to OctreePCL");
 
