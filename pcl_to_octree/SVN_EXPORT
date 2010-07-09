@@ -1,0 +1,113 @@
+commit 613bdb2a1f35faae971cb475f67e21114ecb21b4
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Fri Jul 9 15:10:51 2010 +0200
+
+    adding all to one launch file
+    adding rviz config file
+
+commit 2fe3e9fcba95906f40b2ba116e8f9dfe9cc99c4c
+Author: Zoltan-Csaba Marton <marton@cs.tum.edu>
+Date:   Thu Jul 8 18:38:59 2010 +0200
+
+    solved strange compiler flag error, thanks for Lorenz!
+
+commit 54456b9523c2c7a73eb2fadaf628e3ab74cee1dc
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Thu Jul 8 17:37:07 2010 +0200
+
+    remove redundant linking of libs
+
+commit 8ea4f138ded8e620c166358b6a8c843f36177e2e
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Thu Jul 8 14:29:29 2010 +0200
+
+    exporting include and link flags
+
+commit 9d4aba5f5a154e3d27828fcc2a553b0c1ad5f37b
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Thu Jul 8 14:15:55 2010 +0200
+
+    compiling "OcTreeNodePCL.h"
+    	  OcTreePCL.h" into a static library since they
+    	  link against octomap which is static also.
+    @Lorenz: How can we compile it into a shared library?
+
+commit 5a8359e3789f01e1dde875029909c3f7bd4fbdaa
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Thu Jul 8 10:57:55 2010 +0200
+
+    removed testing code
+    got rid of octree_node_list
+    make visualization of octree optional
+
+commit 2737e3cc248fd0cbadc8c5d9264642008e4b12fe
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Thu Jul 8 10:57:13 2010 +0200
+
+    label string -> int
+
+commit dee8c412abb19683c32d90b012a91e3702c59a7e
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Thu Jul 8 08:50:03 2010 +0200
+
+    added client to launch file, still seg faults though
+
+commit 0e036a4b961a3bb269055d07e288d49da6cc2969
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Thu Jul 8 08:13:39 2010 +0200
+
+    compiles
+
+commit 447b94dcb7300da5b90d9127e1f07cd98ba252f4
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Thu Jul 8 07:26:50 2010 +0200
+
+    added octree client that subscribes to topic with
+    OctomapBinary msg and converts it into OctreePCL
+
+commit b13dbafc99cc02b8c77b23abc08e5c0a87806e62
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Wed Jul 7 20:42:41 2010 +0200
+
+    added octree node list
+
+commit fb7dc8d2141d5fc82f92f15805842bcd78ce6f4b
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Wed Jul 7 17:30:12 2010 +0200
+
+    octree for Zoli
+    still not ideal
+
+commit 92991e29aafb34eaef65338095dcb0fcad908cd5
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Wed Jul 7 13:32:13 2010 +0200
+
+    added resolution of the node
+
+commit ec906379b34f106c9812b4885d8c15cfaab87d78
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Jul 6 20:03:23 2010 +0200
+
+    added centroids to OctreeNodePLc class
+    constructing octree by voxel size
+    TODO:
+    add 3d points
+    check mem. leak
+
+commit f2bf27060cec189ec1c875272bea9dea8af80cf2
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Jul 6 13:36:39 2010 +0200
+
+    synthetic cloud constructor
+
+commit cfb71f9fce0c07c75db1f32e4fba777bd41f1c6c
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Jul 6 10:21:35 2010 +0200
+
+    fixed indendation
+
+commit 0c9b127f5f9774add160c75dc6196983626762c2
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Mon Jul 5 19:45:14 2010 +0200
+
+    octree for GRSD feature
