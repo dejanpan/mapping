@@ -36,3 +36,6 @@ rosbuild_add_executable(pointcloud_publisher src/pcl_to_octree/pointcloud_publis
 
 rosbuild_add_executable(octree_client src/pcl_to_octree/octree_client.cpp)
 target_link_libraries(octree_client octree_pcl)
+
+rosbuild_add_executable(pcl_to_octree_vanilla src/pcl_to_octree/pcl_to_octree_vanilla.cpp)
+rosbuild_add_executable(octree_client_vanilla src/pcl_to_octree/octree_client_vanilla.cpp)
