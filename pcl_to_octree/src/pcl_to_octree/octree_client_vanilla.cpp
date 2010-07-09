@@ -77,9 +77,11 @@ OctreeClient::~OctreeClient()
 void OctreeClient::OctreeCallback(const octomap_server::OctomapBinary& mapMsg)
 {
   ROS_INFO("Received an octree.");
-  octomap::OcTree* octree = new octomap::OcTree(0.5);
+  //create new OcTree with arbitrary resolution - 0.25 in this case
+  //the resolution gets overridden from the incoming octree
+  octomap::OcTree* octree = new octomap::OcTree(0.25);
   octomap_server::octomapMsgToMap(mapMsg, *octree);
-  ROS_INFO("OctomapBinary converted to Octree");
+  ROS_INFO("OctomapBinary converted to Octree with resolution %lf", octree->getResolution());
 
   //ROS_INFO("Octree Node List size: %ld",octree->octree_node_list.size());
 
