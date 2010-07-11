@@ -26,7 +26,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 
-rosbuild_add_library(octree_pcl STATIC src/pcl_to_octree/octree/OcTreePCL.cpp 
+rosbuild_add_library(octree_pcl src/pcl_to_octree/octree/OcTreePCL.cpp 
                                        src/pcl_to_octree/octree/OcTreeNodePCL.cpp)
 
 rosbuild_add_executable(pcl_to_octree src/pcl_to_octree/pcl_to_octree.cpp)
