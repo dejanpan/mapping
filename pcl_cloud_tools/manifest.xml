@@ -15,7 +15,7 @@
   <depend package="geometry_msgs" />
   <depend package="sensor_msgs" />
   <depend package="mapping_msgs" />
-  <depend package="triangle_mesh" />
+  <depend package="triangle_mesh_msgs" />
   <depend package="ias_table_msgs" />
   <depend package="yaml_cpp" />
   <depend package="opencv2" /> 
