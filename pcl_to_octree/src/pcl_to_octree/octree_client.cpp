@@ -77,10 +77,10 @@ OctreeClient::~OctreeClient()
 void OctreeClient::OctreeCallback(const octomap_server::OctomapBinary& mapMsg)
 {
   ROS_INFO("Received an octree.");
-  octomap::OcTreePCL* octree = new octomap::OcTreePCL (0.5);
+  octomap::OcTreePCL* octree = new octomap::OcTreePCL(0);
   octomap_server::octomapMsgToMap(mapMsg, *octree);
   ROS_INFO("OctomapBinary converted to OctreePCL");
-
+  
   //ROS_INFO("Octree Node List size: %ld",octree->octree_node_list.size());
 
   //**********************************************************************************
@@ -114,7 +114,7 @@ void OctreeClient::OctreeCallback(const octomap_server::OctomapBinary& mapMsg)
 
     for (unsigned i = 0; i < octree_marker_array_msg_.markers.size(); ++i)
     {
-      octree_marker_array_msg_.markers[i].header.frame_id = mapMsg.header.frame_id;
+      octree_marker_array_msg_.markers[i].header.frame_id = "/map";
       octree_marker_array_msg_.markers[i].header.stamp = ros::Time::now();
 	
       double size = lowestRes * pow(2,i);
