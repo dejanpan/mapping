@@ -76,6 +76,34 @@ namespace octomap {
      * @return Leaf Node inliers
      */
     std::vector<int> get3DPointInliers();
+ 
+     // -- I/O  ---------------------------------------
+
+    /**
+     * Read node from binary stream (max-likelihood value), recursively
+     * continue with all children.
+     *
+     * This will set the log_odds_occupancy value of
+     * all leaves to either free or occupied.
+     *
+     * @param s
+     * @return
+     */
+    std::istream& readBinary(std::istream &s);
+
+    /**
+     * Write node to binary stream (max-likelihood value),
+     * recursively continue with all children.
+     *
+     * This will discard the log_odds_occupancy value, writing
+     * all leaves as either free or occupied.
+     *
+     * @param s
+     * @return
+     */
+    std::ostream& writeBinary(std::ostream &s) const;
+
+   
 
   };
 
