@@ -1,0 +1,56 @@
+<launch>
+  <!--node pkg="pointcloud_registration" type="pointcloud_registration" name="pointcloud_registration" output="screen" respawn="false" launch-prefix="xterm -e gdb -args"-->
+  
+  <node pkg="pointcloud_registration" type="pointcloud_registration" name="pointcloud_registration" output="screen" respawn="false">
+    
+    <!-- Topic to publish the final registered point cloud --> 
+    <param name="publish_merged_pointcloud_topic" value="/merged_pointcloud"/>
+   
+    <!-- Topic to subscribe to receive point clouds --> 
+    <param name="subscribe_pointcloud_topic" value="/shoulder_cloud"/>
+    
+    <!-- Frame id for publishing -->
+    <param name="frame_id" value="/map"/>
+   
+    <!-- Maximum number of iterations for the icp algorithm -->
+    <param name="max_number_of_iterations_icp" value="1000"/>
+   
+    <!-- Maximum number of nearest neigbors to look for in the radius search for the icp algorithm -->
+    <param name="max_nn_icp" value="30" />
+    
+    <!-- Maximum number of nearest neigbors to look for in the radius search to get the overlapping region of two point clouds -->
+    <param name="max_nn_overlap" value="10" />
+    
+    <!-- Radius for the radius search for the icp algorithm -->
+    <param name="radius_icp" value="0.2" />
+    
+    <!-- Radius for the radius search to get the overlapping region of two point clouds -->
+    <param name="radius_overlap" value="0.2" />
+    
+    <!-- Set true if wish to filter outliers, based on the Statistical Outlier Removal in pcl -->
+    <param name="filter_outliers" value="false"/>
+    
+    <!-- Set true if wish to downsample the point cloud before registration (Speeds up processing significantly) -->
+    <param name="downsample_pointcloud_before" value="false"/>
+    
+    <!-- Set true if wish to downsample the point cloud after registration -->
+    <param name="downsample_pointcloud_after" value="false"/>
+    
+    <!-- Downsample leaf size -->
+    <param name="downsample_leafsize" value="0.02"/>
+    
+    <!-- Maximum z-coordinate difference between two correspondences which is allowed -->
+    <param name="epsilon_z" value="0.025"/>
+   
+    <!-- Set true if wish to filter correspondences based on curvature difference -->
+    <param name="curvature_check" value="true" />
+    
+    <!-- Maximum curvature value difference between two correspondences which is allowed -->
+    <param name="epsilon_curvature" value="0.05"/>
+   
+    <!-- Transformation epsilon value to be reached for convergence -->
+    <param name="epsilon_transformation" value="1e-6"/>
+ 
+ </node>
+
+</launch>
