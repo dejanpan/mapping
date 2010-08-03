@@ -1,0 +1,11 @@
+commit 85a865809515480c0f10d067e0213efedc76b2cb
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Aug 3 18:49:56 2010 +0200
+
+    added licence headers
+
+commit 03d7aa029500bb274b1b0a6d9966298d16ef08f5
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Aug 3 18:44:00 2010 +0200
+
+    added package for global PointCloud registration by Hozefa
