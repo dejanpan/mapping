@@ -1,0 +1,33 @@
+<package>
+  <description brief="pointcloud_registration">
+
+     pointcloud_registration: This package implements registration of point clouds. 
+     It also contains an additional feature called Spin Image Local.
+ 
+     Based on original code written by Radu Rusu (rusu@willowgarage.com)
+     Contact Persons:
+     1. Hozefa Indorewala: 	h.indorewala@jacobs-university.de
+     2. Dejan Pangercic: 	dejan.pangercic@cs.tum.edu
+     3. Zoltan-Csaba Marton: 	marton@cs.tum.edu
+     4. Nico Blodow:		blodow@cs.tum.edu
+
+  </description>
+  <author>Hozefa Indorewala</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pointcloud_registration</url>
+ 
+   <!-- ROS DEPENDENCIES -->
+   <depend package="pcl"/>
+   <depend package="roscpp"/>
+
+   <!-- MSG DEPENDENCIES -->
+   <depend package="sensor_msgs"/>
+
+   <export>
+     <cpp cflags="-I${prefix}/include -I${prefix}/src"/>
+   </export>
+
+</package>
+
+
