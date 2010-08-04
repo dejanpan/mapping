@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud.h>
+#include <pcl/ros/conversions.h>
 #include "pcl/io/pcd_io.h"
 #include "pcl/point_types.h"
 #include <sensor_msgs/point_cloud_conversion.h>
@@ -30,7 +31,7 @@ int main(int argc, char** argv)
 
   sensor_msgs::PointCloud2 mycloud2;
   sensor_msgs::PointCloud mycloud1;
-  point_cloud::toMsg(cloud, mycloud2);
+  pcl::toROSMsg(cloud, mycloud2);
   sensor_msgs::convertPointCloud2ToPointCloud(mycloud2, mycloud1);
   
   ros::Publisher pointcloud_pub = n.advertise<sensor_msgs::PointCloud>("point_cloud", 1);

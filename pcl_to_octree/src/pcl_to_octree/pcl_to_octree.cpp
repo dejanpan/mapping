@@ -15,6 +15,7 @@
 //#include "octomap_server/octomap_server.h"
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/ros/conversions.h>
 #include <visualization_msgs/MarkerArray.h>
 
 #include <vector>
@@ -103,7 +104,7 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
   octomap::Pointcloud octomap_pointcloud;
       
   //Converting PointCloud2 msg format to pcl pointcloud format in order to read the 3d data
-  point_cloud::fromMsg(pointcloud2_msg, pointcloud2_pcl);
+  pcl::fromROSMsg(pointcloud2_msg, pointcloud2_pcl);
       
   //Reading from pcl point cloud and saving it into octomap point cloud
   for(unsigned int i =0; i < pointcloud2_pcl.points.size(); i++)
