@@ -1,0 +1,24 @@
+<package>
+  <description>
+    A collection of sample consensus models developed at IAS@TUM
+  </description>
+
+  <author>Nico Blodow</author>
+  <license>BSD</license>
+  <review status="experimental" notes="beta"/>
+
+  <depend package="cminpack" />
+  <depend package="roscpp" />
+  <depend package="std_msgs" />
+  <depend package="angles" />
+  <depend package="geometry_msgs" />
+  <depend package="sensor_msgs" />
+  <depend package="fixed_point_cloud_mapping" />
+  <depend package="mapping_msgs" />
+  <depend package="triangle_mesh_msgs" />
+  <depend package="eigen" />
+  <export>
+    <cpp cflags="-I${prefix}/include/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lias_sample_consensus"/>
+  </export>
+
+</package>
