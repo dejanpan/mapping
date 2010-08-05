@@ -7,18 +7,11 @@
   <license>BSD</license>
   <review status="experimental" notes="beta"/>
 
-  <depend package="cminpack" />
+  <depend package="pcl" />
   <depend package="roscpp" />
-  <depend package="std_msgs" />
-  <depend package="angles" />
-  <depend package="geometry_msgs" />
-  <depend package="sensor_msgs" />
-  <depend package="fixed_point_cloud_mapping" />
-  <depend package="mapping_msgs" />
-  <depend package="triangle_mesh_msgs" />
-  <depend package="eigen" />
+  
   <export>
-    <cpp cflags="-I${prefix}/include/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lias_sample_consensus"/>
+    <cpp cflags="-I${prefix}/include/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lpcl_ias_sample_consensus"/>
   </export>
 
 </package>
