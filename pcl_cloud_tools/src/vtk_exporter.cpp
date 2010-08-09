@@ -59,6 +59,8 @@ using terminal_tools::TT_RED;
 using terminal_tools::TT_GREEN;
 using terminal_tools::TT_BLUE;
 
+#define RENWIN_WIDTH 1200
+#define RENWIN_HEIGHT 800
 
 /* ---[ */
 int
@@ -68,7 +70,6 @@ int
   {
     print_error (stderr, "Syntax is: %s input.vtk [output.extension1...N]\n", argv[0]);
     fprintf (stderr, "  where the VTK file will be saved in files with the specified extensions\n");
-    //fprintf (stderr, "  supported extensions are: OBJ*, VRML, X3D, IV, POV, RIB*, OOGL, GL2PS*\n");
     fprintf (stderr, "  supported extensions are: OBJ*, VRML, X3D, IV, RIB*, OOGL\n");
     fprintf (stderr, "  * multiple files are produced, please see corresponding documantation\n");
     fprintf (stderr, "  (OBJ is easy to check and works with blender - you can use that to convert it)\n");
@@ -76,17 +77,16 @@ int
   }
   
   // Parse the command line arguments for .vtk or .ply files
-//   vector<int> pFileIndicesVTK = ParseFileNamesArgument (argc, argv);
 //   vector<int> pFileIndicesVRML = ParseFileExtensionArgument (argc, argv, ".wrl");
 //   vector<int> pFileIndicesX3D = ParseFileExtensionArgument (argc, argv, ".x3d");
 //   vector<int> pFileIndicesOBJ = ParseFileExtensionArgument (argc, argv, ".obj");
-//   vector<int> pFileIndicesIV = ParseFileExtensionArgument (argc, argv, ".iv");
 //   //vector<int> pFileIndicesPOV = ParseFileExtensionArgument (argc, argv, ".pov");
 //   vector<int> pFileIndicesRIB = ParseFileExtensionArgument (argc, argv, ".rib");
 //   vector<int> pFileIndicesOOGL = ParseFileExtensionArgument (argc, argv, ".oogl");
 //   //vector<int> pFileIndicesGL2PS = ParseFileExtensionArgument (argc, argv, ".gl2ps");
 
   vector<int> p_file_indices_vtk = terminal_tools::parse_file_extension_argument (argc, argv, ".vtk");
+  vector<int> p_file_indices_iv = terminal_tools::parse_file_extension_argument (argc, argv, ".iv");
   
   
   // Loading VTK file
@@ -103,22 +103,19 @@ int
   //ren->AutomaticLightCreationOff ();
 
   // Create an actor for the data and add it to the renderer
-//   ren->AddActor (createActorFromDataSet (data, 0.0, 0.0, 0.0));
+  ren->AddActor (create_actor_from_data_set(data, 0.0, 0.0, 0.0));
   
-//   // Create the VTK window
-//   char title[256];
-//   sprintf (title, "VTK exporter");
-//   vtkRenderWindow *renWin = vtkRenderWindow::New ();
-//   renWin->SetWindowName (title);
-//   renWin->AddRenderer (ren);
-//   renWin->SetSize (RENWIN_WIDTH, RENWIN_HEIGHT);
-//   /*vtkRenderWindowInteractor* iren;
-//   iren = CreateRenderWindowAndInteractor (ren, title, argc, argv);
-//   iren->Start ();*/
+  // Create the VTK window
+  char title[256];
+  sprintf (title, "VTK exporter");
+  vtkRenderWindow *renWin = vtkRenderWindow::New ();
+  renWin->SetWindowName (title);
+  renWin->AddRenderer (ren);
+  renWin->SetSize (RENWIN_WIDTH, RENWIN_HEIGHT);
 
-//   // Create exporter
-//   vector<vtkExporter*> exporters;
-//   vector<char*> filenames;
+  // Create exporter
+  vector<vtkExporter*> exporters;
+  vector<char*> filenames;
 
 //   if (pFileIndicesVRML.size () > 0)
 //   {
@@ -141,13 +138,13 @@ int
 //     filenames.push_back (argv [pFileIndicesOBJ.at (0)]);
 //     exporters.push_back (exporter);
 //   }
-//   if (pFileIndicesIV.size () > 0)
-//   {
-//     vtkIVExporter* exporter = vtkIVExporter::New ();
-//     exporter->SetFileName (argv [pFileIndicesIV.at (0)]);
-//     filenames.push_back (argv [pFileIndicesIV.at (0)]);
-//     exporters.push_back (exporter);
-//   }
+  if (p_file_indices_iv.size () > 0)
+    {
+      vtkIVExporter* exporter = vtkIVExporter::New ();
+      exporter->SetFileName (argv [p_file_indices_iv.at (0)]);
+      filenames.push_back (argv [p_file_indices_iv.at (0)]);
+      exporters.push_back (exporter);
+    }
 //   /*if (pFileIndicesPOV.size () > 0)
 //   {
 //     vtkPOVExporter* exporter = vtkPOVExporter::New ();
@@ -177,14 +174,14 @@ int
 //     exporters.push_back (exporter);
 //   }*/
 
-//   // Saving
-//   for (unsigned i = 0; i < exporters.size (); i++)
-//   {
-//     print_info (stderr, "Writing to "); print_value (stderr, "%s\n", filenames[i]);
-//     //exporter->SetInput (iren->getRenderWindow ());
-//     exporters[i]->SetInput (renWin);
-//     exporters[i]->Write ();
-//   }
-//   fprintf (stderr, "[done]\n");
+  // Saving
+  for (unsigned i = 0; i < exporters.size (); i++)
+    {
+      print_info (stderr, "Writing to "); print_value (stderr, "%s\n", filenames[i]);
+      //exporter->SetInput (iren->getRenderWindow ());
+      exporters[i]->SetInput (renWin);
+      exporters[i]->Write ();
+    }
+  fprintf (stderr, "[done]\n");
 }
 /* ]--- */
