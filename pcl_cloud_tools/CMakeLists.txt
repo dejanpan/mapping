@@ -21,4 +21,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
-rosbuild_add_executable(pointcloud_to_octree src/pointcloud_to_octree.cpp)
+#rosbuild_add_executable(pointcloud_to_octree src/pointcloud_to_octree.cpp)
+
+rosbuild_add_executable(vtk_exporter src/vtk_exporter.cpp)
+target_link_libraries (vtk_exporter pcl_visualization)
