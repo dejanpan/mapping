@@ -23,9 +23,9 @@
 #include <vector>
 #include <math.h>
 
-#include "../common/CommonVTKRoutines.h"
-#include "../common/CommonTerminalRoutines.h"
-#include "../common/CommonANNRoutines.h"
+//#include "../common/CommonVTKRoutines.h"
+//#include "../common/CommonTerminalRoutines.h"
+//#include "../common/CommonANNRoutines.h"
 
 #include <vtkIVExporter.h>
 //#include <vtkGL2PSExporter.h>
@@ -35,9 +35,30 @@
 #include <vtkIVExporter.h>
 #include <vtkOBJExporter.h>
 #include <vtkX3DExporter.h>
+
 #include <vtkVRMLExporter.h>
 
+//pcl_visualizer includes
+#include <pcl_visualization/pcl_visualizer.h>
+#include <terminal_tools/print.h>
+#include <terminal_tools/parse.h>
+
+#include <pcl_cloud_tools/misc.h>
+
 using namespace std;
+using terminal_tools::print_color;
+using terminal_tools::print_error;
+using terminal_tools::print_error;
+using terminal_tools::print_warn;
+using terminal_tools::print_info;
+using terminal_tools::print_debug;
+using terminal_tools::print_value;
+using terminal_tools::print_highlight;
+using terminal_tools::TT_BRIGHT;
+using terminal_tools::TT_RED;
+using terminal_tools::TT_GREEN;
+using terminal_tools::TT_BLUE;
+
 
 /* ---[ */
 int
@@ -55,28 +76,25 @@ int
   }
   
   // Parse the command line arguments for .vtk or .ply files
-  vector<int> pFileIndicesVTK = ParseFileNamesArgument (argc, argv);
-  vector<int> pFileIndicesVRML = ParseFileExtensionArgument (argc, argv, ".wrl");
-  vector<int> pFileIndicesX3D = ParseFileExtensionArgument (argc, argv, ".x3d");
-  vector<int> pFileIndicesOBJ = ParseFileExtensionArgument (argc, argv, ".obj");
-  vector<int> pFileIndicesIV = ParseFileExtensionArgument (argc, argv, ".iv");
-  //vector<int> pFileIndicesPOV = ParseFileExtensionArgument (argc, argv, ".pov");
-  vector<int> pFileIndicesRIB = ParseFileExtensionArgument (argc, argv, ".rib");
-  vector<int> pFileIndicesOOGL = ParseFileExtensionArgument (argc, argv, ".oogl");
-  //vector<int> pFileIndicesGL2PS = ParseFileExtensionArgument (argc, argv, ".gl2ps");
+//   vector<int> pFileIndicesVTK = ParseFileNamesArgument (argc, argv);
+//   vector<int> pFileIndicesVRML = ParseFileExtensionArgument (argc, argv, ".wrl");
+//   vector<int> pFileIndicesX3D = ParseFileExtensionArgument (argc, argv, ".x3d");
+//   vector<int> pFileIndicesOBJ = ParseFileExtensionArgument (argc, argv, ".obj");
+//   vector<int> pFileIndicesIV = ParseFileExtensionArgument (argc, argv, ".iv");
+//   //vector<int> pFileIndicesPOV = ParseFileExtensionArgument (argc, argv, ".pov");
+//   vector<int> pFileIndicesRIB = ParseFileExtensionArgument (argc, argv, ".rib");
+//   vector<int> pFileIndicesOOGL = ParseFileExtensionArgument (argc, argv, ".oogl");
+//   //vector<int> pFileIndicesGL2PS = ParseFileExtensionArgument (argc, argv, ".gl2ps");
 
+  vector<int> p_file_indices_vtk = terminal_tools::parse_file_extension_argument (argc, argv, ".vtk");
+  
+  
   // Loading VTK file
-  vtkPolyData* data = reinterpret_cast<vtkPolyData*>(LoadAsDataSet (argv[pFileIndicesVTK.at (0)]));
-  //vtkDataSet* data = LoadAsDataSet (argv[pFileIndicesVTK.at(0)]);
-
-  /*vtkPolyDataReader* reader = vtkPolyDataReader::New ();
-  reader->SetFileName (argv [pFileIndicesVTK.at (0)]);
-  reader->Update ();
-  vtkPolyData* data = reader->GetOutput ();*/
+  vtkPolyData* data = reinterpret_cast<vtkPolyData*>(load_poly_data_as_data_set(argv[p_file_indices_vtk.at (0)]));
   data->Update ();
 
   // Print info
-  print_info (stderr, "Loaded "); print_value (stderr, "%s", argv [pFileIndicesVTK.at (0)]);
+  print_info (stderr, "Loaded "); print_value (stderr, "%s", argv [p_file_indices_vtk.at (0)]);
   fprintf (stderr, " with "); print_value (stderr, "%d", data->GetNumberOfPoints ()); fprintf (stderr, " points and ");
   print_value (stderr, "%d", data->GetNumberOfPoints ()); fprintf (stderr, " polygons.\n");
 
@@ -85,88 +103,88 @@ int
   //ren->AutomaticLightCreationOff ();
 
   // Create an actor for the data and add it to the renderer
-  ren->AddActor (createActorFromDataSet (data, 0.0, 0.0, 0.0));
+//   ren->AddActor (createActorFromDataSet (data, 0.0, 0.0, 0.0));
   
-  // Create the VTK window
-  char title[256];
-  sprintf (title, "VTK exporter");
-  vtkRenderWindow *renWin = vtkRenderWindow::New ();
-  renWin->SetWindowName (title);
-  renWin->AddRenderer (ren);
-  renWin->SetSize (RENWIN_WIDTH, RENWIN_HEIGHT);
-  /*vtkRenderWindowInteractor* iren;
-  iren = CreateRenderWindowAndInteractor (ren, title, argc, argv);
-  iren->Start ();*/
+//   // Create the VTK window
+//   char title[256];
+//   sprintf (title, "VTK exporter");
+//   vtkRenderWindow *renWin = vtkRenderWindow::New ();
+//   renWin->SetWindowName (title);
+//   renWin->AddRenderer (ren);
+//   renWin->SetSize (RENWIN_WIDTH, RENWIN_HEIGHT);
+//   /*vtkRenderWindowInteractor* iren;
+//   iren = CreateRenderWindowAndInteractor (ren, title, argc, argv);
+//   iren->Start ();*/
 
-  // Create exporter
-  vector<vtkExporter*> exporters;
-  vector<char*> filenames;
+//   // Create exporter
+//   vector<vtkExporter*> exporters;
+//   vector<char*> filenames;
 
-  if (pFileIndicesVRML.size () > 0)
-  {
-    vtkVRMLExporter* exporter = vtkVRMLExporter::New ();
-    exporter->SetFileName (argv [pFileIndicesVRML.at (0)]);
-    filenames.push_back (argv [pFileIndicesVRML.at (0)]);
-    exporters.push_back (exporter);
-  }
-  if (pFileIndicesX3D.size () > 0)
-  {
-    vtkX3DExporter* exporter = vtkX3DExporter::New ();
-    exporter->SetFileName (argv [pFileIndicesX3D.at (0)]);
-    filenames.push_back (argv [pFileIndicesX3D.at (0)]);
-    exporters.push_back (exporter);
-  }
-  if (pFileIndicesOBJ.size () > 0)
-  {
-    vtkOBJExporter* exporter = vtkOBJExporter::New ();
-    exporter->SetFilePrefix (argv [pFileIndicesOBJ.at (0)]);
-    filenames.push_back (argv [pFileIndicesOBJ.at (0)]);
-    exporters.push_back (exporter);
-  }
-  if (pFileIndicesIV.size () > 0)
-  {
-    vtkIVExporter* exporter = vtkIVExporter::New ();
-    exporter->SetFileName (argv [pFileIndicesIV.at (0)]);
-    filenames.push_back (argv [pFileIndicesIV.at (0)]);
-    exporters.push_back (exporter);
-  }
-  /*if (pFileIndicesPOV.size () > 0)
-  {
-    vtkPOVExporter* exporter = vtkPOVExporter::New ();
-    exporter->SetFileName (argv [pFileIndicesPOV.at (0)]);
-    filenames.push_back (argv [pFileIndicesPOV.at (0)]);
-    exporters.push_back (exporter);
-  }*/
-  if (pFileIndicesRIB.size () > 0)
-  {
-    vtkRIBExporter* exporter = vtkRIBExporter::New ();
-    exporter->SetFilePrefix (argv [pFileIndicesRIB.at (0)]);
-    filenames.push_back (argv [pFileIndicesRIB.at (0)]);
-    exporters.push_back (exporter);
-  }
-  if (pFileIndicesOOGL.size () > 0)
-  {
-    vtkOOGLExporter* exporter = vtkOOGLExporter::New ();
-    exporter->SetFileName (argv [pFileIndicesOOGL.at (0)]);
-    filenames.push_back (argv [pFileIndicesOOGL.at (0)]);
-    exporters.push_back (exporter);
-  }
-  /*if (pFileIndicesGL2PS.size () > 0)
-  {
-    vtkGL2PSExporter* exporter = vtkGL2PSExporter::New ();
-    exporter->SetFilePrefix (argv [pFileIndicesGL2PS.at (0)]);
-    filenames.push_back (argv [pFileIndicesGL2PS.at (0)]);
-    exporters.push_back (exporter);
-  }*/
+//   if (pFileIndicesVRML.size () > 0)
+//   {
+//     vtkVRMLExporter* exporter = vtkVRMLExporter::New ();
+//     exporter->SetFileName (argv [pFileIndicesVRML.at (0)]);
+//     filenames.push_back (argv [pFileIndicesVRML.at (0)]);
+//     exporters.push_back (exporter);
+//   }
+//   if (pFileIndicesX3D.size () > 0)
+//   {
+//     vtkX3DExporter* exporter = vtkX3DExporter::New ();
+//     exporter->SetFileName (argv [pFileIndicesX3D.at (0)]);
+//     filenames.push_back (argv [pFileIndicesX3D.at (0)]);
+//     exporters.push_back (exporter);
+//   }
+//   if (pFileIndicesOBJ.size () > 0)
+//   {
+//     vtkOBJExporter* exporter = vtkOBJExporter::New ();
+//     exporter->SetFilePrefix (argv [pFileIndicesOBJ.at (0)]);
+//     filenames.push_back (argv [pFileIndicesOBJ.at (0)]);
+//     exporters.push_back (exporter);
+//   }
+//   if (pFileIndicesIV.size () > 0)
+//   {
+//     vtkIVExporter* exporter = vtkIVExporter::New ();
+//     exporter->SetFileName (argv [pFileIndicesIV.at (0)]);
+//     filenames.push_back (argv [pFileIndicesIV.at (0)]);
+//     exporters.push_back (exporter);
+//   }
+//   /*if (pFileIndicesPOV.size () > 0)
+//   {
+//     vtkPOVExporter* exporter = vtkPOVExporter::New ();
+//     exporter->SetFileName (argv [pFileIndicesPOV.at (0)]);
+//     filenames.push_back (argv [pFileIndicesPOV.at (0)]);
+//     exporters.push_back (exporter);
+//   }*/
+//   if (pFileIndicesRIB.size () > 0)
+//   {
+//     vtkRIBExporter* exporter = vtkRIBExporter::New ();
+//     exporter->SetFilePrefix (argv [pFileIndicesRIB.at (0)]);
+//     filenames.push_back (argv [pFileIndicesRIB.at (0)]);
+//     exporters.push_back (exporter);
+//   }
+//   if (pFileIndicesOOGL.size () > 0)
+//   {
+//     vtkOOGLExporter* exporter = vtkOOGLExporter::New ();
+//     exporter->SetFileName (argv [pFileIndicesOOGL.at (0)]);
+//     filenames.push_back (argv [pFileIndicesOOGL.at (0)]);
+//     exporters.push_back (exporter);
+//   }
+//   /*if (pFileIndicesGL2PS.size () > 0)
+//   {
+//     vtkGL2PSExporter* exporter = vtkGL2PSExporter::New ();
+//     exporter->SetFilePrefix (argv [pFileIndicesGL2PS.at (0)]);
+//     filenames.push_back (argv [pFileIndicesGL2PS.at (0)]);
+//     exporters.push_back (exporter);
+//   }*/
 
-  // Saving
-  for (unsigned i = 0; i < exporters.size (); i++)
-  {
-    print_info (stderr, "Writing to "); print_value (stderr, "%s\n", filenames[i]);
-    //exporter->SetInput (iren->getRenderWindow ());
-    exporters[i]->SetInput (renWin);
-    exporters[i]->Write ();
-  }
-  fprintf (stderr, "[done]\n");
+//   // Saving
+//   for (unsigned i = 0; i < exporters.size (); i++)
+//   {
+//     print_info (stderr, "Writing to "); print_value (stderr, "%s\n", filenames[i]);
+//     //exporter->SetInput (iren->getRenderWindow ());
+//     exporters[i]->SetInput (renWin);
+//     exporters[i]->Write ();
+//   }
+//   fprintf (stderr, "[done]\n");
 }
 /* ]--- */
