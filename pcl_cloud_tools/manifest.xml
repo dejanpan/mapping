@@ -26,4 +26,6 @@
   <depend package="octomap"/>
   <depend package="octomap_server"/>
   <depend package="visualization_msgs" />
+  <depend package="vtk" />
+  <depend package="pcl_visualization" />
 </package>
