@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "pcl_cloud_tools/dxf_writer.h"
 
 dxfwriter::dxfwriter(std::string FileName) :
