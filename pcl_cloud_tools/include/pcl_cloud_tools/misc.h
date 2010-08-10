@@ -54,4 +54,15 @@ create_actor_from_data_set (vtkDataSet *data, double c1, double c2, double c3, b
   return actor;
 }
 
+//needed by vtk_to_dxf_exporter
+typedef struct
+{
+  double x;
+  double y;
+  double z;
+} Point3d_t;
+
+typedef std::vector<Point3d_t> Polygon_t;
+typedef std::vector<std::pair<Polygon_t, Polygon_t> > Mesh_t;
+
 #endif

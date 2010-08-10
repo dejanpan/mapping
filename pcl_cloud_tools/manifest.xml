@@ -28,4 +28,5 @@
   <depend package="visualization_msgs" />
   <depend package="vtk" />
   <depend package="pcl_visualization" />
+  <depend package="cognitive_perception" />
 </package>
