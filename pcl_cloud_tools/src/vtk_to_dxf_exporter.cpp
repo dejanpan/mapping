@@ -23,13 +23,27 @@
 #include <vector>
 #include <math.h>
 
-#include "../common/CommonVTKRoutines.h"
-#include "../common/CommonTerminalRoutines.h"
-#include "../common/CommonANNRoutines.h"
+//terminal_tools includes
+#include <terminal_tools/print.h>
+#include <terminal_tools/parse.h>
 
-#include "DxfWriter.h"
+//pcl_visualizer includes
+#include <pcl_visualization/pcl_visualizer.h>
+
+#include "pcl_cloud_tools/dxf_writer.h"
 
 using namespace std;
+using terminal_tools::print_color;
+using terminal_tools::print_error;
+using terminal_tools::print_warn;
+using terminal_tools::print_info;
+using terminal_tools::print_debug;
+using terminal_tools::print_value;
+using terminal_tools::print_highlight;
+using terminal_tools::TT_BRIGHT;
+using terminal_tools::TT_RED;
+using terminal_tools::TT_GREEN;
+using terminal_tools::TT_BLUE;
 
 /* ---[ */
 int
@@ -42,11 +56,11 @@ int
   }
   
   // Parse the command line arguments for .vtk or .ply files
-  vector<int> pFileIndicesVTK = ParseFileNamesArgument (argc, argv);
-  vector<int> pFileIndicesDXF = ParseFileExtensionArgument (argc, argv, ".dxf");
+  vector<int> p_file_indices_vtk = terminal_tools::parse_file_extension_argument (argc, argv, ".vtk");
+  vector<int> p_file_indices_dxf = terminal_tools::parse_file_extension_argument (argc, argv, ".dxf");
 
   // Loading VTK file
-  vtkPolyData* data = reinterpret_cast<vtkPolyData*>(LoadAsDataSet (argv[pFileIndicesVTK.at (0)]));
+  vtkPolyData* data = reinterpret_cast<vtkPolyData*>(load_poly_data_as_data_set(argv[p_file_indices_vtk.at (0)]));
   //vtkDataSet* data = LoadAsDataSet (argv[pFileIndicesVTK.at(0)]);
 
   /*vtkPolyDataReader* reader = vtkPolyDataReader::New ();
@@ -56,7 +70,7 @@ int
   data->Update ();
 
   // Print info
-  print_info (stderr, "Loaded "); print_value (stderr, "%s", argv [pFileIndicesVTK.at (0)]);
+  print_info (stderr, "Loaded "); print_value (stderr, "%s", argv [p_file_indices_vtk.at (0)]);
   fprintf (stderr, " with "); print_value (stderr, "%d", data->GetNumberOfPoints ()); fprintf (stderr, " points and ");
   print_value (stderr, "%d", data->GetNumberOfPoints ()); fprintf (stderr, " polygons.\n");
   
@@ -87,16 +101,16 @@ int
       mesh.push_back (polypair);
     }
     else
-      print_warning (stderr, "Skipping cell as it has %d points, and DXF writer can handle only 3 or 4\n", n, npts);
+      print_warn (stderr, "Skipping cell as it has %d points, and DXF writer can handle only 3 or 4\n", n, npts);
     
     // Progress bar
-    nrpd = print_progressbar (++n, data->GetNumberOfPolys (), nrpd);
+    //    nrpd = print_progressbar (++n, data->GetNumberOfPolys (), nrpd);
   }
 
   // Writing DXF file
   print_info (stderr, "Writing "); print_value (stderr, "%d", mesh.size ());
-  fprintf (stderr, " polygons to "); print_value (stderr, "%s\n", argv [pFileIndicesDXF.at (0)]);
-  dxfwriter::WriteMesh (mesh, argv [pFileIndicesDXF.at (0)]);
+  fprintf (stderr, " polygons to "); print_value (stderr, "%s\n", argv [p_file_indices_dxf.at (0)]);
+  dxfwriter::WriteMesh (mesh, argv [p_file_indices_dxf.at (0)]);
   fprintf (stderr, "[done]\n");
 }
 /* ]--- */
