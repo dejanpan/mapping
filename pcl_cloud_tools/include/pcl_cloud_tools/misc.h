@@ -1,8 +1,17 @@
 #ifndef PCL_CLOUD_TOOLS_MISC_H_
 #define PCL_CLOUD_TOOLS_MISC_H_
 
+#include <vtkLODActor.h> 
+#include <vtkProperty.h> 
 #include <vtkPolyDataReader.h>
 #include <vtkMaskPoints.h>
+#include <vtkSmartPointer.h> 
+#include <vtkDataSetMapper.h>
+/* #include <vector> */
+#include <vtkCellArray.h>
+
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Loads a 3D point cloud from a given fileName.
@@ -18,8 +27,7 @@ load_poly_data_as_data_set (const char* fileName)
 
 ////////////////////////////////////////////////////////////////////////////////
 // ---[ Create a vtkActor from vtkDataSet
-vtkActor* 
-create_actor_from_data_set (vtkDataSet *data, double c1, double c2, double c3, bool lod_enable = false)
+vtkActor* create_actor_from_data_set (vtkDataSet *data, double c1, double c2, double c3, bool lod_enable = false)
 {
   vtkSmartPointer<vtkDataSetMapper> mapper = vtkSmartPointer<vtkDataSetMapper>::New ();
   //  vtkSmartPointer<vtkPainterPolyDataMapper> mapper = vtkSmartPointer<vtkPainterPolyDataMapper>::New ();
@@ -53,16 +61,5 @@ create_actor_from_data_set (vtkDataSet *data, double c1, double c2, double c3, b
   //  actor->GetProperty ()->SetRepresentationToSurface();
   return actor;
 }
-
-//needed by vtk_to_dxf_exporter
-typedef struct
-{
-  double x;
-  double y;
-  double z;
-} Point3d_t;
-
-typedef std::vector<Point3d_t> Polygon_t;
-typedef std::vector<std::pair<Polygon_t, Polygon_t> > Mesh_t;
 
 #endif
