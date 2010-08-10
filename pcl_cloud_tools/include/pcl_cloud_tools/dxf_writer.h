@@ -15,22 +15,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-volatile bool g_stopall = false;
- 
 #ifndef DXFWRTIER_H
 #define DXFWRTIER_H
 #include "File.h"
 #define _USE_MATH_DEFINES
 #include "math.h"
 
-//for Mesh_t
-#include "pcl_cloud_tools/misc.h"
-
 #ifdef WIN32
 #define EXPORT __declspec(dllexport)
 #else
 #define EXPORT
 #endif
+
+typedef struct
+{
+  double x;
+  double y;
+  double z;
+} Point3d_t;
+
+typedef std::vector<Point3d_t> Polygon_t;
+typedef std::vector<std::pair<Polygon_t, Polygon_t> > Mesh_t;
+
 class dxfwriter :
 public linfile::File
 {
@@ -68,4 +74,4 @@ public linfile::File
  private:
   int m_handle;
 };
-#endif//DXFWRTIER_H
+#endif
