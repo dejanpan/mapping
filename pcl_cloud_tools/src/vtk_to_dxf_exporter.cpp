@@ -18,6 +18,11 @@
  *
  * $Id: VTKExporter.cc,v 1.0 2010/02/23 12:00:00 zoli Exp $
  */
+
+
+//TODO: check what exactly does this mean!!!
+volatile bool g_stopall = false;
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -27,9 +32,8 @@
 #include <terminal_tools/print.h>
 #include <terminal_tools/parse.h>
 
-//pcl_visualizer includes
-#include <pcl_visualization/pcl_visualizer.h>
-
+//local includes
+#include "pcl_cloud_tools/misc.h"
 #include "pcl_cloud_tools/dxf_writer.h"
 
 using namespace std;
@@ -82,7 +86,7 @@ int
   vtkPoints *points = data->GetPoints ();
   vtkCellArray* polys = data->GetPolys ();
   vtkIdType npts, *pts;
-  int n = 0, nrpd = 0;
+  int n = 0;
   while (polys->GetNextCell (npts, pts))
   {
     if (npts == 3 || npts == 4)
@@ -103,8 +107,6 @@ int
     else
       print_warn (stderr, "Skipping cell as it has %d points, and DXF writer can handle only 3 or 4\n", n, npts);
     
-    // Progress bar
-    //    nrpd = print_progressbar (++n, data->GetNumberOfPolys (), nrpd);
   }
 
   // Writing DXF file
