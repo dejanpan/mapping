@@ -18,6 +18,7 @@
  *
  * $Id: VTKExporter.cc,v 1.0 2010/02/23 12:00:00 zoli Exp $
  */
+volatile bool g_stopall = false;
 #include <iostream>
 #include <string>
 #include <vector>
@@ -40,6 +41,8 @@
 
 //pcl_visualizer includes
 #include <pcl_visualization/pcl_visualizer.h>
+
+//terminal_tools includes
 #include <terminal_tools/print.h>
 #include <terminal_tools/parse.h>
 
