@@ -28,6 +28,9 @@ volatile bool g_stopall = false;
 //#include "../common/CommonTerminalRoutines.h"
 //#include "../common/CommonANNRoutines.h"
 
+#include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
+
 #include <vtkIVExporter.h>
 //#include <vtkGL2PSExporter.h>
 #include <vtkOOGLExporter.h>
@@ -40,7 +43,7 @@ volatile bool g_stopall = false;
 #include <vtkVRMLExporter.h>
 
 //pcl_visualizer includes
-#include <pcl_visualization/pcl_visualizer.h>
+//#include <pcl_visualization/pcl_visualizer.h>
 
 //terminal_tools includes
 #include <terminal_tools/print.h>
