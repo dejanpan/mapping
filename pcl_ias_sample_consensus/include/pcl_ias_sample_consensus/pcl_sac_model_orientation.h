@@ -41,6 +41,8 @@ namespace pcl
       typedef typename SampleConsensusModel<Normal>::PointCloudPtr NormalsPtr;
       typedef typename SampleConsensusModel<Normal>::PointCloudConstPtr NormalsConstPtr;
 
+      typedef boost::shared_ptr<SACModelOrientation> Ptr;
+
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief The fixed axis. */
       Eigen::Vector3f axis_;
@@ -52,7 +54,7 @@ namespace pcl
       SACModelOrientation (const NormalsConstPtr &cloud) : SampleConsensusModel<Normal> (cloud)
       {
         kdtree_ = boost::make_shared<KdTreeANN <Normal> >();
-        kdtree_->setInputCloud (boost::make_shared<PointCloud <Normal> > (cloud));
+        kdtree_->setInputCloud  (cloud);
       }
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -63,7 +65,7 @@ namespace pcl
       SACModelOrientation (const NormalsConstPtr &cloud, const std::vector<int> &indices) : SampleConsensusModel<Normal> (cloud, indices)
       {
         kdtree_ = boost::make_shared<KdTreeANN <Normal> >();
-        kdtree_->setInputCloud (boost::make_shared<PointCloud <Normal> > (cloud));
+        kdtree_->setInputCloud (cloud);
       }
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -109,7 +111,7 @@ namespace pcl
         * \param model_coefficients the model coefficients that should be used for getting the axes
         * \param inliers the data inliers found as supporting the model (each element is an index of indices_)
         */
-      //void getMinAndMax (Eigen::VectorXf *model_coefficients, std::vector<int> *inliers, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances);
+      //void getMinAndMax (boost::shared_ptr<pcl::PointCloud<pcl::PointT> > cloud, Eigen::VectorXf *model_coefficients, std::vector<int> *inliers, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances);
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Get a random point and return its index.
@@ -170,7 +172,10 @@ namespace pcl
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Return an unique id for each type of model employed. */
-      virtual inline int getModelType () { return 1001; }
+      inline int getModelType () { return 1001; }
+
+      inline void optimizeModelCoefficients(   const std::vector<int> &inliers, const Eigen::VectorXf &model_coefficients,
+                                        Eigen::VectorXf &optimized_coefficients){}
 
     protected:
 

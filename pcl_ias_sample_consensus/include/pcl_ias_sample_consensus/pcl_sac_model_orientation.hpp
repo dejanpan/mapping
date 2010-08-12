@@ -33,7 +33,7 @@
 //  }
 
 //template<typename Normal> void
-//    pcl::SACModelOrientation<Normal>::getMinAndMax (Eigen::VectorXf *model_coefficients, std::vector<int> *inliers, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances)
+//    pcl::SACModelOrientation<Normal>::getMinAndMax (boost::shared_ptr<pcl::PointCloud<pcl::PointT> > cloud, Eigen::VectorXf *model_coefficients, std::vector<int> *inliers, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances)
 //  {
 //    // Initialize result vectors
 //    min_max_indices.resize (6);
