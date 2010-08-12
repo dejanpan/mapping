@@ -28,3 +28,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
+
+rosbuild_add_library(pcl_cloud_algos
+              src/pcl_cloud_algos/box_fit_algo.cpp
+              src/pcl_cloud_algos/box_fit2_algo.cpp)
+
+target_link_libraries(pcl_cloud_algos pcl_ias_sample_consensus)

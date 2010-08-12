@@ -28,15 +28,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CLOUD_ALGOS_BOX_ESTIMATION_H
-#define CLOUD_ALGOS_BOX_ESTIMATION_H
-#include <cloud_algos/cloud_algos.h>
+#ifndef PCL_CLOUD_ALGOS_BOX_ESTIMATION_H
+#define PCL_CLOUD_ALGOS_BOX_ESTIMATION_H
+#include <pcl_cloud_algos/cloud_algos.h>
 #include <mapping_msgs/PolygonalMap.h>
 #include <position_string_msgs/PositionStringList.h>
 #include <triangle_mesh_msgs/TriangleMesh.h>
-#include <point_cloud_mapping/geometry/point.h>
+//#include <point_cloud_mapping/geometry/point.h>
+#include <pcl_cloud_algos/pcl_cloud_algos_point_types.h>
 #include "visualization_msgs/Marker.h"
 #include "visualization_msgs/MarkerArray.h"
+#include <pcl/point_cloud.h>
 
 namespace cloud_algos
 {
@@ -76,11 +78,11 @@ class BoxEstimation : public CloudAlgo
   boost::shared_ptr<const OutputType> output ();
 
   // Get inlier and outlier points
-  virtual boost::shared_ptr<sensor_msgs::PointCloud2> getInliers ();
-  virtual boost::shared_ptr<sensor_msgs::PointCloud2> getOutliers ();
-  virtual boost::shared_ptr<sensor_msgs::PointCloud2> getContained ();
-  virtual boost::shared_ptr<sensor_msgs::PointCloud2> getThresholdedInliers (double eps_angle);
-  virtual void computeInAndOutliers (boost::shared_ptr<const sensor_msgs::PointCloud2> cloud, std::vector<double> coeff, double threshold_in, double threshold_out);
+  virtual boost::shared_ptr<sensor_msgs::PointCloud2 > getInliers ();
+  virtual boost::shared_ptr<sensor_msgs::PointCloud2 > getOutliers ();
+  virtual boost::shared_ptr<sensor_msgs::PointCloud2 > getContained ();
+  virtual boost::shared_ptr<pcl::PointCloud<pcl::PointXYZINormalScanLine> > getThresholdedInliers (double eps_angle);
+  virtual void computeInAndOutliers (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormalScanLine> > cloud, std::vector<double> coeff, double threshold_in, double threshold_out);
 
   ////////////////////////////////////////////////////////////////////////////////
   /**
@@ -91,7 +93,7 @@ class BoxEstimation : public CloudAlgo
    * box dimensions: dx, dy, dz,
    * box eigen axes: e1_x, e1y, e1z, e2_x, e2y, e2z, e3_x, e3y, e3z
    */
-  virtual bool find_model (boost::shared_ptr<const sensor_msgs::PointCloud2> cloud, std::vector<double> &coeff);
+  bool find_model (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormalScanLine> > cloud, std::vector<double> &coeff);
 
   ////////////////////////////////////////////////////////////////////////////////
   /**
@@ -99,7 +101,7 @@ class BoxEstimation : public CloudAlgo
    * \param cloud input point cloud message
    * \param coeff box coefficients (see find_model function):
    */
-  void triangulate_box (boost::shared_ptr<const sensor_msgs::PointCloud2> cloud, std::vector<double> &coeff);
+  void triangulate_box (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormalScanLine> > cloud, std::vector<double> &coeff);
 
   ////////////////////////////////////////////////////////////////////////////////
   /**
@@ -107,7 +109,7 @@ class BoxEstimation : public CloudAlgo
    * \param cloud input point cloud message
    * \param coeff box coefficients (see find_model function):
    */
-  void publish_marker (boost::shared_ptr<const sensor_msgs::PointCloud2> cloud, std::vector<double> &coeff);
+  void publish_marker (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormalScanLine> > cloud, std::vector<double> &coeff);
 
   ////////////////////////////////////////////////////////////////////////////////
   /**
@@ -115,7 +117,7 @@ class BoxEstimation : public CloudAlgo
    * \param cloud input point cloud message
    * \param coeff box coefficients (see find_model function):
    */
-  void computeMarker (boost::shared_ptr<const sensor_msgs::PointCloud2> cloud, std::vector<double> coeff);
+  void computeMarker (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormalScanLine> > cloud, std::vector<double> coeff);
 
   ////////////////////////////////////////////////////////////////////////////////
   /**
@@ -146,7 +148,7 @@ class BoxEstimation : public CloudAlgo
   double threshold_in_;
   double threshold_out_;
 
-  boost::shared_ptr<const sensor_msgs::PointCloud2> cloud_;
+  boost::shared_ptr<pcl::PointCloud <pcl::PointXYZINormalScanLine> > cloud_;
 
   ros::NodeHandle nh_;
 
@@ -158,7 +160,7 @@ class BoxEstimation : public CloudAlgo
 
   //box coefficients: cx, cy, cz, dx, dy, dz, e1_x, e1y, e1z, e2_x, e2y, e2z, e3_x, e3y, e3z
   std::vector<double> coeff_;
-  pcl::PointT box_centroid_;
+  pcl::PointXYZINormalScanLine box_centroid_;
   visualization_msgs::Marker marker_;
 
   //publish box as marker
