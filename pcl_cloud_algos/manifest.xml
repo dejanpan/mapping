@@ -7,7 +7,7 @@
   <license>BSD</license>
   <review status="experimental" notes="beta"/>
 
-  <depend package="ias_sample_consensus" />
+  <depend package="pcl_ias_sample_consensus" />
   <depend package="pluginlib" />
   <depend package="joy" />
   <depend package="roscpp" />
