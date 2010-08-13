@@ -40,7 +40,7 @@
 #include "visualization_msgs/MarkerArray.h"
 #include <pcl/point_cloud.h>
 
-namespace cloud_algos
+namespace pcl_cloud_algos
 {
 
 class BoxEstimation : public CloudAlgo

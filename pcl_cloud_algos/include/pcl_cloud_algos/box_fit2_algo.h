@@ -33,7 +33,8 @@
 //cloud_algos
 #include <pcl_cloud_algos/box_fit_algo.h>
 
-namespace cloud_algos
+#include <pcl_ias_sample_consensus/pcl_sac_model_orientation.h>
+namespace pcl_cloud_algos
 {
 
 class RobustBoxEstimation : public BoxEstimation
@@ -64,7 +65,7 @@ class RobustBoxEstimation : public BoxEstimation
     //success_probability_ = 0.9999; // increasing the default precision of RANSAC a bit, maybe it helps
   };
 
-  //bool getMinAndMax(Eigen::VectorXf *model_coefficients, std::vector<int> *inliers, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances);
+  void getMinAndMax(Eigen::VectorXf *model_coefficients, boost::shared_ptr<pcl::SACModelOrientation<pcl::Normal> > model, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances);
 
   // Overwritten Cloud Algo stuff
   void pre  ();
