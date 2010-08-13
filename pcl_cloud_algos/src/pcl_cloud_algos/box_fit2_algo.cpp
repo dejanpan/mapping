@@ -30,52 +30,53 @@
 #include <pcl_cloud_algos/box_fit2_algo.h>
 
 // Sample Consensus
-#include <pcl_ias_sample_consensus/pcl_sac_model_orientation.h>
 //#include <point_cloud_mapping/sample_consensus/ransac.h>
 #include <pcl/sample_consensus/ransac.h>
 // For computeCentroid
 //#include <point_cloud_mapping/geometry/nearest.h>
 
 using namespace std;
-using namespace cloud_algos;
+using namespace pcl_cloud_algos;
 using namespace pcl;
 //using namespace sample_consensus;
 
-//bool RobustBoxEstimation::getMinAndMax(Eigen::VectorXf *model_coefficients, std::vector<int> *inliers, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances)
-//{
-//
-//  // Initialize result vectors
-//  min_max_indices.resize (6);
-//  min_max_distances.resize (6);
-//  min_max_distances[0] = min_max_distances[2] = min_max_distances[4] = +DBL_MAX;
-//  min_max_distances[1] = min_max_distances[3] = min_max_distances[5] = -DBL_MAX;
-//
-//  // The 3 coordinate axes are nm, nc and axis_
-//  Eigen::Vector3f nm = Eigen::Vector3d::Map(&(*model_coefficients)[0]).cast<float> ();
-//  Eigen::Vector3f nc = axis_.cross (nm);
-//
-//  model->
-//
-//  // Find minimum and maximum distances from origin along the three axes
-//  for (std::vector<int>::iterator it = inliers->begin (); it != inliers->end (); it++)
-//  //for (unsigned i = 0; i < inliers.size (); i++)
-//  {
-//    // @NOTE inliers is a list of indices of the indices_ array!
-//    Eigen::Vector3f point (cloud_->points[(*indices_)[*it]].x, cloud_->points[(*indices_)[*it]].y, cloud_->points[(*indices_)[*it]].z);
-//    //Eigen::Vector3f point (cloud_->points[indices_[*it]].x - center.x, cloud_->points[indices_[*it]].y - center.y, cloud_->points[indices_[*it]].z - center.z);
-//    //Eigen::Vector3f point (cloud_->points[indices_[inliers[i]]].x, cloud_->points[indices_[inliers[i]]].y, cloud_->points[indices_[inliers[i]]].z);
-//    double dists[3];
-//    dists[0] = nm.dot(point);
-//    dists[1] = nc.dot(point);
-//    dists[2] = axis_.dot(point);
-//    for (int d=0; d<3; d++)
-//    {
-//      if (min_max_distances[2*d+0] > dists[d]) { min_max_distances[2*d+0] = dists[d]; min_max_indices[2*d+0] = *it; }
-//      if (min_max_distances[2*d+1] < dists[d]) { min_max_distances[2*d+1] = dists[d]; min_max_indices[2*d+1] = *it; }
-//    }
-//  }
-//
-//}
+void RobustBoxEstimation::getMinAndMax(Eigen::VectorXf *model_coefficients, boost::shared_ptr<SACModelOrientation<Normal> > model, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances)
+{
+
+  boost::shared_ptr<vector<int> > inliers = model->getIndices();
+  boost::shared_ptr<vector<int> > indices = model->getIndices();
+
+  // Initialize result vectors
+  min_max_indices.resize (6);
+  min_max_distances.resize (6);
+  min_max_distances[0] = min_max_distances[2] = min_max_distances[4] = +DBL_MAX;
+  min_max_distances[1] = min_max_distances[3] = min_max_distances[5] = -DBL_MAX;
+
+  // The 3 coordinate axes are nm, nc and axis_
+  Eigen::Vector3f nm = *model_coefficients;
+  //Eigen::Vector3f nm = Eigen::Vector3d::Map(&(*model_coefficients)[0]).cast<float> ();
+  Eigen::Vector3f nc = model->axis_.cross (nm);
+
+  // Find minimum and maximum distances from origin along the three axes
+  for (std::vector<int>::iterator it = inliers->begin (); it != inliers->end (); it++)
+  //for (unsigned i = 0; i < inliers.size (); i++)
+  {
+    // @NOTE inliers is a list of indices of the indices_ array!
+    Eigen::Vector3f point (cloud_->points[(*indices)[*it]].x, cloud_->points[(*indices)[*it]].y, cloud_->points[(*indices)[*it]].z);
+    //Eigen::Vector3f point (cloud_->points[indices_[*it]].x - center.x, cloud_->points[indices_[*it]].y - center.y, cloud_->points[indices_[*it]].z - center.z);
+    //Eigen::Vector3f point (cloud_->points[indices_[inliers[i]]].x, cloud_->points[indices_[inliers[i]]].y, cloud_->points[indices_[inliers[i]]].z);
+    double dists[3];
+    dists[0] = nm.dot(point);
+    dists[1] = nc.dot(point);
+    dists[2] = model->axis_.dot(point);
+    for (int d=0; d<3; d++)
+    {
+      if (min_max_distances[2*d+0] > dists[d]) { min_max_distances[2*d+0] = dists[d]; min_max_indices[2*d+0] = *it; }
+      if (min_max_distances[2*d+1] < dists[d]) { min_max_distances[2*d+1] = dists[d]; min_max_indices[2*d+1] = *it; }
+    }
+  }
+
+}
 std::vector<std::string> RobustBoxEstimation::requires ()
 {
   std::vector<std::string> requires;
@@ -231,7 +232,7 @@ bool RobustBoxEstimation::find_model(boost::shared_ptr<const pcl::PointCloud <pc
 
   //model->getMinAndMax (&refined, &inliers, min_max_indices, min_max_distances);
   //getMinAndMax (&refined, model->getIndices (), min_max_indices, min_max_distances);
-  //getMinAndMax (refined, model->getIndices(), min_max_indices, min_max_distances);
+  getMinAndMax (&refined, model, min_max_indices, min_max_distances);
   //vector<int> min_max_indices = model->getMinAndMaxIndices (refined);
 
   //cerr << min_max_distances.at (1) << " " << min_max_distances.at (0) << endl;

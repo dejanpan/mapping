@@ -8,7 +8,7 @@
 #include <ros/node_handle.h>
 #include <sensor_msgs/PointCloud2.h>
 
-namespace cloud_algos
+namespace pcl_cloud_algos
 {
 
 //int getChannelIndex

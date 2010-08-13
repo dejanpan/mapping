@@ -67,7 +67,7 @@
 
 
 using namespace std;
-using namespace cloud_algos;
+using namespace pcl_cloud_algos;
 
 void BoxEstimation::init (ros::NodeHandle& nh)
 {
