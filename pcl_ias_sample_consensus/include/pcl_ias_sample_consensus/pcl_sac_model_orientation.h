@@ -69,57 +69,11 @@ namespace pcl
       }
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      /** \brief Constructor. */
-      //SACModelOrientation () : sample_consensus::SACModel ()
-      //{
-      //  // nx needs to be set
-      //  nx_idx_ = -1;
-      //  axis_[0] = 0;
-      //  axis_[1] = 0;
-      //  axis_[2] = 1;
-      //  //eps_angle_ = 0.1;
-      //}
-
-      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      /** \brief Destructor for SACModelOrientation. */
-      //~SACModelOrientation () {}
-
-      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      /** \brief Set the dataset -- and initialize internal variables
-       * \param cloud the data set to be used */
-      //inline void
-      //  setDataSet (sensor_msgs::PointCloud *cloud)
-      //{
-      //  SACModel::setDataSet (cloud);
-      //  init (cloud);
-      //}
-
-      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      /** \brief Set the dataset and indices -- and initialize internal variables
-       * \param cloud the data set to be used
-       * \param indices the point indices used
-       */
-      //inline void
-      //  setDataSet (sensor_msgs::PointCloud *cloud, std::vector<int> indices)
-      //{
-      //  SACModel::setDataSet (cloud, indices);
-      //  init (cloud);
-      //}
-
-      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      /** \brief Get the minimum and maximum distances along the axes and the corresponding index in the indices_ vector.
-        * \param model_coefficients the model coefficients that should be used for getting the axes
-        * \param inliers the data inliers found as supporting the model (each element is an index of indices_)
-        */
-      //void getMinAndMax (boost::shared_ptr<pcl::PointCloud<pcl::PointT> > cloud, Eigen::VectorXf *model_coefficients, std::vector<int> *inliers, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances);
-
-      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Get a random point and return its index.
         * \param iterations the internal number of iterations used by SAC methods (incremented at samplings that can not produce a model) -- Not needed.
         * \param samples the resultant model samples
         */
       void getSamples (int &iterations, std::vector<int> &samples);
-
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Check whether the given index samples can form a valid model, compute the model coefficients from
@@ -190,12 +144,6 @@ namespace pcl
           ROS_ASSERT (model_coefficients.size () == 4);
           return (true);
        }
-      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      /** \brief Creates a kd-tree for searching the normals and locates the nx channel.
-       * @note We assume that if nx exists then ny and nz are the channels following it.
-       * \param cloud the data set to be used
-       */
-      //void init (sensor_msgs::PointCloud *cloud);
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Index of the nx channel (the x component of the normal vector). The next indices are assumed to be that of ny and nz! */
