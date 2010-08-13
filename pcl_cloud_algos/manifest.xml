@@ -23,11 +23,11 @@
   <depend package="perception_msgs" />
   <depend package="perception_srvs" />
   <depend package="tabletop_msgs" />
-  <depend package="player_log_actarray" />
   <depend package="ias_descriptors_3d"/>
   <depend package="libsvm"/>
   <depend package="eigen"/>
   <depend package="pcl"/>
+  <depend package="position_string_msgs"/>
 
   <export>
     <cpp cflags="-I${prefix}/include/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lcloud_algos"/>
