@@ -10,6 +10,7 @@ args="0.2"/>
     <param name="level" value="0" />
     <param name="frame_id" value="/map"/>
     <param name="visualize_octree" value="true"/>
+    <param name="visualize_only_occupied_cells" value="true"/>
 </node>
 
 <node name="rviz" pkg="rviz" type="rviz" args="-d $(find pcl_to_octree)/p2o.vcg"/>

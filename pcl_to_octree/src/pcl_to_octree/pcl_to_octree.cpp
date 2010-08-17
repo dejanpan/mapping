@@ -26,29 +26,29 @@ class PclToOctree
 public:
   PclToOctree();
   ~PclToOctree();
-	void pclToOctreeCallback(const sensor_msgs::PointCloud& msg);
+	void pclToOctreeCallback(const sensor_msgs::PointCloud2& msg);
 	void run();
-    
+
 private:
   ros::NodeHandle nh_;
-  double laser_offset_, octree_res_; 
+  double laser_offset_, octree_res_;
   int octree_maxrange_, level_;
-  std::string point_cloud_topic_, frame_id_;	
-  bool visualize_octree_;
+  std::string point_cloud_topic_, frame_id_;
+  bool visualize_octree_, visualize_only_occupied_cells_;
 	// Publishes the octree in MarkerArray format so that it can be visualized in rviz
   ros::Publisher octree_marker_array_publisher_;
-	
+
 	/*
-	 * The following publisher, even though not required, is used because otherwise rviz 
+	 * The following publisher, even though not required, is used because otherwise rviz
 	 * cannot visualize the MarkerArray format without advertising the Marker format
 	 */
   ros::Publisher octree_marker_publisher_;
-	
+
 	ros::Publisher octree_binary_publisher_;
-	
+
 	// Subscribes to the PointCloud format to acquire point cloud data
 	ros::Subscriber pointcloud_subscriber_;
-	
+
 	// Marker array to visualize the octree. It displays the occuplied cells of the octree
 	visualization_msgs::MarkerArray octree_marker_array_msg_;
 };
@@ -61,25 +61,26 @@ PclToOctree::PclToOctree() : nh_("~")
   nh_.param("laser_offset", laser_offset_, 1.5);
   nh_.param("octree_resolution", octree_res_, 0.05);
   nh_.param("octree_maxrange", octree_maxrange_, -1);
-  nh_.param("point_cloud_topic", point_cloud_topic_, std::string("/shoulder_cloud")); 
+  nh_.param("point_cloud_topic", point_cloud_topic_, std::string("/shoulder_cloud"));
   nh_.param("frame_id", frame_id_, std::string("/map"));
   nh_.param("level", level_, 0);
-  nh_.param("visualize_octree", visualize_octree_, false); 
+  nh_.param("visualize_octree", visualize_octree_, false);
+  nh_.param("visualize_only_occupied_cells", visualize_only_occupied_cells_, true);
   ROS_INFO("pcl_to_octree node is up and running.");
-  run();   
+  run();
 }
 
 
 void PclToOctree::run()
 {
   octree_marker_array_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
-    
+
   octree_marker_publisher_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 100);
-    
+
   octree_binary_publisher_ = nh_.advertise<octomap_server::OctomapBinary>("octree_binary", 100);
-    
+
   pointcloud_subscriber_ = nh_.subscribe(point_cloud_topic_, 100, &PclToOctree::pclToOctreeCallback, this);
-    
+
   ros::spin();
 }
 
@@ -90,22 +91,22 @@ PclToOctree::~PclToOctree()
   octree_marker_publisher_.shutdown();
 }
 
-void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_msg)
+void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud2& pointcloud2_msg)
 {
   ROS_INFO("Received a point cloud.");
-  sensor_msgs::PointCloud2 pointcloud2_msg;
+  //sensor_msgs::PointCloud2 pointcloud2_msg;
   octomap_server::OctomapBinary octree_msg;
-      
+
   // Converting from PointCloud msg format to PointCloud2 msg format
-  sensor_msgs::convertPointCloudToPointCloud2(pointcloud_msg, pointcloud2_msg);
+  //sensor_msgs::convertPointCloudToPointCloud2(pointcloud_msg, pointcloud2_msg);
   pcl::PointCloud<pcl::PointXYZ> pointcloud2_pcl;
-    
+
   octomap::point3d octomap_3d_point;
   octomap::Pointcloud octomap_pointcloud;
-      
+
   //Converting PointCloud2 msg format to pcl pointcloud format in order to read the 3d data
   pcl::fromROSMsg(pointcloud2_msg, pointcloud2_pcl);
-      
+
   //Reading from pcl point cloud and saving it into octomap point cloud
   for(unsigned int i =0; i < pointcloud2_pcl.points.size(); i++)
   {
@@ -114,18 +115,18 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
 	  octomap_3d_point(2) = pointcloud2_pcl.points[i].z;
 	  octomap_pointcloud.push_back(octomap_3d_point);
   }
-    
+
   // Converting from octomap point cloud to octomap graph
   octomap::pose6d offset_trans(0,0,-laser_offset_,0,0,0);
   octomap::pose6d laser_pose(0,0,laser_offset_,0,0,0);
   octomap_pointcloud.transform(offset_trans);
-    
-    
+
+
   octomap::ScanGraph* octomap_graph = new octomap::ScanGraph();
   octomap_graph->addNode(&octomap_pointcloud, laser_pose);
-    
+
   ROS_INFO("Number of points in graph: %d", octomap_graph->getNumPoints());
-    
+
   // Converting from octomap graph to octomap tree (octree)
   octomap::OcTreePCL* octree = new octomap::OcTreePCL(octree_res_);
   for (octomap::ScanGraph::iterator scan_it = octomap_graph->begin(); scan_it != octomap_graph->end(); scan_it++)
@@ -141,7 +142,7 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
   octree->getLeafNodes(leaves);
   std::list<octomap::OcTreeVolume>::iterator it1;
   //int cnt = 0;
-  
+
   //find Leaf Nodes' centroids, assign controid coordinates to Leaf Node
   for( it1 = leaves.begin(); it1 != leaves.end(); ++it1)
   {
@@ -180,7 +181,7 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
       }
       ROS_INFO("inliers: %s", inliers_stream.str().c_str());
       ROS_INFO("label: %d",  octree_node_test->getLabel());
-      ROS_INFO("centroid: %f, %f, %f",  octree_node_test->getCentroid().x(),  octree_node_test->getCentroid().y(),  
+      ROS_INFO("centroid: %f, %f, %f",  octree_node_test->getCentroid().x(),  octree_node_test->getCentroid().y(),
                octree_node_test->getCentroid().z());
     }
   }
@@ -189,12 +190,12 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
   double sx, sy, sz;
   octree->getMetricSize(sx, sy, sz);
   ROS_INFO("Octree metric size x: %f, y: %f, z: %f", sx, sy, sz);
-  
+
   //convert octree to OctreeBinary (serialization)
   octomap_server::octomapMapToMsg(*octree, octree_msg);
   octree_binary_publisher_.publish(octree_msg);
   ROS_INFO("OctreeBinary built and published");
-   
+
   //**********************************************************************************
   //Visualization of Octree
   //**********************************************************************************
@@ -209,12 +210,18 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
     {
       std::list<octomap::OcTreeVolume> all_cells;
       //getting the occupied cells at different depths of the octree
-      //    octree->getOccupied(all_cells, i);
-      octree->getLeafNodes(all_cells, i);
+      if(visualize_only_occupied_cells_ == true)
+      {
+        octree->getOccupied(all_cells, i);
+      }
+      else
+      {
+        octree->getLeafNodes(all_cells, i);
+      }
       for (it = all_cells.begin(); it != all_cells.end(); ++it)
       {
         // which array to store cubes in?
-        int idx = int(log2(it->second / lowestRes) +0.5);  
+        int idx = int(log2(it->second / lowestRes) +0.5);
         assert (idx >= 0 && unsigned(idx) < octree_marker_array_msg_.markers.size());
         geometry_msgs::Point cube_center;
         cube_center.x = it->first.x();
@@ -228,7 +235,7 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
     {
       octree_marker_array_msg_.markers[i].header.frame_id = frame_id_;
       octree_marker_array_msg_.markers[i].header.stamp = ros::Time::now();
-	
+
       double size = lowestRes * pow(2,i);
 
       std::stringstream ss;
@@ -244,18 +251,18 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
       octree_marker_array_msg_.markers[i].color.g = 0.0f;
       octree_marker_array_msg_.markers[i].color.b = 0.0f;
       octree_marker_array_msg_.markers[i].color.a = 0.5f;
-	
-	
+
+
       if (octree_marker_array_msg_.markers[i].points.size() > 0)
         octree_marker_array_msg_.markers[i].action = visualization_msgs::Marker::ADD;
       else
         octree_marker_array_msg_.markers[i].action = visualization_msgs::Marker::DELETE;
-		
+
     }
 
     octree_marker_array_publisher_.publish(octree_marker_array_msg_);
-    
-     
+
+
     for (unsigned int i = 0; i < octree_marker_array_msg_.markers.size(); i++)
     {
       if (!octree_marker_array_msg_.markers[i].points.empty())
@@ -264,7 +271,7 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
       }
     }
     octree_marker_array_msg_.markers.clear();
-  } 
+  }
 }
 
 int main(int argc, char** argv)
