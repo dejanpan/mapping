@@ -30,17 +30,17 @@ int main(int argc, char** argv)
   }
 
   sensor_msgs::PointCloud2 mycloud2;
-  sensor_msgs::PointCloud mycloud1;
+  //sensor_msgs::PointCloud mycloud1;
   pcl::toROSMsg(cloud, mycloud2);
-  sensor_msgs::convertPointCloud2ToPointCloud(mycloud2, mycloud1);
-  
-  ros::Publisher pointcloud_pub = n.advertise<sensor_msgs::PointCloud>("point_cloud", 1);
+  //sensor_msgs::convertPointCloud2ToPointCloud(mycloud2, mycloud1);
+
+  ros::Publisher pointcloud_pub = n.advertise<sensor_msgs::PointCloud2>("point_cloud", 1);
   ros::Rate loop_rate(atof(argv[1]));
   while (ros::ok())
   {
-    mycloud1.header.frame_id = "/map";
-    mycloud1.header.stamp = ros::Time::now();
-    pointcloud_pub.publish(mycloud1);
+    mycloud2.header.frame_id = "/map";
+    mycloud2.header.stamp = ros::Time::now();
+    pointcloud_pub.publish(mycloud2);
     ROS_INFO("PointCloud published");
     ros::spinOnce();
     loop_rate.sleep();
