@@ -1,10 +1,10 @@
-/* 
+/*
  * Copyright (c) 2010, Hozefa Indorewala <indorewala@ias.in.tum.de>
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of Willow Garage, Inc. nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -29,17 +29,14 @@
 
 /*
  * Author: Hozefa Indorewala
- * This node subscribes to /shoulder_cloud, receives point clouds and then registers them and publishes
- * the result on /merged_pointcloud
+ * This node subscribes to a PointCloud2 topic, receives point clouds and then registers them and publishes
+ * the result on /merged_pointcloud (PointCloud2)
  */
 
 #include <ros/ros.h>
-#include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/point_cloud_conversion.h>
 #include <pointcloud_registration/pointcloud_registration_point_types.h>
 #include <pcl/io/pcd_io.h>
-#include <vector>
 #include <Eigen/SVD>
 
 #include "pcl/filters/statistical_outlier_removal.h" // to filter outliers
@@ -55,18 +52,17 @@
 
 #include <pointcloud_registration/icp/icp_correspondences_check.h> //for icp
 #include <algorithm> //for the sort and unique functions
-#include <iostream>
 
 #include <ctime>
 
 const float PI = 3.14159265;
 
-bool pclSort (pcl::PointXYZINormalScanIndex i, pcl::PointXYZINormalScanIndex j)
+bool pclSort (pcl::PointXYZRGBNormalScanIndex i, pcl::PointXYZRGBNormalScanIndex j)
 {
   return (i.x < j.x);
 }
 
-bool pclUnique (pcl::PointXYZINormalScanIndex i, pcl::PointXYZINormalScanIndex j)
+bool pclUnique (pcl::PointXYZRGBNormalScanIndex i, pcl::PointXYZRGBNormalScanIndex j)
 {
   double x_diff = fabs(i.x - j.x);
   double y_diff = fabs(i.y - j.y);
@@ -82,10 +78,10 @@ class PointCloudRegistration
   public:
     PointCloudRegistration();
     ~PointCloudRegistration();
-    void pointcloudRegistrationCallBack(const sensor_msgs::PointCloud& msg);
+    void pointcloudRegistrationCallBack(const sensor_msgs::PointCloud2& msg);
     Eigen::Matrix4f getOverlapTransformation();
-    void publishPointCloud(pcl::PointCloud<pcl::PointXYZINormalScanIndex> &pointcloud);
-    pcl::PointCloud<pcl::PointXYZINormalScanIndex> convertFromMsgToPointCloud(const sensor_msgs::PointCloud& pointcloud_msg);
+    void publishPointCloud(pcl::PointCloud<pcl::PointXYZRGBNormalScanIndex> &pointcloud);
+    pcl::PointCloud<pcl::PointXYZRGBNormalScanIndex> convertFromMsgToPointCloud(const sensor_msgs::PointCloud2& pointcloud_msg);
 
     void run();
 
@@ -101,10 +97,10 @@ class PointCloudRegistration
     ros::Subscriber pointcloud_subscriber_;
     ros::Publisher pointcloud_merged_publisher_;
 
-    pcl::IterativeClosestPointCorrespondencesCheck<pcl::PointXYZINormalScanIndex, pcl::PointXYZINormalScanIndex> icp_; // for icp
-    pcl::KdTreeANN<pcl::PointXYZINormalScanIndex> kdtree_;  // for kdtree
+    pcl::IterativeClosestPointCorrespondencesCheck<pcl::PointXYZRGBNormalScanIndex, pcl::PointXYZRGBNormalScanIndex> icp_; // for icp
+    pcl::KdTreeANN<pcl::PointXYZRGBNormalScanIndex> kdtree_;  // for kdtree
     bool firstCloudReceived_, secondCloudReceived_;
-    pcl::PointCloud<pcl::PointXYZINormalScanIndex> pointcloud2_current_, pointcloud2_merged_, pointcloud2_transformed_;
+    pcl::PointCloud<pcl::PointXYZRGBNormalScanIndex> pointcloud2_current_, pointcloud2_merged_, pointcloud2_transformed_;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,10 +122,10 @@ Eigen::Matrix4f PointCloudRegistration::getOverlapTransformation()
     std::vector<int> nn_indices (max_nn_overlap_);
     std::vector<float> nn_dists (max_nn_overlap_);
 
-    pcl::PointCloud<pcl::PointXYZINormalScanIndex> overlap_model, overlap_current;
+    pcl::PointCloud<pcl::PointXYZRGBNormalScanIndex> overlap_model, overlap_current;
     Eigen::Matrix4f transformation;
 
-    std::vector<pcl::PointXYZINormalScanIndex>::iterator it;
+    std::vector<pcl::PointXYZRGBNormalScanIndex>::iterator it;
 
     for(size_t idx = 0 ; idx < pointcloud2_current_.points.size(); idx++ )
     {
@@ -150,8 +146,8 @@ Eigen::Matrix4f PointCloudRegistration::getOverlapTransformation()
     it = std::unique(overlap_model.points.begin(), overlap_model.points.end(), pclUnique);
     overlap_model.points.resize(it - overlap_model.points.begin());
 
-    icp_.setInputTarget(boost::make_shared< pcl::PointCloud < pcl::PointXYZINormalScanIndex> > (overlap_model));
-    icp_.setInputCloud(boost::make_shared< pcl::PointCloud < pcl::PointXYZINormalScanIndex> > (overlap_current));
+    icp_.setInputTarget(boost::make_shared< pcl::PointCloud < pcl::PointXYZRGBNormalScanIndex> > (overlap_model));
+    icp_.setInputCloud(boost::make_shared< pcl::PointCloud < pcl::PointXYZRGBNormalScanIndex> > (overlap_current));
 
     icp_.align(pointcloud2_transformed_);
     transformation = icp_.getFinalTransformation();
@@ -161,7 +157,7 @@ Eigen::Matrix4f PointCloudRegistration::getOverlapTransformation()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PointCloudRegistration::publishPointCloud(pcl::PointCloud<pcl::PointXYZINormalScanIndex> &pointcloud)
+void PointCloudRegistration::publishPointCloud(pcl::PointCloud<pcl::PointXYZRGBNormalScanIndex> &pointcloud)
 {
   sensor_msgs::PointCloud2 mycloud;
   pcl::toROSMsg(pointcloud, mycloud);
@@ -192,52 +188,52 @@ void PointCloudRegistration::publishPointCloud(pcl::PointCloud<pcl::PointXYZINor
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-pcl::PointCloud<pcl::PointXYZINormalScanIndex> PointCloudRegistration::convertFromMsgToPointCloud(const sensor_msgs::PointCloud& pointcloud_msg)
+pcl::PointCloud<pcl::PointXYZRGBNormalScanIndex> PointCloudRegistration::convertFromMsgToPointCloud(const sensor_msgs::PointCloud2& pointcloud_msg)
 {
   //incrementing the scan index
   scan_index_++;
   // Declaring some variables required in this function
-  sensor_msgs::PointCloud2 pointcloud2_msg;
-  pcl::PointCloud<pcl::PointXYZI> pointcloud_pcl_step01, pointcloud_pcl_step02;
-  pcl::PointCloud<pcl::PointXYZINormalScanIndex> pointcloud_pcl_normals;
-  pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> n;
-  pcl::KdTreeANN<pcl::PointXYZI>::Ptr tree_ptr_;
-  tree_ptr_ = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZI> > ();
+  //sensor_msgs::PointCloud2 pointcloud2_msg;
+  pcl::PointCloud<pcl::PointXYZRGB> pointcloud_pcl_step01, pointcloud_pcl_step02;
+  pcl::PointCloud<pcl::PointXYZRGBNormalScanIndex> pointcloud_pcl_normals;
+  pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> n;
+  pcl::KdTreeANN<pcl::PointXYZRGB>::Ptr tree_ptr_;
+  tree_ptr_ = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZRGB> > ();
   vector<int> indices;
 
   // Converting from PointCloud msg format to PointCloud2 msg format
 
-  sensor_msgs::convertPointCloudToPointCloud2(pointcloud_msg, pointcloud2_msg);
+  //sensor_msgs::convertPointCloudToPointCloud2(pointcloud_msg, pointcloud2_msg);
 
   //This is done because there is a bug in PCL.
-  for(u_int i = 0 ; i < pointcloud2_msg.fields.size(); i++)
-  {
-    if(pointcloud2_msg.fields[i].name == "intensities")
-    {
-      pointcloud2_msg.fields[i].name = "intensity";
-    }
-  }
+  //for(u_int i = 0 ; i < pointcloud_msg.fields.size(); i++)
+  //{
+  //  if(pointcloud_msg.fields[i].name == "intensities")
+  //  {
+  //    pointcloud_msg.fields[i].name = "intensity";
+  //  }
+  //}
 
   // STEP 01: Check if we should downsample the input cloud or not
   if(downsample_pointcloud_before_ == true)
   {
-    ROS_INFO ("PointCloud before downsampling: %d .", pointcloud2_msg.width * pointcloud2_msg.height);
-    sensor_msgs::PointCloud2 pointcloud2_downsampled_msg;
+    ROS_INFO ("PointCloud before downsampling: %d .", pointcloud_msg.width * pointcloud_msg.height);
+    sensor_msgs::PointCloud2 pointcloud_downsampled_msg;
     pcl::VoxelGrid<sensor_msgs::PointCloud2> sor_; // for downsampling of pointclouds
 
     //Now we will downsample the point cloud
-    sor_.setInputCloud (boost::make_shared<sensor_msgs::PointCloud2> (pointcloud2_msg));
+    sor_.setInputCloud (boost::make_shared<sensor_msgs::PointCloud2> (pointcloud_msg));
     sor_.setLeafSize (downsample_leafsize_, downsample_leafsize_, downsample_leafsize_);
-    sor_.filter (pointcloud2_downsampled_msg);
-    ROS_INFO ("PointCloud after downsampling: %d .", pointcloud2_downsampled_msg.width * pointcloud2_downsampled_msg.height);
+    sor_.filter (pointcloud_downsampled_msg);
+    ROS_INFO ("PointCloud after downsampling: %d .", pointcloud_downsampled_msg.width * pointcloud_downsampled_msg.height);
 
     // Converting from PointCloud2 msg format to pcl pointcloud format
-    pcl::fromROSMsg(pointcloud2_downsampled_msg, pointcloud_pcl_step01);
+    pcl::fromROSMsg(pointcloud_downsampled_msg, pointcloud_pcl_step01);
   }
   else
   {
     // Converting from PointCloud2 msg format to pcl pointcloud format
-    pcl::fromROSMsg(pointcloud2_msg, pointcloud_pcl_step01);
+    pcl::fromROSMsg(pointcloud_msg, pointcloud_pcl_step01);
   }
 
   // STEP 02: Check if we should filter the outliers or not
@@ -245,17 +241,17 @@ pcl::PointCloud<pcl::PointXYZINormalScanIndex> PointCloudRegistration::convertFr
   if(filter_outliers_)
   {
     // Removing outliers
-    pcl::StatisticalOutlierRemoval<pcl::PointXYZI> sor;
-    sor.setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointXYZI> >(pointcloud_pcl_step01));
+    pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+    sor.setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointXYZRGB> >(pointcloud_pcl_step01));
     sor.setMeanK (50);
     sor.setStddevMulThresh (1.0);
     sor.filter (pointcloud_pcl_step02);
   }
   else
   {
-    pointcloud_pcl_step02 = pointcloud_pcl_step01;
+    copyPointCloud(pointcloud_pcl_step01, pointcloud_pcl_step02);
   }
-  tree_ptr_->setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointXYZI> > (pointcloud_pcl_step02));
+  tree_ptr_->setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointXYZRGB> > (pointcloud_pcl_step02));
   indices.resize (pointcloud_pcl_step02.points.size ());
   for (size_t i = 0; i < indices.size (); ++i)
   {
@@ -268,7 +264,7 @@ pcl::PointCloud<pcl::PointXYZINormalScanIndex> PointCloudRegistration::convertFr
   pcl::PointCloud<pcl::Normal> normals;
   // set parameters
 
-  n.setInputCloud (boost::make_shared <const pcl::PointCloud<pcl::PointXYZI> > (pointcloud_pcl_step02));
+  n.setInputCloud (boost::make_shared <const pcl::PointCloud<pcl::PointXYZRGB> > (pointcloud_pcl_step02));
   n.setIndices (boost::make_shared <vector<int> > (indices));
   n.setSearchMethod (tree_ptr_);
   n.setKSearch (10);
@@ -276,7 +272,7 @@ pcl::PointCloud<pcl::PointXYZINormalScanIndex> PointCloudRegistration::convertFr
   // estimate
   n.compute (normals);
 
-  // STEP 04: Here we copy data from the normals and the input cloud into the PointXYZINormalScanIndex cloud
+  // STEP 04: Here we copy data from the normals and the input cloud into the PointXYZRGBNormalScanIndex cloud
 
   pointcloud_pcl_normals.points.resize(pointcloud_pcl_step02.points.size());
 
@@ -285,7 +281,7 @@ pcl::PointCloud<pcl::PointXYZINormalScanIndex> PointCloudRegistration::convertFr
     pointcloud_pcl_normals.points[i].x = pointcloud_pcl_step02.points[i].x;
     pointcloud_pcl_normals.points[i].y = pointcloud_pcl_step02.points[i].y;
     pointcloud_pcl_normals.points[i].z = pointcloud_pcl_step02.points[i].z;
-    pointcloud_pcl_normals.points[i].intensity = pointcloud_pcl_step02.points[i].intensity;
+    pointcloud_pcl_normals.points[i].rgb = pointcloud_pcl_step02.points[i].rgb;
     pointcloud_pcl_normals.points[i].normal[0] = normals.points[i].normal[0];
     pointcloud_pcl_normals.points[i].normal[1] = normals.points[i].normal[1];
     pointcloud_pcl_normals.points[i].normal[2] = normals.points[i].normal[2];
@@ -352,19 +348,19 @@ void PointCloudRegistration::run()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PointCloudRegistration::pointcloudRegistrationCallBack(const sensor_msgs::PointCloud& pointcloud_msg)
+void PointCloudRegistration::pointcloudRegistrationCallBack(const sensor_msgs::PointCloud2& pointcloud_msg)
 {
 
   start = time(NULL);
   if( firstCloudReceived_ == false)
   {
-    pointcloud2_current_ = convertFromMsgToPointCloud(pointcloud_msg);
+    copyPointCloud(convertFromMsgToPointCloud(pointcloud_msg), pointcloud2_current_);
     firstCloudReceived_ = true;
     ROS_INFO("Received first point cloud.");
-    kdtree_.setInputCloud(boost::make_shared< pcl::PointCloud < pcl::PointXYZINormalScanIndex> > (pointcloud2_current_));
+    kdtree_.setInputCloud(boost::make_shared< pcl::PointCloud < pcl::PointXYZRGBNormalScanIndex> > (pointcloud2_current_));
 
 
-    pointcloud2_merged_ = pointcloud2_current_;
+    copyPointCloud(pointcloud2_current_, pointcloud2_merged_);
 
   }
   else if( secondCloudReceived_ == false)
@@ -383,7 +379,7 @@ void PointCloudRegistration::pointcloudRegistrationCallBack(const sensor_msgs::P
   {
     ROS_INFO("Received point cloud.");
     pointcloud2_current_ = convertFromMsgToPointCloud(pointcloud_msg);
-    kdtree_.setInputCloud(boost::make_shared< pcl::PointCloud < pcl::PointXYZINormalScanIndex> > (pointcloud2_merged_));
+    kdtree_.setInputCloud(boost::make_shared< pcl::PointCloud < pcl::PointXYZRGBNormalScanIndex> > (pointcloud2_merged_));
 
     //Now we get the transformation from the overlapped regions of the 2 point clouds
     final_transformation_= getOverlapTransformation();

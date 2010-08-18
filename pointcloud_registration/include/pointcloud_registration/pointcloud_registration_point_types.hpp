@@ -1,10 +1,10 @@
-/* 
+/*
  * Copyright (c) 2010, Hozefa Indorewala <indorewala@ias.in.tum.de>
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of Willow Garage, Inc. nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -30,36 +30,34 @@
 namespace pcl
 {
 
-struct PointXYZINormal
-{
-  float x;
-  float y;
-  float z;
-  float intensity;
-  float normal[3];
-  float curvature;
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-} EIGEN_ALIGN_128;
-inline std::ostream& operator<<(std::ostream& os, const PointXYZINormal& p)
-{
-  os << "("<<p.x<<","<<p.y<<","<<p.z<<" - "<<p.intensity<<" - "<<p.normal[0]<<","<<p.normal[1]<<","<<p.normal[2]<<" - "<<p.curvature<<")";
-  return os;
-}
+  //struct PointXYZINormal
+  //{
+  //  float x;
+  //  float y;
+  //  float z;
+  //  float intensity;
+  //  float normal[3];
+  //  float curvature;
+  //  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  //} EIGEN_ALIGN_128;
+  //inline std::ostream& operator<<(std::ostream& os, const PointXYZINormal& p)
+  //{
+  //  os << "("<<p.x<<","<<p.y<<","<<p.z<<" - "<<p.intensity<<" - "<<p.normal[0]<<","<<p.normal[1]<<","<<p.normal[2]<<" - "<<p.curvature<<")";
+  //  return os;
+  //}
 
-struct PointXYZINormalScanIndex
+struct PointXYZRGBNormalScanIndex
 {
-  float x;
-  float y;
-  float z;
-  float intensity;
-  float normal[3];
+  PCL_ADD_POINT4D;
+  float rgb;
+  PCL_ADD_NORMAL4D;
   float curvature;
-  int scan_index;
+  uint32_t scan_index;
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 } EIGEN_ALIGN_128;
-inline std::ostream& operator<<(std::ostream& os, const PointXYZINormalScanIndex& p)
+inline std::ostream& operator<<(std::ostream& os, const PointXYZRGBNormalScanIndex& p)
 {
-  os << "("<<p.x<<","<<p.y<<","<<p.z<<" - "<<p.intensity<<" - "<<p.normal[0]<<","<<p.normal[1]<<","<<p.normal[2]<<" - "<<p.curvature<<" - "<<p.scan_index<<")";
+  os << "("<<p.x<<","<<p.y<<","<<p.z<<" - "<<p.rgb<<" - "<<p.normal[0]<<","<<p.normal[1]<<","<<p.normal[2]<<" - "<<p.curvature<<" - "<<p.scan_index<<")";
   return os;
 }
 
