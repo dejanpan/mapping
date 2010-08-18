@@ -29,4 +29,7 @@
   <depend package="vtk" />
   <depend package="pcl_visualization" />
   <depend package="cognitive_perception" />
+  <export>
+    <cpp cflags="-I${prefix}/include/" />
+  </export>
 </package>
