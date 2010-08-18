@@ -34,4 +34,4 @@ target_link_libraries(pointcloud_registration pcl_io)
 
 
 rosbuild_add_executable(test_spin_image_local src/pointcloud_registration/test_spin_image_local.cpp)
-target_link_libraries(test_spin_image_local pcl_io)
+target_link_libraries(test_spin_image_local pcl_io qhull)
