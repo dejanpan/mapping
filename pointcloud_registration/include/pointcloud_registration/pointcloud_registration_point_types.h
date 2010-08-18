@@ -1,10 +1,10 @@
-/* 
+/*
  * Copyright (c) 2010, Hozefa Indorewala <indorewala@ias.in.tum.de>
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of Willow Garage, Inc. nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -38,8 +38,8 @@
 
 namespace pcl
 {
-  struct PointXYZINormal;
-  struct PointXYZINormalScanIndex; //For use in ICP
+  //struct PointXYZINormal;
+  struct PointXYZRGBNormalScanIndex; //For use in ICP
 
   /** \brief A point structure representing the Spin Image Local Histogram. */
   struct SpinImageLocal;
@@ -54,26 +54,26 @@ namespace pcl
 // =====POINT_CLOUD_REGISTER=====
 // ==============================
 
-POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PointXYZINormal,
+//POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PointXYZINormal,
+//                                   (float, x, x)
+//                                   (float, y, y)
+//                                   (float, z, z)
+//                                   (float, intensity, intensity)
+//                                   (float, normal[0], normal_x)
+//                                   (float, normal[1], normal_y)
+//                                   (float, normal[2], normal_z)
+//                                   (float, curvature, curvature)
+//);
+POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PointXYZRGBNormalScanIndex,
                                    (float, x, x)
                                    (float, y, y)
                                    (float, z, z)
-                                   (float, intensity, intensity)
+                                   (float, rgb, rgb)
                                    (float, normal[0], normal_x)
                                    (float, normal[1], normal_y)
                                    (float, normal[2], normal_z)
                                    (float, curvature, curvature)
-);
-POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PointXYZINormalScanIndex,
-                                   (float, x, x)
-                                   (float, y, y)
-                                   (float, z, z)
-                                   (float, intensity, intensity)
-                                   (float, normal[0], normal_x)
-                                   (float, normal[1], normal_y)
-                                   (float, normal[2], normal_z)
-                                   (float, curvature, curvature)
-                                   (int, scan_index, scan_index)
+                                   (uint32_t, scan_index, scan_index)
 );
 
 POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::SpinImageLocal,

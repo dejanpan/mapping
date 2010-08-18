@@ -7,7 +7,7 @@
     <param name="publish_merged_pointcloud_topic" value="/merged_pointcloud"/>
    
     <!-- Topic to subscribe to receive point clouds --> 
-    <param name="subscribe_pointcloud_topic" value="/shoulder_cloud"/>
+    <param name="subscribe_pointcloud_topic" value="/wide_stereo/points2"/>
     
     <!-- Frame id for publishing -->
     <param name="frame_id" value="/map"/>
