@@ -14,20 +14,18 @@ def buildConfusionMatrix(path,nr):
         conf_array = []
         for el in range(1, int((nr))):
             conf_array.append(0)
-        for j in input.xreadlines():
-            #print "line: ", j.split()
-            if i == int(j.split()[1]):
-                if i == int(j.split()[0]):
-                    conf_array[i-1] =  conf_array[i-1] + 1 
-                else:
-                    conf_array[int(j.split()[0]) - 1] =  conf_array[int(j.split()[0]) - 1] + 1 
+        for line in input.xreadlines():
+            #print "line: ", line.split()
+            j = [int(line.split()[0])/10, int(line.split()[1])/10]
+            if i == int(j[1]):
+               conf_array[int(j[0]) - 1] =  conf_array[int(j[0]) - 1] + 1 
             #nr of lines
             nr_lines = nr_lines + 1
         print "nr lines", nr_lines
         #print conf_array
         conf_array_array.append(conf_array)
         input.close()
-    print 'confusion array: ', conf_array_array
+    print 'rows are ground truth, columns the classification: ', conf_array_array
     compute_false_pos_statistics(conf_array_array)
     plot_confusion_matrix(conf_array_array, int(nr)-1)
 
