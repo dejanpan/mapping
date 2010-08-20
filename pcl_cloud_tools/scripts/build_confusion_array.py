@@ -18,7 +18,7 @@ def buildConfusionMatrix(path,nr):
             #print "line: ", line.split()
             j = [int(line.split()[0])/10, int(line.split()[1])/10]
             if i == int(j[1]):
-               conf_array[int(j[0]) - 1] =  conf_array[int(j[0]) - 1] + 1 
+               conf_array[int(j[0]) - 1] =  conf_array[int(j[0]) - 1] + 1
             #nr of lines
             nr_lines = nr_lines + 1
         print "nr lines", nr_lines
