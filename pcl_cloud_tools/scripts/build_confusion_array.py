@@ -47,7 +47,7 @@ def plot_confusion_matrix(conf_arr, nr):
     fig = plt.figure()
     plt.xticks( arange(nr), ('SmallCylinder',  'FlatBigBox',  'TetraPak',  'MediumBox',  'Teapot',  'TallCylinder'), rotation=90)
     plt.yticks( arange(nr), ('SmallCylinder',  'FlatBigBox',  'TetraPak',  'MediumBox',  'Teapot',  'TallCylinder') )
-    plt.title('GRSD Confusion Matrix for Training Objects')
+    plt.title('GRSD Confusion Matrix for Testing Objects')
     ax = fig.add_subplot(111)
     res = ax.imshow(array(norm_conf),  cmap=cm.jet, interpolation='nearest', aspect='auto')
     cb = fig.colorbar(res)
