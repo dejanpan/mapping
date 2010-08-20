@@ -31,8 +31,8 @@
 #ifndef PCL_CLOUD_ALGOS_BOX_ESTIMATION_H
 #define PCL_CLOUD_ALGOS_BOX_ESTIMATION_H
 #include <pcl_cloud_algos/cloud_algos.h>
-#include <mapping_msgs/PolygonalMap.h>
-#include <position_string_msgs/PositionStringList.h>
+//#include <mapping_msgs/PolygonalMap.h>
+//#include <position_string_msgs/PositionStringList.h>
 #include <triangle_mesh_msgs/TriangleMesh.h>
 //#include <point_cloud_mapping/geometry/point.h>
 #include <pcl_cloud_algos/pcl_cloud_algos_point_types.h>
