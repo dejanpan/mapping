@@ -32,11 +32,9 @@ namespace pcl
 
   struct PointXYZINormalScanLine
   {
-    float x;
-    float y;
-    float z;
+    PCL_ADD_POINT4D;
     float intensity;
-    float normal[3];
+    PCL_ADD_NORMAL4D;
     float scan;
     float line;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
