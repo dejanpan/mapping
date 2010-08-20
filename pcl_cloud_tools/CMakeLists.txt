@@ -26,3 +26,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 rosbuild_add_executable(vtk_exporter src/vtk_exporter.cpp)
 
 rosbuild_add_executable(vtk_to_dxf_exporter src/vtk_to_dxf_exporter.cpp src/dxf_writer.cpp)
+
+rosbuild_add_executable (virtual_scanner src/virtual_scanner.cpp)
+rosbuild_link_boost (virtual_scanner filesystem system)
+target_link_libraries (virtual_scanner vtkHybrid itpp)
