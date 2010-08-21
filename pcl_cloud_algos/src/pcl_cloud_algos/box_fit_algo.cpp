@@ -296,8 +296,8 @@ void BoxEstimation::computeInAndOutliers (boost::shared_ptr<const pcl::PointClou
 /**
  * actual model fitting happens here
  */
-//bool BoxEstimation::find_model(boost::shared_ptr<const sensor_msgs::PointCloud2> cloud, std::vector<double> &coeff)
-//{
+bool BoxEstimation::find_model (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormalScanLine> > cloud, std::vector<double> &coeff)
+{
   //Eigen::Vector4f centroid;
   //pcl::compute3DCentroid (*cloud, centroid);
   //coeff[0] = box_centroid_.x;
@@ -375,7 +375,7 @@ void BoxEstimation::computeInAndOutliers (boost::shared_ptr<const pcl::PointClou
 
   // TODO: we should get feedback on success from the compute function
   //return true;
-//}
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /**

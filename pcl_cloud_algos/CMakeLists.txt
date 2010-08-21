@@ -35,6 +35,11 @@ rosbuild_add_library(pcl_cloud_algos
 
 target_link_libraries(pcl_cloud_algos pcl_ias_sample_consensus)
 
-rosbuild_add_executable (box_fit2_node src/pcl_cloud_algos/box_fit2_algo.cpp src/pcl_cloud_algos/box_fit_algo.cpp)
-#set_target_properties (box_fit2_node PROPERTIES COMPILE_FLAGS "-DCREATE_NODE -DNO_BOXFIT_NODE")
-set_target_properties (box_fit2_node PROPERTIES COMPILE_FLAGS "-DCREATE_NODE")
+rosbuild_add_executable (box_fit_node  src/pcl_cloud_algos/box_fit_algo.cpp)
+get_target_property(prev_props box_fit_node COMPILE_FLAGS)
+set_target_properties (box_fit_node PROPERTIES COMPILE_FLAGS "${prev_props} -DCREATE_NODE")
+
+#rosbuild_add_executable (box_fit2_node  src/pcl_cloud_algos/box_fit_algo.cpp src/pcl_cloud_algos/box_fit2_algo.cpp)
+#get_target_property(prev_props box_fit2_node COMPILE_FLAGS)
+#set_target_properties (box_fit2_node PROPERTIES COMPILE_FLAGS "${prev_props} -DCREATE_NODE -DNO_BOXFIT_NODE")
+
