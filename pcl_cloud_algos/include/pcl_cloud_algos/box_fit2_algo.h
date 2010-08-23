@@ -80,7 +80,7 @@ class RobustBoxEstimation : public BoxEstimation
    * box dimensions: dx, dy, dz,
    * box robust axes: e1_x, e1y, e1z, e2_x, e2y, e2z, e3_x, e3y, e3z
    */
-  virtual bool find_model (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormalScanLine> > cloud, std::vector<double> &coeff);
+  virtual bool find_model (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormal> > cloud, std::vector<double> &coeff);
 
   ros::Publisher createPublisher (ros::NodeHandle& nh)
   {

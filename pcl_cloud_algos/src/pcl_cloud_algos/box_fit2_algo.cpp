@@ -102,7 +102,7 @@ void RobustBoxEstimation::pre ()
 /**
  * actual model fitting happens here
  */
-bool RobustBoxEstimation::find_model(boost::shared_ptr<const pcl::PointCloud <pcl::PointXYZINormalScanLine> > cloud, std::vector<double> &coeff)
+bool RobustBoxEstimation::find_model(boost::shared_ptr<const pcl::PointCloud <pcl::PointXYZINormal> > cloud, std::vector<double> &coeff)
 {
   if (verbosity_level_ > 0) ROS_INFO ("[RobustBoxEstimation] Looking for box in a cluster of %u points", (unsigned)cloud->points.size ());
 

@@ -154,7 +154,7 @@ boost::shared_ptr<const BoxEstimation::OutputType> BoxEstimation::output ()
 
 boost::shared_ptr<sensor_msgs::PointCloud2> BoxEstimation::getOutliers ()
 {
-  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZINormalScanLine> > ret (new pcl::PointCloud<pcl::PointXYZINormalScanLine>);
+  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZINormal> > ret (new pcl::PointCloud<pcl::PointXYZINormal>);
   boost::shared_ptr<sensor_msgs::PointCloud2> ret_msg (new sensor_msgs::PointCloud2);
   //ROS_INFO("created PointCloud object: 0x%x", (void*) ret.get()); - ZOLI COMMENTED THIS TO GET RID OF WARNING, SUPPOSING WAS ONLY DEBUG :)
 
@@ -191,7 +191,7 @@ boost::shared_ptr<sensor_msgs::PointCloud2> BoxEstimation::getOutliers ()
 
 boost::shared_ptr<sensor_msgs::PointCloud2> BoxEstimation::getInliers ()
 {
-  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZINormalScanLine> > ret (new pcl::PointCloud<pcl::PointXYZINormalScanLine> ());
+  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZINormal> > ret (new pcl::PointCloud<pcl::PointXYZINormal> ());
   boost::shared_ptr<sensor_msgs::PointCloud2> ret_msg (new sensor_msgs::PointCloud2);
   pcl::copyPointCloud (*cloud_, inliers_, *ret);
   //ret->points.reserve (inliers_.size ());
@@ -204,7 +204,7 @@ boost::shared_ptr<sensor_msgs::PointCloud2> BoxEstimation::getInliers ()
 
 boost::shared_ptr<sensor_msgs::PointCloud2> BoxEstimation::getContained ()
 {
-  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZINormalScanLine> > ret (new pcl::PointCloud<pcl::PointXYZINormalScanLine> ());
+  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZINormal> > ret (new pcl::PointCloud<pcl::PointXYZINormal> ());
   boost::shared_ptr<sensor_msgs::PointCloud2> ret_msg (new sensor_msgs::PointCloud2);
   pcl::copyPointCloud (*cloud_, contained_, *ret);
   //ret->points.reserve (contained_.size ());
@@ -215,7 +215,7 @@ boost::shared_ptr<sensor_msgs::PointCloud2> BoxEstimation::getContained ()
   return ret_msg;
 }
 
-boost::shared_ptr<pcl::PointCloud <pcl::PointXYZINormalScanLine> > BoxEstimation::getThresholdedInliers (double eps_angle)
+boost::shared_ptr<pcl::PointCloud <pcl::PointXYZINormal> > BoxEstimation::getThresholdedInliers (double eps_angle)
 {
   //int nxIdx = getChannelIndex(cloud_, "nx");
   //if (nxIdx == -1)
@@ -224,7 +224,7 @@ boost::shared_ptr<pcl::PointCloud <pcl::PointXYZINormalScanLine> > BoxEstimation
   //{
     Eigen::Matrix3d axes = Eigen::Matrix3d::Map(&coeff_[6]).transpose ();
     //Eigen::Matrix3f axes = Eigen::Matrix3d::Map(&coeff_[6]).cast<float> ().transpose ();
-    boost::shared_ptr<pcl::PointCloud<pcl::PointXYZINormalScanLine> > ret (new pcl::PointCloud<pcl::PointXYZINormalScanLine> ());
+    boost::shared_ptr<pcl::PointCloud<pcl::PointXYZINormal> > ret (new pcl::PointCloud<pcl::PointXYZINormal> ());
     ret->points.reserve (inliers_.size ());
     ret->header = cloud_->header;
     for (unsigned int i = 0; i < inliers_.size (); i++)
@@ -250,7 +250,7 @@ boost::shared_ptr<pcl::PointCloud <pcl::PointXYZINormalScanLine> > BoxEstimation
   //}
 }
 
-void BoxEstimation::computeInAndOutliers (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormalScanLine> > cloud, std::vector<double> coeff, double threshold_in, double threshold_out)
+void BoxEstimation::computeInAndOutliers (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormal> > cloud, std::vector<double> coeff, double threshold_in, double threshold_out)
 {
   //Eigen::Matrix3f axes = Eigen::Matrix3d::Map(&coeff[6]).cast<float> ().transpose ();
   Eigen::Matrix3d axes = Eigen::Matrix3d::Map(&coeff[6]).transpose ();
@@ -296,7 +296,7 @@ void BoxEstimation::computeInAndOutliers (boost::shared_ptr<const pcl::PointClou
 /**
  * actual model fitting happens here
  */
-bool BoxEstimation::find_model (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormalScanLine> > cloud, std::vector<double> &coeff)
+bool BoxEstimation::find_model (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormal> > cloud, std::vector<double> &coeff)
 {
   //Eigen::Vector4f centroid;
   //pcl::compute3DCentroid (*cloud, centroid);
@@ -381,9 +381,9 @@ bool BoxEstimation::find_model (boost::shared_ptr<const pcl::PointCloud<pcl::Poi
 /**
  * \brief triangulates box
  */
-void BoxEstimation::triangulate_box(boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormalScanLine> > cloud, std::vector<double> &coeff)
+void BoxEstimation::triangulate_box(boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormal> > cloud, std::vector<double> &coeff)
 {
-  pcl::PointXYZINormalScanLine current_point;
+  pcl::PointXYZINormal current_point;
   triangle_mesh_msgs::Triangle triangle;
   mesh_ = boost::shared_ptr <BoxEstimation::OutputType> (new BoxEstimation::OutputType);
   mesh_->points.resize(8);
@@ -453,7 +453,7 @@ void BoxEstimation::triangulate_box(boost::shared_ptr<const pcl::PointCloud<pcl:
 /**
  * \brief publishes model marker (to rviz)
  */
-void BoxEstimation::publish_marker (boost::shared_ptr<const pcl::PointCloud <pcl::PointXYZINormalScanLine> > cloud, std::vector<double> &coeff)
+void BoxEstimation::publish_marker (boost::shared_ptr<const pcl::PointCloud <pcl::PointXYZINormal> > cloud, std::vector<double> &coeff)
 {
   computeMarker (cloud, coeff);
   marker_pub_.publish (marker_);
@@ -463,7 +463,7 @@ void BoxEstimation::publish_marker (boost::shared_ptr<const pcl::PointCloud <pcl
 /**
  * \brief computes model marker (to rviz)
  */
-void BoxEstimation::computeMarker (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormalScanLine> > cloud, std::vector<double> coeff)
+void BoxEstimation::computeMarker (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormal> > cloud, std::vector<double> coeff)
 {
   btMatrix3x3 box_rot (coeff[6], coeff[7], coeff[8],
                        coeff[9], coeff[10], coeff[11],
