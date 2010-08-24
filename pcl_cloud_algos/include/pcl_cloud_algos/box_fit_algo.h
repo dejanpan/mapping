@@ -93,7 +93,7 @@ class BoxEstimation : public CloudAlgo
    * box dimensions: dx, dy, dz,
    * box eigen axes: e1_x, e1y, e1z, e2_x, e2y, e2z, e3_x, e3y, e3z
    */
-  bool find_model (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormal> > cloud, std::vector<double> &coeff);
+  virtual bool find_model (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormal> > cloud, std::vector<double> &coeff);
 
   ////////////////////////////////////////////////////////////////////////////////
   /**
@@ -150,6 +150,7 @@ class BoxEstimation : public CloudAlgo
 
   boost::shared_ptr<pcl::PointCloud <pcl::PointXYZINormal> > cloud_;
 
+  std::string frame_id_;
   ros::NodeHandle nh_;
 
   //model rviz publisher

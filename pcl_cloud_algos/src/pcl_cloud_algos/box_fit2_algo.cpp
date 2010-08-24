@@ -40,7 +40,7 @@ using namespace pcl_cloud_algos;
 using namespace pcl;
 //using namespace sample_consensus;
 
-void RobustBoxEstimation::getMinAndMax(Eigen::VectorXf *model_coefficients, boost::shared_ptr<SACModelOrientation<Normal> > model, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances)
+void RobustBoxEstimation::getMinAndMax(Eigen::VectorXf model_coefficients, boost::shared_ptr<SACModelOrientation<Normal> > model, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances)
 {
 
   boost::shared_ptr<vector<int> > inliers = model->getIndices();
@@ -53,7 +53,10 @@ void RobustBoxEstimation::getMinAndMax(Eigen::VectorXf *model_coefficients, boos
   min_max_distances[1] = min_max_distances[3] = min_max_distances[5] = -DBL_MAX;
 
   // The 3 coordinate axes are nm, nc and axis_
-  Eigen::Vector3f nm = *model_coefficients;
+  Eigen::Vector3f nm;
+  nm[0] = model_coefficients[0];
+  nm[1] = model_coefficients[1];
+  nm[2] = model_coefficients[2];
   //Eigen::Vector3f nm = Eigen::Vector3d::Map(&(*model_coefficients)[0]).cast<float> ();
   Eigen::Vector3f nc = model->axis_.cross (nm);
 
@@ -150,6 +153,36 @@ bool RobustBoxEstimation::find_model(boost::shared_ptr<const pcl::PointCloud <pc
     // Get inliers and refine result
     sac->getInliers(inliers);
     if (verbosity_level_ > 1) cerr << "number of inliers: " << inliers.size () << endl;
+    // Exhaustive search for best model
+    std::vector<int> best_sample;
+    std::vector<int> best_inliers;
+    Eigen::VectorXf model_coefficients;
+    for (unsigned i = 0; i < cloud->points.size (); i++)
+    {
+      std::vector<int> selection (1);
+      selection[0] = i;
+      model->computeModelCoefficients (selection, model_coefficients);
+
+      model->selectWithinDistance (model_coefficients, eps_angle_, inliers);
+      if (best_inliers.size () < inliers.size ())
+      {
+        best_inliers = inliers;
+        best_sample = selection;
+      }
+    }
+
+    // Check if successful and save results
+    if (best_inliers.size () > 0)
+    {
+      model->computeModelCoefficients (best_sample, refined);
+      //model->getModelCoefficients (refined);
+      /// @NOTE: making things transparent for the outside... not really needed
+      inliers = best_inliers;
+      //model->setBestModel (best_sample);
+      //model->setBestInliers (best_inliers);
+      // refine results: needs inliers to be set!
+      // sac->refineCoefficients(refined);
+    }
     /// @NOTE best_model_ contains actually the samples used to find the best model!
     //model->computeModelCoefficients(model->getBestModel ());
     //Eigen::VectorXf original;
@@ -215,6 +248,10 @@ bool RobustBoxEstimation::find_model(boost::shared_ptr<const pcl::PointCloud <pc
   refined[0] = - (model->axis_[1]*coeff[9+2] - model->axis_[2]*coeff[9+1]);
   refined[1] = - (model->axis_[2]*coeff[9+0] - model->axis_[0]*coeff[9+2]);
   refined[2] = - (model->axis_[0]*coeff[9+1] - model->axis_[1]*coeff[9+0]);
+
+  ROS_INFO("refined[0]: %f", refined[0]);
+  ROS_INFO("refined[1]: %f", refined[1]);
+  ROS_INFO("refined[2]: %f", refined[2]);
   coeff[6+0] = refined[0];
   coeff[6+1] = refined[1];
   coeff[6+2] = refined[2];
@@ -232,7 +269,7 @@ bool RobustBoxEstimation::find_model(boost::shared_ptr<const pcl::PointCloud <pc
 
   //model->getMinAndMax (&refined, &inliers, min_max_indices, min_max_distances);
   //getMinAndMax (&refined, model->getIndices (), min_max_indices, min_max_distances);
-  getMinAndMax (&refined, model, min_max_indices, min_max_distances);
+  getMinAndMax (refined, model, min_max_indices, min_max_distances);
   //vector<int> min_max_indices = model->getMinAndMaxIndices (refined);
 
   //cerr << min_max_distances.at (1) << " " << min_max_distances.at (0) << endl;

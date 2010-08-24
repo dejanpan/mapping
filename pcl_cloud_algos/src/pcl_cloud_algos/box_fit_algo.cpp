@@ -49,7 +49,7 @@
 //ros
 #include <sensor_msgs/PointCloud2.h>
 //#include <geometry_msgs/PointStamped.h>
-//#include <geometry_msgs/Point32.h>
+#include <geometry_msgs/Point32.h>
 #include <ros/ros.h>
 
 //cloud_algos
@@ -80,6 +80,7 @@ void BoxEstimation::init (ros::NodeHandle& nh)
   coeff_.resize(15);
   r_ = g_ = 0.0;
   b_ = 1.0;
+  cloud_ = boost::make_shared<pcl::PointCloud<pcl::PointXYZINormal> > ();
 }
 
 void BoxEstimation::pre  ()
@@ -109,6 +110,7 @@ std::vector<std::string> BoxEstimation::provides ()
 
 std::string BoxEstimation::process (const boost::shared_ptr<const InputType> input)
 {
+  frame_id_ = input->header.frame_id;
   //converting to pcl format
   pcl::fromROSMsg(*input, *cloud_);
 
@@ -158,7 +160,7 @@ boost::shared_ptr<sensor_msgs::PointCloud2> BoxEstimation::getOutliers ()
   boost::shared_ptr<sensor_msgs::PointCloud2> ret_msg (new sensor_msgs::PointCloud2);
   //ROS_INFO("created PointCloud object: 0x%x", (void*) ret.get()); - ZOLI COMMENTED THIS TO GET RID OF WARNING, SUPPOSING WAS ONLY DEBUG :)
 
-  ret->header = cloud_->header;
+  //ret->header = cloud_->header;
   //int channel_index = getChannelIndex (cloud_, "index");
   //int channel_line = getChannelIndex (cloud_, "line");
   //if (channel_line != -1)
@@ -186,6 +188,8 @@ boost::shared_ptr<sensor_msgs::PointCloud2> BoxEstimation::getOutliers ()
     //  ret->channels[1].values.at(i) = cloud_->channels[channel_line].values.at (outliers_.at (i));
   }
   pcl::toROSMsg(*ret, *ret_msg);
+  ret_msg->header.frame_id = frame_id_;
+  ret_msg->header.stamp = ros::Time::now();
   return ret_msg;
 }
 
@@ -199,6 +203,8 @@ boost::shared_ptr<sensor_msgs::PointCloud2> BoxEstimation::getInliers ()
   //for (unsigned int i = 0; i < inliers_.size (); i++)
   //  ret->points.push_back (cloud_->points.at (inliers_.at (i)));
   pcl::toROSMsg(*ret, *ret_msg);
+  ret_msg->header.frame_id = frame_id_;
+  ret_msg->header.stamp = ros::Time::now();
   return ret_msg;
 }
 
@@ -212,6 +218,8 @@ boost::shared_ptr<sensor_msgs::PointCloud2> BoxEstimation::getContained ()
   //for (unsigned int i = 0; i < contained_.size (); i++)
   //  ret->points.push_back (cloud_->points.at (contained_.at (i)));
   pcl::toROSMsg(*ret, *ret_msg);
+  ret_msg->header.frame_id = frame_id_;
+  ret_msg->header.stamp = ros::Time::now();
   return ret_msg;
 }
 
@@ -303,7 +311,6 @@ bool BoxEstimation::find_model (boost::shared_ptr<const pcl::PointCloud<pcl::Poi
   //coeff[0] = box_centroid_.x;
   //coeff[1] = box_centroid_.y;
   //coeff[2] = box_centroid_.z;
-
   //// ----------------------------------------------
   //// Read point cloud data and create Kd-tree that represents points.
   //// We will compute features for all points in the point cloud.
@@ -383,15 +390,15 @@ bool BoxEstimation::find_model (boost::shared_ptr<const pcl::PointCloud<pcl::Poi
  */
 void BoxEstimation::triangulate_box(boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormal> > cloud, std::vector<double> &coeff)
 {
-  pcl::PointXYZINormal current_point;
+  //pcl::PointXYZINormal current_point;
+  geometry_msgs::Point32 current_point;
   triangle_mesh_msgs::Triangle triangle;
   mesh_ = boost::shared_ptr <BoxEstimation::OutputType> (new BoxEstimation::OutputType);
-  mesh_->points.resize(8);
-  mesh_->triangles.resize(12);
-  mesh_->header = cloud->header;
+  //mesh_->points.resize(8);
+  //mesh_->triangles.resize(12);
+  //mesh_->header = cloud->header;
 
   int counter = 0;
-
   // create box vertices
   for (int i = -1; i <= 1; i = i+2)
   {
@@ -414,39 +421,44 @@ void BoxEstimation::triangulate_box(boost::shared_ptr<const pcl::PointCloud<pcl:
         //current_point.y = coeff[1] + j * coeff[4]/2;
         //current_point.z = coeff[2] + k * coeff[5]/2;
 
-        mesh_->points[counter++].x = current_point.x;
-        mesh_->points[counter++].y = current_point.y;
-        mesh_->points[counter++].z = current_point.z;
+        //mesh_->points[counter++].x = current_point.x;
+        //mesh_->points[counter++].y = current_point.y;
+        //mesh_->points[counter++].z = current_point.z;
+
+        mesh_->points.push_back(current_point);
       }
     }
   }
 
   // fill in the box sides (2 triangles per side)
-  counter = 0;
   triangle.i = 0, triangle.j = 1, triangle.k = 2;
-  mesh_->triangles[counter++] = triangle;
+  mesh_->triangles.push_back(triangle);
   triangle.i = 0, triangle.j = 1, triangle.k = 4;
-  mesh_->triangles[counter++] = triangle;
+  mesh_->triangles.push_back(triangle);
   triangle.i = 0, triangle.j = 2, triangle.k = 6;
-  mesh_->triangles[counter++] = triangle;
+  mesh_->triangles.push_back(triangle);
   triangle.i = 0, triangle.j = 6, triangle.k = 4;
-  mesh_->triangles[counter++] = triangle;
+  mesh_->triangles.push_back(triangle);
   triangle.i = 1, triangle.j = 4, triangle.k = 5;
-  mesh_->triangles[counter++] = triangle;
+  mesh_->triangles.push_back(triangle);
   triangle.i = 5, triangle.j = 4, triangle.k = 6;
-  mesh_->triangles[counter++] = triangle;
+  mesh_->triangles.push_back(triangle);
   triangle.i = 5, triangle.j = 7, triangle.k = 6;
-  mesh_->triangles[counter++] = triangle;
+  mesh_->triangles.push_back(triangle);
   triangle.i = 7, triangle.j = 6, triangle.k = 2;
-  mesh_->triangles[counter++] = triangle;
+  mesh_->triangles.push_back(triangle);
   triangle.i = 7, triangle.j = 3, triangle.k = 2;
-  mesh_->triangles[counter++] = triangle;
+  mesh_->triangles.push_back(triangle);
   triangle.i = 1, triangle.j = 2, triangle.k = 3;
-  mesh_->triangles[counter++] = triangle;
+  mesh_->triangles.push_back(triangle);
   triangle.i = 1, triangle.j = 3, triangle.k = 7;
-  mesh_->triangles[counter++] = triangle;
+  mesh_->triangles.push_back(triangle);
   triangle.i = 1, triangle.j = 5, triangle.k = 7;
-  mesh_->triangles[counter++] = triangle;
+  mesh_->triangles.push_back(triangle);
+
+
+  mesh_->header.frame_id = frame_id_;
+  mesh_->header.stamp = ros::Time::now();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -474,7 +486,10 @@ void BoxEstimation::computeMarker (boost::shared_ptr<const pcl::PointCloud<pcl::
 
   //marker_.header.frame_id = "base_link";
   //marker_.header.stamp = ros::Time();
-  marker_.header = cloud->header;
+  //marker_.header = cloud->header;
+
+  marker_.header.frame_id = frame_id_;
+  marker_.header.stamp = ros::Time::now();
   marker_.ns = "BoxEstimation";
   marker_.id = 0;
   marker_.type = visualization_msgs::Marker::CUBE;
@@ -489,19 +504,19 @@ void BoxEstimation::computeMarker (boost::shared_ptr<const pcl::PointCloud<pcl::
   marker_.scale.x = coeff[3];
   marker_.scale.y = coeff[4];
   marker_.scale.z = coeff[5];
-  marker_.color.a = 0.3;
+  marker_.color.a = 0.1;
   marker_.color.r = 0.0;
   marker_.color.g = 1.0;
   marker_.color.b = 0.0;
   std::cerr << "BOX MARKER COMPUTED, WITH FRAME " << marker_.header.frame_id << std::endl;
 }
 
-#ifndef NO_BOXFIT_NODE
-#ifdef CREATE_NODE
-int main (int argc, char* argv[])
-{
-  return standalone_node <BoxEstimation> (argc, argv);
-}
-#endif
-#endif
+//#ifndef NO_BOXFIT_NODE
+//#ifdef CREATE_NODE
+//int main (int argc, char* argv[])
+//{
+//  return standalone_node <BoxEstimation> (argc, argv);
+//}
+//#endif
+//#endif
 
