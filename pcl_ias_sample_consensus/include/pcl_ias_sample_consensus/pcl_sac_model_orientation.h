@@ -114,7 +114,7 @@ namespace pcl
         * \param model_coefficients the coefficients of a model
         * \param projected_points the resultant projected points
         */
-      void projectPoints (const std::vector<int> &inliers, const Eigen::VectorXf &model_coefficients, Normals &projected_points, bool copy_data_fields = true);
+      void projectPoints (const std::vector<int> &inliers, const Eigen::VectorXf &model_coefficients, Normals &projected_points, bool copy_data_fields = true){}
 
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,7 +122,7 @@ namespace pcl
         * \param indices the data indices that need to be tested against the model (each element is an index of indices_)
         * \param threshold a maximum admissible distance threshold for determining the inliers from the outliers
         */
-      bool doSamplesVerifyModel (const std::set<int> &indices, const Eigen::VectorXf &model_coefficients, double threshold);
+      bool doSamplesVerifyModel (const std::set<int> &indices, const Eigen::VectorXf &model_coefficients, double threshold){}
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Return an unique id for each type of model employed. */
