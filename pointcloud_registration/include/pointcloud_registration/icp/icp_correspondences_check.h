@@ -100,14 +100,16 @@ namespace pcl
         std::vector<int> nn_indices (max_nn_);
         std::vector<float> nn_dists (max_nn_);
 
-
+        int count = 0;
         this->nr_iterations_ = 0;
         while (!this->converged_)           // repeat until convergence
         {
+          ROS_INFO("Iteration Number: %d", this->nr_iterations_);
           // Point cloud containing the correspondences of each point in <input, indices>
           PointCloudTarget model_corresp;
           PointCloudSource source_corresp;
 
+          count = 0;
           source_corresp.points.reserve(this->indices_->size());
           model_corresp.points.reserve(this->indices_->size());
           // Save the previously estimated transformation
@@ -119,6 +121,7 @@ namespace pcl
             // Use radius search to look for neighbors within a user specified radius
             if (!searchForNeighbors (output, idx, radius_, max_nn_, nn_indices, nn_dists))
             {
+//              ROS_INFO("No neigbor found for idx = %d", (int) idx);
               continue;
             }
 
@@ -135,12 +138,20 @@ namespace pcl
                     continue;
                   }
                 }
+                count++;
                 source_corresp.points.push_back (output.points[idx]);
                 model_corresp.points.push_back (this->target_->points[nn_indices[i]]);
                 break;
               }
             }
           }
+
+          if(source_corresp.points.size() == 0)
+          {
+            ROS_ERROR("[pointcloud_registration::%s::computeTransformation] No correspondences found. Try to relax the conditions.", getClassName().c_str());
+            return;
+          }
+          ROS_INFO("Correspondences: %d", count);
           // Zero the Z coordinate value since the robot moved in the x & y plane only
           for(size_t i = 0; i < source_corresp.points.size(); i++)
           {
@@ -159,6 +170,8 @@ namespace pcl
 
           //Compute transformation change
           double transformation_change = fabs ((this->transformation_ - this->previous_transformation_).sum ());
+
+          ROS_INFO("Transformation change: %f", transformation_change);
 
           this->nr_iterations_++;
           // Check for convergence
