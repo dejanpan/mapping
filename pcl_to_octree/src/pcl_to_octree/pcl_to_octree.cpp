@@ -61,8 +61,7 @@ PclToOctree::PclToOctree() : nh_("~")
   nh_.param("laser_offset", laser_offset_, 1.5);
   nh_.param("octree_resolution", octree_res_, 0.05);
   nh_.param("octree_maxrange", octree_maxrange_, -1);
-  nh_.param("point_cloud_topic", point_cloud_topic_, std::string("/shoulder_cloud"));
-  nh_.param("frame_id", frame_id_, std::string("/map"));
+  nh_.param("point_cloud_topic", point_cloud_topic_, std::string("/merged_cloud"));
   nh_.param("level", level_, 0);
   nh_.param("visualize_octree", visualize_octree_, false);
   nh_.param("visualize_only_occupied_cells", visualize_only_occupied_cells_, true);
@@ -94,6 +93,8 @@ PclToOctree::~PclToOctree()
 void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud2& pointcloud2_msg)
 {
   ROS_INFO("Received a point cloud.");
+
+  frame_id_ = pointcloud2_msg.header.frame_id;
   //sensor_msgs::PointCloud2 pointcloud2_msg;
   octomap_server::OctomapBinary octree_msg;
 
@@ -179,10 +180,10 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud2& pointcloud
       {
         inliers_stream << octree_node_test->get3DPointInliers()[i] << ", ";
       }
-      ROS_INFO("inliers: %s", inliers_stream.str().c_str());
-      ROS_INFO("label: %d",  octree_node_test->getLabel());
-      ROS_INFO("centroid: %f, %f, %f",  octree_node_test->getCentroid().x(),  octree_node_test->getCentroid().y(),
-               octree_node_test->getCentroid().z());
+      //ROS_INFO("inliers: %s", inliers_stream.str().c_str());
+      //ROS_INFO("label: %d",  octree_node_test->getLabel());
+      //ROS_INFO("centroid: %f, %f, %f",  octree_node_test->getCentroid().x(),  octree_node_test->getCentroid().y(),
+      //         octree_node_test->getCentroid().z());
     }
   }
 
