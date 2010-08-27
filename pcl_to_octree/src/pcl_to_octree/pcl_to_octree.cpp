@@ -62,6 +62,7 @@ PclToOctree::PclToOctree() : nh_("~")
   nh_.param("octree_resolution", octree_res_, 0.05);
   nh_.param("octree_maxrange", octree_maxrange_, -1);
   nh_.param("point_cloud_topic", point_cloud_topic_, std::string("/merged_cloud"));
+  nh_.param("frame_id", frame_id_, std::string("/map"));
   nh_.param("level", level_, 0);
   nh_.param("visualize_octree", visualize_octree_, false);
   nh_.param("visualize_only_occupied_cells", visualize_only_occupied_cells_, true);
