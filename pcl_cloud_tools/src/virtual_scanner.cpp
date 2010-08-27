@@ -38,9 +38,10 @@
 /**
   * \author Radu Bogdan Rusu
   *
-  * @b virtual_scanner obtains a list of models from a 3D CAD database, and virtually scans them 
+  * @b virtual_scanner takes in a .ply or a .vtk file of an object model, and virtually scans it
   * in a raytracing fashion, saving the end results as PCD (Point Cloud Data) files. In addition, 
-  * it noisifies the PCD models, and downsamples them.
+  * it noisifies the PCD models, and downsamples them. 
+  * The viewpoint can be set to 1 or multiple views on a sphere.
   */
 volatile bool g_stopall = false;
 #include <string>
@@ -69,11 +70,14 @@ volatile bool g_stopall = false;
 #include <vtkCellLocator.h>
 #include <vtkPolyData.h>
 
-// interface to model database
-//#include <model_database/postgresql_model_database.h>
-//#include <model_database/model_database.h>
-//#include <model_database/database_scaled_model.h>
+//terminal_tools includes
+#include <terminal_tools/print.h>
+#include <terminal_tools/parse.h>
 
+//local includes
+#include "pcl_cloud_tools/misc.h"
+
+#include <vector>
 #define EPS 0.00001
 
 struct ScanParameters
@@ -123,14 +127,37 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (PointXYZViewpoint,
 int
   main (int argc, char** argv)
 {
-  if (argc < 2)
+  if (argc < 3)
     {
-    ROS_INFO("Usage %s <model.ply>", argv[0]);
+    ROS_INFO("Usage %s single_view <0|1> <model.ply | model.vtk>", argv[0]);
     return -1;
     }
-  std::stringstream filename_stream;
-  filename_stream << argv[1];
-  std::string filename = filename_stream.str();
+  std::string filename;
+  // Parse the command line arguments for .vtk or .ply files
+  std::vector<int> p_file_indices_vtk = terminal_tools::parse_file_extension_argument (argc, argv, ".vtk");
+  std::vector<int> p_file_indices_ply = terminal_tools::parse_file_extension_argument (argc, argv, ".ply");
+  bool single_view = 1;
+  terminal_tools::parse_argument (argc, argv, "single_view", single_view);
+  vtkSmartPointer<vtkPolyData> data;
+  // Loading VTK file
+  if (p_file_indices_vtk.size() != 0)
+    //vtkPolyData* data = reinterpret_cast<vtkPolyData*>(load_poly_data_as_data_set(argv[p_file_indices_vtk.at (0)]));
+    data = load_poly_data_as_data_set(argv[p_file_indices_vtk.at (0)]);
+  //Loading PLY file
+  else if (p_file_indices_ply.size() != 0)
+    {
+      std::stringstream filename_stream;
+      //      filename_stream << argv[p_file_indices_vtk.at (0)];
+      filename_stream << argv[3];
+      filename = filename_stream.str();
+      data = loadPLYAsDataSet (filename.c_str());
+      ROS_INFO ("Loading ply model with %d vertices/points.", (int)data->GetNumberOfPoints ());
+    }
+  else
+    {
+      ROS_ERROR("Unrecognized file format");
+      return -1;
+    }
   // Default scan parameters
   ScanParameters sp;
   sp.nr_scans           = 900;
@@ -166,25 +193,6 @@ int
   itpp::Normal_RNG    n_rng   (0.0, noise_std*noise_std);
   itpp::Laplace_RNG   lap_rng (0.0, noise_std*noise_std);
 
-  // Database parameters are hard-coded in for now
-//   model_database::PostgresqlModelDatabase database ("wgs36.willowgarage.com", "5432", "willow", "willow", "models");
-//   if (!database.isConnected ())
-//   {
-//     ROS_ERROR ("Failed to connect to database");
-//     return (1);
-//   }
-//   ROS_INFO("connected to db");
-//   boost::ptr_vector<model_database::DatabaseScaledModel> models;
-//   //database.getScaledModelsReducedExperimentSet (models);
-//   database.getScaledModelsIcraExperimentSet (models);
-
-//   std::string root_path;
-//   if (!database.getModelRoot (root_path))
-//   {
-//     ROS_ERROR ("Failed to get root path from database");
-//     return (1);
-//   }
-
   std::vector<std::string> st;
   // Virtual camera parameters
   double eye[3]     = {0.0, 0.0, 0.0};
@@ -213,15 +221,6 @@ int
   sphere->Update ();
   ROS_INFO ("Created %d camera position points.", (int)sphere->GetNumberOfPoints ());
 
-  // Parse all models in the database
-  //for (size_t cm = 0; cm < 1; cm++)
-  //{
-    //    std::string model_path = models[cm].geometry_path_.get ();
-    //    std::string path = root_path + model_path;
-
-  vtkSmartPointer<vtkPolyData> data = loadPLYAsDataSet (filename.c_str());
-    ROS_INFO ("Loading ply model with %d vertices/points.", (int)data->GetNumberOfPoints ());
-
     // Build a spatial locator for our dataset
     vtkSmartPointer<vtkCellLocator> tree = vtkSmartPointer<vtkCellLocator>::New ();
     tree->SetDataSet (data);
@@ -235,9 +234,13 @@ int
     // Get the min-max bounds of data
     data->GetBounds (bounds);
     
-    // Complete scan
+    // if single view is required iterate over loop only once
+    int number_of_points = sphere->GetNumberOfPoints ();
+    if (single_view)
+      number_of_points = 1;
+
     int sid = -1;
-    for (int i = 0; i < sphere->GetNumberOfPoints (); i++)
+    for (int i = 0; i < number_of_points; i++)
     {
       sphere->GetPoint (i, eye);
       if (fabs(eye[0]) < EPS) eye[0] = 0;
@@ -250,6 +253,16 @@ int
       eye[0] *= scan_dist;
       eye[1] *= scan_dist;
       eye[2] *= scan_dist;
+      //Change here if only single view point is required
+      if (single_view)
+	{
+	  eye[0] = 0.0;
+	  eye[1] = -0.26;
+	  eye[2] = -0.86;  
+	  viewray[0] = 0.0;
+	  viewray[1] = 0.26;
+	  viewray[2] = 0.86;
+	}
 
       if ((viewray[0] == 0) && (viewray[1] == 0))
         vtkMath::Cross (viewray, x_axis, right);
@@ -323,10 +336,11 @@ int
         }
       }
 
+      ROS_WARN("size %d", cloud.points.size());
       // Downsample and remove silly po int duplicates
       pcl::PointCloud<PointXYZViewpoint> cloud_downsampled;
       grid.setInputCloud (boost::make_shared<pcl::PointCloud<PointXYZViewpoint> > (cloud));
-      grid.filter (cloud_downsampled);
+      //grid.filter (cloud_downsampled);
 
       // Saves the point cloud data to disk
       sprintf (seq, "%d", (int)i);
@@ -349,15 +363,8 @@ int
 
       fname = st.at (st.size () - 1) + seq + ".pcd";
       ROS_INFO ("Writing %d points to %s", (int)cloud.points.size (), fname.c_str ());
-/*      for (size_t cp = 0; cp < cloud.points.size (); ++cp)
-      {
-        cloud.points[cp].x /= 1000;
-        cloud.points[cp].y /= 1000;
-        cloud.points[cp].z /= 1000;
-      }*/
       pcl::io::savePCDFile (fname.c_str (), cloud);
     } // sphere 
-    //}
   return (0);
 }
 /* ]--- */
