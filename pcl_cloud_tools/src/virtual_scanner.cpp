@@ -101,9 +101,10 @@ vtkPolyData*
 
 struct PointXYZViewpoint
 {
-  float x;
-  float y;
-  float z;
+  //  float x;
+  //  float y;
+  // float z;
+  PCL_ADD_POINT4D;
   float vx;
   float vy;
   float vz;
