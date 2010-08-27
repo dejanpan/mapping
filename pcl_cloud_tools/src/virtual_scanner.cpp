@@ -105,9 +105,6 @@ vtkPolyData*
 
 struct PointXYZViewpoint
 {
-  //  float x;
-  //  float y;
-  // float z;
   PCL_ADD_POINT4D;
   float vx;
   float vy;
@@ -141,14 +138,18 @@ int
   vtkSmartPointer<vtkPolyData> data;
   // Loading VTK file
   if (p_file_indices_vtk.size() != 0)
-    //vtkPolyData* data = reinterpret_cast<vtkPolyData*>(load_poly_data_as_data_set(argv[p_file_indices_vtk.at (0)]));
-    data = load_poly_data_as_data_set(argv[p_file_indices_vtk.at (0)]);
+    {
+     data = load_poly_data_as_data_set(argv[p_file_indices_vtk.at (0)]);
+     std::stringstream filename_stream;
+     filename_stream << argv[p_file_indices_vtk.at (0)];
+     filename = filename_stream.str();
+     ROS_INFO ("Loading vtk model with %d vertices/points.", (int)data->GetNumberOfPoints ());
+    }
   //Loading PLY file
   else if (p_file_indices_ply.size() != 0)
     {
       std::stringstream filename_stream;
-      //      filename_stream << argv[p_file_indices_vtk.at (0)];
-      filename_stream << argv[3];
+      filename_stream << argv[p_file_indices_ply.at (0)];
       filename = filename_stream.str();
       data = loadPLYAsDataSet (filename.c_str());
       ROS_INFO ("Loading ply model with %d vertices/points.", (int)data->GetNumberOfPoints ());
@@ -219,7 +220,8 @@ int
   // Get camera positions
   vtkPolyData *sphere = subdivide->GetOutput ();
   sphere->Update ();
-  ROS_INFO ("Created %d camera position points.", (int)sphere->GetNumberOfPoints ());
+  if(!single_view)
+    ROS_INFO ("Created %d camera position points.", (int)sphere->GetNumberOfPoints ());
 
     // Build a spatial locator for our dataset
     vtkSmartPointer<vtkCellLocator> tree = vtkSmartPointer<vtkCellLocator>::New ();
@@ -300,7 +302,6 @@ int
           pid ++;
         
           // Create a beam vector with (lat,long) angles (vert, hor) with the viewray
-          //     beam = bend(viewray, up, vert) + bend(viewray, right, hor)
           tr2->Identity ();
           tr2->RotateWXYZ (hor, up);
           tr2->InternalTransformPoint (temp_beam, beam);
@@ -336,7 +337,6 @@ int
         }
       }
 
-      ROS_WARN("size %d", cloud.points.size());
       // Downsample and remove silly po int duplicates
       pcl::PointCloud<PointXYZViewpoint> cloud_downsampled;
       grid.setInputCloud (boost::make_shared<pcl::PointCloud<PointXYZViewpoint> > (cloud));
@@ -348,7 +348,6 @@ int
       boost::split (st, filename, boost::is_any_of ("/"), boost::token_compress_on);
 
       std::stringstream ss;
-      //ss << models[cm].id_.get ();
       std::string output_dir = st.at (st.size () - 1);
       boost::filesystem::path outpath (output_dir);
       if (!boost::filesystem::exists (outpath))
