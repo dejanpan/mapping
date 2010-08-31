@@ -1,9 +1,9 @@
 <launch>
-<node pkg="point_cloud_converter" type="point_cloud_converter" name="point_cloud_converter" output="screen" respawn="true"
+<node pkg="point_cloud_converter" type="point_cloud_converter" name="point_cloud_converter" output="screen" respawn="true" >
       <remap from="/points_in" to="/shoulder_cloud"/>
 </node>
 
-<node pkg="pcl_ros" type="pointcloud_to_pcd" name="pointcloud_to_pcd" output="screen" respawn="true"
+<node pkg="pcl_ros" type="pointcloud_to_pcd" name="pointcloud_to_pcd" output="screen" respawn="true" >
       <remap from="/input" to="/points2_out"/>
 </node>
 </launch>
