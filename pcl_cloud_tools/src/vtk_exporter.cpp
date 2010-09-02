@@ -18,7 +18,6 @@
  *
  * $Id: VTKExporter.cc,v 1.0 2010/02/23 12:00:00 zoli Exp $
  */
-volatile bool g_stopall = false;
 #include <iostream>
 #include <string>
 #include <vector>

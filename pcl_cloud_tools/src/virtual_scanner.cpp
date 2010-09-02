@@ -43,7 +43,6 @@
   * it noisifies the PCD models, and downsamples them. 
   * The viewpoint can be set to 1 or multiple views on a sphere.
   */
-volatile bool g_stopall = false;
 #include <string>
 
 // ROS messages
