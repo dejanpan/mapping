@@ -29,7 +29,8 @@ public:
 private:
   ros::NodeHandle nh_;
   std::string octree_topic_;	
-  bool visualize_octree_;
+  std::string frame_id_;
+  bool visualize_octree_, visualize_only_occupied_cells_;
 	// Publishes the octree in MarkerArray format so that it can be visualized in rviz
   ros::Publisher octree_marker_array_publisher_;
 	
@@ -51,6 +52,8 @@ OctreeClient::OctreeClient() : nh_("~")
 {
   nh_.param("octree_topic", octree_topic_, std::string("/pcl_to_octree/octree_binary")); 
   nh_.param("visualize_octree", visualize_octree_, true); 
+  nh_.param("visualize_only_occupied_cells", visualize_only_occupied_cells_, true);
+  nh_.param("frame_id", frame_id_, std::string("/map"));
   ROS_INFO("octree_client node is up and running.");
   run();   
 }
@@ -91,14 +94,19 @@ void OctreeClient::OctreeCallback(const octomap_server::OctomapBinary& mapMsg)
     // each array stores all cubes of a different size, one for each depth level:
     octree_marker_array_msg_.markers.resize(16);
     double lowestRes = octree->getResolution();
+    ROS_INFO_STREAM("lowest resolution: " << lowestRes);
     std::list<octomap::OcTreeVolume>::iterator it;
 
     for(unsigned int i = 0; i < 16; i++)
     {
       std::list<octomap::OcTreeVolume> all_cells;
       //getting the occupied cells at different depths of the octree
-      //    octree->getOccupied(all_cells, i);
-      octree->getLeafNodes(all_cells, i);
+      if(visualize_only_occupied_cells_ == true)  {
+        octree->getOccupied(all_cells, i);
+      }
+      else {
+        octree->getLeafNodes(all_cells, i);
+      }
       for (it = all_cells.begin(); it != all_cells.end(); ++it)
       {
         // which array to store cubes in?
@@ -114,7 +122,7 @@ void OctreeClient::OctreeCallback(const octomap_server::OctomapBinary& mapMsg)
 
     for (unsigned i = 0; i < octree_marker_array_msg_.markers.size(); ++i)
     {
-      octree_marker_array_msg_.markers[i].header.frame_id = "/map";
+      octree_marker_array_msg_.markers[i].header.frame_id = frame_id_;
       octree_marker_array_msg_.markers[i].header.stamp = ros::Time::now();
 	
       double size = lowestRes * pow(2,i);
@@ -153,6 +161,8 @@ void OctreeClient::OctreeCallback(const octomap_server::OctomapBinary& mapMsg)
     }
     octree_marker_array_msg_.markers.clear();
   }
+
+  free(octree);
     
 }
 
