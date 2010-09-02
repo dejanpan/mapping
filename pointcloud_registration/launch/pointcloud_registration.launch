@@ -31,13 +31,13 @@
     <param name="downsample_pointcloud_before" value="false"/>
     
     <!-- Set true if wish to downsample the point cloud after registration -->
-    <param name="downsample_pointcloud_after" value="true"/>
+    <param name="downsample_pointcloud_after" value="false"/>
     
     <!-- Downsample leaf size -->
     <param name="downsample_leafsize" value="0.03"/>
     
     <!-- Maximum z-coordinate difference between two correspondences which is allowed -->
-    <param name="epsilon_z" value="0.025"/>
+    <param name="epsilon_z" value="0.01"/>
    
     <!-- Set true if wish to filter correspondences based on curvature difference -->
     <param name="curvature_check" value="true" />
