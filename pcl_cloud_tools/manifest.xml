@@ -12,6 +12,7 @@
   <depend package="std_msgs" />
   <depend package="angles" />
   <depend package="pcl" />
+  <depend package="pcl_ros" />
   <depend package="geometry_msgs" />
   <depend package="sensor_msgs" />
   <depend package="mapping_msgs" />
@@ -28,7 +29,7 @@
   <depend package="visualization_msgs" />
   <depend package="vtk" />
   <depend package="pcl_visualization" />
-  <depend package="cognitive_perception" />
+<!--   <depend package="cognitive_perception" /> -->
   <export>
     <cpp cflags="-I${prefix}/include/" />
   </export>
