@@ -21,8 +21,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
-#rosbuild_add_executable(pointcloud_to_octree src/pointcloud_to_octree.cpp)
-
 rosbuild_add_executable(vtk_exporter src/vtk_exporter.cpp)
 
 rosbuild_add_executable(vtk_to_dxf_exporter src/vtk_to_dxf_exporter.cpp src/dxf_writer.cpp)
