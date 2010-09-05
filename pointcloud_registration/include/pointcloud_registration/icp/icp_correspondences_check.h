@@ -104,7 +104,7 @@ namespace pcl
         this->nr_iterations_ = 0;
         while (!this->converged_)           // repeat until convergence
         {
-          ROS_INFO("Iteration Number: %d", this->nr_iterations_);
+          //ROS_INFO("Iteration Number: %d", this->nr_iterations_);
           // Point cloud containing the correspondences of each point in <input, indices>
           PointCloudTarget model_corresp;
           PointCloudSource source_corresp;
@@ -151,7 +151,7 @@ namespace pcl
             ROS_ERROR("[pointcloud_registration::%s::computeTransformation] No correspondences found. Try to relax the conditions.", getClassName().c_str());
             return;
           }
-          ROS_INFO("Correspondences: %d", count);
+          //ROS_INFO("Correspondences: %d", count);
           // Zero the Z coordinate value since the robot moved in the x & y plane only
           for(size_t i = 0; i < source_corresp.points.size(); i++)
           {
@@ -171,7 +171,7 @@ namespace pcl
           //Compute transformation change
           double transformation_change = fabs ((this->transformation_ - this->previous_transformation_).sum ());
 
-          ROS_INFO("Transformation change: %f", transformation_change);
+          //ROS_INFO("Transformation change: %f", transformation_change);
 
           this->nr_iterations_++;
           // Check for convergence
@@ -214,7 +214,7 @@ namespace pcl
         demeanPointCloud (cloud_tgt, centroid_tgt, cloud_tgt_demean);
 
         // Assemble the correlation matrix H = source * target'
-        Eigen::Matrix3f H = (cloud_src_demean * cloud_tgt_demean.transpose ()).corner<3, 3>(Eigen::TopLeft);
+        Eigen::Matrix3f H = (cloud_src_demean * cloud_tgt_demean.transpose ()).topLeftCorner<3, 3>();
 
         // Compute the Singular Value Decomposition
         Eigen::SVD<Eigen::Matrix3f> svd (H);
@@ -232,9 +232,9 @@ namespace pcl
         Eigen::Matrix3f R = v * u.transpose ();
 
         // Return the correct transformation
-        transformation_matrix.corner<3, 3> (Eigen::TopLeft) = R;
-        Eigen::Vector3f Rc = R * centroid_src.start<3> ();
-        transformation_matrix.block <3, 1> (0, 3) = centroid_tgt.start<3> () - Rc;
+        transformation_matrix.topLeftCorner<3, 3> () = R;
+        Eigen::Vector3f Rc = R * centroid_src.head<3> ();
+        transformation_matrix.block <3, 1> (0, 3) = centroid_tgt.head<3> () - Rc;
 
         // Assemble the correlation matrix H = source' * target
         //Eigen::Matrix3f H = (cloud_src_demean.transpose () * cloud_tgt_demean).corner<3, 3>(Eigen::TopLeft);

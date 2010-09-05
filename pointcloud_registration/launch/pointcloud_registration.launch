@@ -22,7 +22,7 @@
     <param name="radius_icp" value="0.1" />
     
     <!-- Radius for the radius search to get the overlapping region of two point clouds -->
-    <param name="radius_overlap" value="0.2" />
+    <param name="radius_overlap" value="0.1" />
     
     <!-- Set true if wish to filter outliers, based on the Statistical Outlier Removal in pcl -->
     <param name="filter_outliers" value="true"/>
@@ -31,10 +31,10 @@
     <param name="downsample_pointcloud_before" value="false"/>
     
     <!-- Set true if wish to downsample the point cloud after registration -->
-    <param name="downsample_pointcloud_after" value="false"/>
+    <param name="downsample_pointcloud_after" value="true"/>
     
     <!-- Downsample leaf size -->
-    <param name="downsample_leafsize" value="0.03"/>
+    <param name="downsample_leafsize" value="0.035"/>
     
     <!-- Maximum z-coordinate difference between two correspondences which is allowed -->
     <param name="epsilon_z" value="0.01"/>
@@ -46,7 +46,7 @@
     <param name="epsilon_curvature" value="0.01"/>
    
     <!-- Transformation epsilon value to be reached for convergence -->
-    <param name="epsilon_transformation" value="1e-6"/>
+    <param name="epsilon_transformation" value="1e-8"/>
  
  </node>
 
