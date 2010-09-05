@@ -288,6 +288,7 @@ pcl::PointCloud<pcl::PointXYZINormal> PointCloudRegistration::convertFromMsgToPo
     pointcloud_pcl_normals.points[i].y = pointcloud_pcl_step02.points[i].y;
     pointcloud_pcl_normals.points[i].z = pointcloud_pcl_step02.points[i].z;
     //pointcloud_pcl_normals.points[i].rgb = pointcloud_pcl_step02.points[i].rgb;
+    pointcloud_pcl_normals.points[i].intensity = pointcloud_pcl_step02.points[i].intensity;
     pointcloud_pcl_normals.points[i].normal[0] = normals.points[i].normal[0];
     pointcloud_pcl_normals.points[i].normal[1] = normals.points[i].normal[1];
     pointcloud_pcl_normals.points[i].normal[2] = normals.points[i].normal[2];
