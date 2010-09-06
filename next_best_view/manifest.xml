@@ -1,0 +1,20 @@
+<package>
+  <description brief="next_best_view">
+
+     next_best_view
+
+  </description>
+  <author>Felix Ruess</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/next_best_view</url>
+  <depend package="roscpp"/>
+  <depend package="pcl"/>
+  <depend package="octomap"/>
+  <depend package="octomap_server"/>
+  <depend package="pcl_to_octree"/>
+  <depend package="tf"/>
+
+</package>
+
+
