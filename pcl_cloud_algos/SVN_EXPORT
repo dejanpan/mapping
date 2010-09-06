@@ -1,0 +1,71 @@
+commit debb4dbcf11318fd8e021d8e70c5087671a3ba8b
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Mon Sep 6 16:01:15 2010 +0200
+
+    author
+
+commit 81bc6f84f958e0d878dc1fed3a68b9ea83dd3252
+Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
+Date:   Tue Aug 24 18:43:42 2010 +0200
+
+    Completed porting and preliminary testing of box fit algorithm to compy with PCL.
+
+commit 9418aa7afeedbeadb7537ea0b66bd9653aa8138a
+Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
+Date:   Mon Aug 23 12:53:39 2010 +0200
+
+    Changed point type from PointXYZINormalScanLine to PointXYZINormal.
+
+commit ba17665b00325751bc98316f93c983b0d022925e
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Sat Aug 21 03:58:22 2010 +0200
+
+    fixed error xml-rpc
+
+commit b516b8c98f18ce8578c31222fe437cf657fb0c45
+Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
+Date:   Fri Aug 20 19:53:22 2010 +0200
+
+    Trying to fix bug during compilation. It remains unfixed as of this commit.
+
+commit ea9c10458b662427dd4e40d0c30112088b746f0e
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Fri Aug 13 17:25:04 2010 +0200
+
+    removed dependency on player_log_actarray
+
+commit 8eb8b85c145c078970b1148dc8422e9525e84207
+Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
+Date:   Fri Aug 13 13:32:20 2010 +0200
+
+    Continued porting of cloud_algos to pcl
+
+commit 0f02506a2e8e61bbb14e76fc5d0ba72e2f83969a
+Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
+Date:   Thu Aug 12 19:24:10 2010 +0200
+
+    Continuing porting of cloud_algos to pcl_cloud_algos for compilation with pcl
+
+commit 2f202c200a2d9c35663d89fdf800baf914318f7f
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Fri Aug 6 14:00:41 2010 +0200
+
+    put the half-ported box_fit_algo where it belongs to
+
+commit 9850dd2f3c75834011276c8da02d29ade6471eff
+Author: Nico Blodow <blodow@cs.tum.edu>
+Date:   Mon Jul 12 13:02:19 2010 +0200
+
+    collected triangle mesh and position string messages and plugins in new stack ias_visualization
+
+commit 2445fee8a30d572a2609c3d063ac1877374b29e2
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Jun 15 21:45:58 2010 +0200
+
+    dependency on pcl
+
+commit d7d793d3da84642b6dabb2ca5690d1c8230c0406
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Jun 15 21:42:20 2010 +0200
+
+    cloud_algos based on pcl init commit
