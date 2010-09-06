@@ -1,17 +1,23 @@
-commit 8751bafeb367b0dc2ad89c189ce3ee7a5d593bef
+commit 7c8ba87e05fb4b3f41dbf2185bfd6d26f21752a0
 Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
-Date:   Wed Aug 18 19:48:49 2010 +0200
+Date:   Sun Sep 5 19:58:48 2010 +0200
 
-    Moved to PointCloud2 format. Changed point types in compliance with pcl. added rgb feature.
+    Adapting to changes in pcl.
 
-commit f68b727cab2c77838066f4f57a4a89f5661eb6bc
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Tue Aug 3 18:51:55 2010 +0200
+commit 4bca4b7e85b4ef6e8611cb4f3ee94d3800790339
+Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
+Date:   Thu Sep 2 19:01:03 2010 +0200
+
+    Launch file modified based on new scans of IAS kitchen. cpp file modified for change in Point type.
+
+commit aa3ce7781e2226f6753d1bdb56fb5b89c37da35d
+Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
+Date:   Fri Aug 27 11:06:43 2010 +0200
+
+    Removed frame_id parameter from launch file. Now, the frame_id of the input cloud is used for the output cloud.
+
+commit 08d126cdcfc9fa8e83fa64e632a98a1dd018a606
+Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
+Date:   Wed Aug 18 19:52:03 2010 +0200
 
     public export
-
-commit d1056d5b537690531a871bcc46dd08303d738360
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Tue Aug 3 18:49:56 2010 +0200
-
-    added licence headers
