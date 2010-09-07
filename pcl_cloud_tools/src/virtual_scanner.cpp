@@ -125,15 +125,21 @@ int
 {
   if (argc < 3)
     {
-    ROS_INFO("Usage %s single_view <0|1> <model.ply | model.vtk>", argv[0]);
+    ROS_INFO("Usage %s -single_view <0|1> -view_point <x,y,z> -target_point <x,y,z> <model.ply | model.vtk>", argv[0]);
     return -1;
     }
   std::string filename;
   // Parse the command line arguments for .vtk or .ply files
   std::vector<int> p_file_indices_vtk = terminal_tools::parse_file_extension_argument (argc, argv, ".vtk");
   std::vector<int> p_file_indices_ply = terminal_tools::parse_file_extension_argument (argc, argv, ".ply");
-  bool single_view = 1;
-  terminal_tools::parse_argument (argc, argv, "single_view", single_view);
+  bool object_coordinates = true;
+  terminal_tools::parse_argument (argc, argv, "-object_coordinates", object_coordinates);
+  bool single_view = false;
+  terminal_tools::parse_argument (argc, argv, "-single_view", single_view);
+  double vx = 0, vy = 0, vz = 0;
+  terminal_tools::parse_3x_arguments (argc, argv, "-view_point", vx, vy, vz);
+  double tx = 0, ty = 0, tz = 0;
+  terminal_tools::parse_3x_arguments (argc, argv, "-target_point", tx, ty, tz);
   vtkSmartPointer<vtkPolyData> data;
   // Loading VTK file
   if (p_file_indices_vtk.size() != 0)
@@ -222,147 +228,169 @@ int
   if(!single_view)
     ROS_INFO ("Created %d camera position points.", (int)sphere->GetNumberOfPoints ());
 
-    // Build a spatial locator for our dataset
-    vtkSmartPointer<vtkCellLocator> tree = vtkSmartPointer<vtkCellLocator>::New ();
-    tree->SetDataSet (data);
-    tree->CacheCellBoundsOn ();
-    tree->SetTolerance (0.0);
-    tree->SetNumberOfCellsPerBucket (1);
-    tree->AutomaticOn ();
-    tree->BuildLocator ();
-    tree->Update ();
+  // Build a spatial locator for our dataset
+  vtkSmartPointer<vtkCellLocator> tree = vtkSmartPointer<vtkCellLocator>::New ();
+  tree->SetDataSet (data);
+  tree->CacheCellBoundsOn ();
+  tree->SetTolerance (0.0);
+  tree->SetNumberOfCellsPerBucket (1);
+  tree->AutomaticOn ();
+  tree->BuildLocator ();
+  tree->Update ();
 
-    // Get the min-max bounds of data
-    data->GetBounds (bounds);
-    
-    // if single view is required iterate over loop only once
-    int number_of_points = sphere->GetNumberOfPoints ();
+  // Get the min-max bounds of data
+  data->GetBounds (bounds);
+
+  // if single view is required iterate over loop only once
+  int number_of_points = sphere->GetNumberOfPoints ();
+  if (single_view)
+    number_of_points = 1;
+
+  int sid = -1;
+  for (int i = 0; i < number_of_points; i++)
+  {
+    sphere->GetPoint (i, eye);
+    if (fabs(eye[0]) < EPS) eye[0] = 0;
+    if (fabs(eye[1]) < EPS) eye[1] = 0;
+    if (fabs(eye[2]) < EPS) eye[2] = 0;
+
+    viewray[0] = -eye[0];
+    viewray[1] = -eye[1];
+    viewray[2] = -eye[2];
+    eye[0] *= scan_dist;
+    eye[1] *= scan_dist;
+    eye[2] *= scan_dist;
+    //Change here if only single view point is required
     if (single_view)
-      number_of_points = 1;
-
-    int sid = -1;
-    for (int i = 0; i < number_of_points; i++)
     {
-      sphere->GetPoint (i, eye);
-      if (fabs(eye[0]) < EPS) eye[0] = 0;
-      if (fabs(eye[1]) < EPS) eye[1] = 0;
-      if (fabs(eye[2]) < EPS) eye[2] = 0;
-
-      viewray[0] = -eye[0];
-      viewray[1] = -eye[1];
-      viewray[2] = -eye[2];
-      eye[0] *= scan_dist;
-      eye[1] *= scan_dist;
-      eye[2] *= scan_dist;
-      //Change here if only single view point is required
-      if (single_view)
-	{
-	  eye[0] = 0.0;
-	  eye[1] = -0.26;
-	  eye[2] = -0.86;  
-	  viewray[0] = 0.0;
-	  viewray[1] = 0.26;
-	  viewray[2] = 0.86;
-	}
-
-      if ((viewray[0] == 0) && (viewray[1] == 0))
-        vtkMath::Cross (viewray, x_axis, right);
-      else    
-        vtkMath::Cross (viewray, z_axis, right);
-      if (fabs(right[0]) < EPS) right[0] = 0;
-      if (fabs(right[1]) < EPS) right[1] = 0;
-      if (fabs(right[2]) < EPS) right[2] = 0;
-
-      vtkMath::Cross (viewray, right, up);
-      if (fabs(up[0]) < EPS) up[0] = 0;
-      if (fabs(up[1]) < EPS) up[1] = 0;
-      if (fabs(up[2]) < EPS) up[2] = 0;
-
-      // Create a transformation
-      vtkGeneralTransform* tr1 = vtkGeneralTransform::New ();
-      vtkGeneralTransform* tr2 = vtkGeneralTransform::New ();
-    
-      // right = viewray x up
-      vtkMath::Cross (viewray, up, right);
-    
-      // Sweep vertically
-      for (double vert = vert_start; vert <= vert_end; vert += sp.vert_res)
+      eye[0] = vx;//0.0;
+      eye[1] = vy;//-0.26;
+      eye[2] = vz;//-0.86;
+      viewray[0] = vx - tx;
+      viewray[1] = vy - ty;
+      viewray[2] = vz - tz;
+      double len = sqrt (viewray[0]*viewray[0] + viewray[1]*viewray[1] + viewray[2]*viewray[2]);
+      if (len == 0)
       {
-        sid++;
+        ROS_ERROR ("The single_view option is enabled but the view_point and the target_point are the same!");
+        break;
+      }
+      viewray[0] /= len;
+      viewray[1] /= len;
+      viewray[2] /= len;
+    }
+
+    if ((viewray[0] == 0) && (viewray[1] == 0))
+      vtkMath::Cross (viewray, x_axis, right);
+    else
+      vtkMath::Cross (viewray, z_axis, right);
+    if (fabs(right[0]) < EPS) right[0] = 0;
+    if (fabs(right[1]) < EPS) right[1] = 0;
+    if (fabs(right[2]) < EPS) right[2] = 0;
+
+    vtkMath::Cross (viewray, right, up);
+    if (fabs(up[0]) < EPS) up[0] = 0;
+    if (fabs(up[1]) < EPS) up[1] = 0;
+    if (fabs(up[2]) < EPS) up[2] = 0;
+
+    // Create a transformation
+    vtkGeneralTransform* tr1 = vtkGeneralTransform::New ();
+    vtkGeneralTransform* tr2 = vtkGeneralTransform::New ();
+
+    // right = viewray x up
+    vtkMath::Cross (viewray, up, right);
+
+    // Sweep vertically
+    for (double vert = vert_start; vert <= vert_end; vert += sp.vert_res)
+    {
+      sid++;
+
+      tr1->Identity ();
+      tr1->RotateWXYZ (vert, right);
+      tr1->InternalTransformPoint (viewray, temp_beam);
+
+      // Sweep horizontally
+      int pid = -1;
+      for (double hor = hor_start; hor <= hor_end; hor += sp.hor_res)
+      {
+        pid ++;
       
-        tr1->Identity ();
-        tr1->RotateWXYZ (vert, right);
-        tr1->InternalTransformPoint (viewray, temp_beam);
-  
-        // Sweep horizontally
-        int pid = -1;
-        for (double hor = hor_start; hor <= hor_end; hor += sp.hor_res)
+        // Create a beam vector with (lat,long) angles (vert, hor) with the viewray
+        tr2->Identity ();
+        tr2->RotateWXYZ (hor, up);
+        tr2->InternalTransformPoint (temp_beam, beam);
+        vtkMath::Normalize (beam);
+
+        // Find point at max range: p = eye + beam * max_dist
+        for (int d = 0; d < 3; d++)
+          p[d] = eye[d] + beam[d] * sp.max_dist;
+
+        // Put p_coords into laser scan at packetid = vert, scan id = hor
+        vtkIdType cellId;
+        if (tree->IntersectWithLine (eye, p, 0, t, x, p_coords, subId, cellId))
         {
-          pid ++;
-        
-          // Create a beam vector with (lat,long) angles (vert, hor) with the viewray
-          tr2->Identity ();
-          tr2->RotateWXYZ (hor, up);
-          tr2->InternalTransformPoint (temp_beam, beam);
-          vtkMath::Normalize (beam);
-  
-          // Find point at max range: p = eye + beam * max_dist
-          for (int d = 0; d < 3; d++)
-            p[d] = eye[d] + beam[d] * sp.max_dist;
-         
-          // Put p_coords into laser scan at packetid = vert, scan id = hor
-          vtkIdType cellId;
-          if (tree->IntersectWithLine (eye, p, 0, t, x, p_coords, subId, cellId))
+          PointXYZViewpoint pt;
+          if (object_coordinates)
           {
-            PointXYZViewpoint pt;
             pt.x = x[0]; pt.y = x[1]; pt.z = x[2];
             pt.vx = eye[0]; pt.vy = eye[1]; pt.vz = eye[2];
-	    cloud.points.push_back(pt);
           }
-        } // Horizontal
-      } // Vertical
-      
-      // Noisify each point in the dataset
-      // \note: we might decide to noisify along the ray later
-      for (size_t cp = 0; cp < cloud.points.size (); ++cp)
-      {
-        // Add noise ?
-        switch (noise_model)
-        {
-          // Gaussian
-          case 1: { cloud.points[cp].x += n_rng (); cloud.points[cp].y += n_rng (); cloud.points[cp].z += n_rng (); break; }
-          // Laplace
-          case 2: { cloud.points[cp].x += lap_rng (); cloud.points[cp].y += lap_rng (); cloud.points[cp].z += lap_rng (); break; }
+          else
+          {
+            // x axis is the viewray
+            // z axis is up
+            // y axis is -right (negative because x*z=-y but viewray*up=right)
+            pt.x = viewray[0]*x[0] - right[0]*x[1] + up[0]*x[2];
+            pt.x = viewray[1]*x[0] - right[1]*x[1] + up[2]*x[2];
+            pt.x = viewray[2]*x[0] - right[2]*x[1] + up[1]*x[2];
+            pt.vx = pt.vy = pt.vz = 0.0;
+          }
+          cloud.points.push_back(pt);
         }
-      }
+      } // Horizontal
+    } // Vertical
 
-      // Downsample and remove silly po int duplicates
-      pcl::PointCloud<PointXYZViewpoint> cloud_downsampled;
-      grid.setInputCloud (boost::make_shared<pcl::PointCloud<PointXYZViewpoint> > (cloud));
-      //grid.filter (cloud_downsampled);
-
-      // Saves the point cloud data to disk
-      sprintf (seq, "%d", (int)i);
-      boost::trim (filename);
-      boost::split (st, filename, boost::is_any_of ("/"), boost::token_compress_on);
-
-      std::stringstream ss;
-      std::string output_dir = st.at (st.size () - 1);
-      boost::filesystem::path outpath (output_dir);
-      if (!boost::filesystem::exists (outpath))
+    // Noisify each point in the dataset
+    // \note: we might decide to noisify along the ray later
+    for (size_t cp = 0; cp < cloud.points.size (); ++cp)
+    {
+      // Add noise ?
+      switch (noise_model)
       {
-        if (!boost::filesystem::create_directories (outpath))
-        {
-          ROS_ERROR ("Error creating directory %s.", output_dir.c_str ());
-          return (-1);
-        }
-        ROS_INFO ("Creating directory %s", output_dir.c_str ());
+        // Gaussian
+        case 1: { cloud.points[cp].x += n_rng (); cloud.points[cp].y += n_rng (); cloud.points[cp].z += n_rng (); break; }
+        // Laplace
+        case 2: { cloud.points[cp].x += lap_rng (); cloud.points[cp].y += lap_rng (); cloud.points[cp].z += lap_rng (); break; }
       }
+    }
 
-      fname = st.at (st.size () - 1) + seq + ".pcd";
-      ROS_INFO ("Writing %d points to %s", (int)cloud.points.size (), fname.c_str ());
-      pcl::io::savePCDFile (fname.c_str (), cloud);
-    } // sphere 
+    // Downsample and remove silly po int duplicates
+    pcl::PointCloud<PointXYZViewpoint> cloud_downsampled;
+    grid.setInputCloud (boost::make_shared<pcl::PointCloud<PointXYZViewpoint> > (cloud));
+    //grid.filter (cloud_downsampled);
+
+    // Saves the point cloud data to disk
+    sprintf (seq, "%d", (int)i);
+    boost::trim (filename);
+    boost::split (st, filename, boost::is_any_of ("/"), boost::token_compress_on);
+
+    std::stringstream ss;
+    std::string output_dir = st.at (st.size () - 1);
+    boost::filesystem::path outpath (output_dir);
+    if (!boost::filesystem::exists (outpath))
+    {
+      if (!boost::filesystem::create_directories (outpath))
+      {
+        ROS_ERROR ("Error creating directory %s.", output_dir.c_str ());
+        return (-1);
+      }
+      ROS_INFO ("Creating directory %s", output_dir.c_str ());
+    }
+
+    fname = st.at (st.size () - 1) + seq + ".pcd";
+    ROS_INFO ("Writing %d points to %s", (int)cloud.points.size (), fname.c_str ());
+    pcl::io::savePCDFile (fname.c_str (), cloud);
+  } // sphere
   return (0);
 }
 /* ]--- */
