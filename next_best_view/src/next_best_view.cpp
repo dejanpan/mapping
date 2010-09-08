@@ -58,16 +58,16 @@ protected:
 
 	// Publishes the octree in MarkerArray format so that it can be visualized in rviz
 	ros::Publisher octree_marker_array_publisher_;
-	
+
 	/*
-	 * The following publisher, even though not required, is used because otherwise rviz 
+	 * The following publisher, even though not required, is used because otherwise rviz
 	 * cannot visualize the MarkerArray format without advertising the Marker format
 	 */
 	ros::Publisher octree_marker_publisher_;
-	
+
 	// Marker array to visualize the octree. It displays the occuplied cells of the octree
 	visualization_msgs::MarkerArray octree_marker_array_msg_;
-	
+
 public:
 	Nbv(ros::NodeHandle &anode);
 	~Nbv();
@@ -86,22 +86,22 @@ Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
 	nh_.param("free_label", free_label_, 0);
 	nh_.param("occupied_label", occupied_label_, 1);
 	nh_.param("unknown_label", unknown_label_, -1);
-	
-	nh_.param("visualize_octree", visualize_octree_, true); 
-	
+
+	nh_.param("visualize_octree", visualize_octree_, true);
+
 	cloud_sub_ = nh_.subscribe (input_cloud_topic_, 1, &Nbv::cloud_cb, this);
 	octree_pub_ = nh_.advertise<octomap_server::OctomapBinary> (output_octree_topic_, 1);
-	
+
 	octree_marker_array_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
 	octree_marker_publisher_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 100);
-	
+
 	octree_ = NULL;
 }
 
 Nbv::~Nbv()
 {
   ROS_INFO("Shutting down next_best_view node!");
-	
+
   octree_marker_array_publisher_.shutdown();
   octree_marker_publisher_.shutdown();
 }
@@ -111,38 +111,40 @@ Nbv::~Nbv()
 * \param pointcloud2_msg input point cloud to be processed
 */
 void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
-	
+
 	pcl::PointCloud<pcl::PointXYZ> pointcloud2_pcl;
 	octomap::point3d octomap_point3d;
-	
+
+	ROS_INFO("Received point cloud");
+
 	tf::StampedTransform transform;
 	try {
 		ros::Time acquisition_time = pointcloud2_msg->header.stamp;
 		ros::Duration timeout(1.0 / 30);
-		tf_listener_.waitForTransform("/laser_tilt_link", pointcloud2_msg->header.frame_id, acquisition_time, timeout);
-		tf_listener_.lookupTransform("/laser_tilt_link", pointcloud2_msg->header.frame_id, acquisition_time, transform);
-        }
-        catch (tf::TransformException& ex) {
+		tf_listener_.waitForTransform(pointcloud2_msg->header.frame_id, "/laser_tilt_link", acquisition_time, timeout);
+		tf_listener_.lookupTransform(pointcloud2_msg->header.frame_id, "/laser_tilt_link", acquisition_time, transform);
+	}
+	catch (tf::TransformException& ex) {
 		ROS_WARN("[next_best_view] TF exception:\n%s", ex.what());
 	}
 	tf::Point pt = transform.getOrigin();
 	//octomap::pose6d laser_pose (-0.526,0.921,1.317,0,0,0);
 	octomap::pose6d laser_pose (pt.x(), pt.y(), pt.z(),0,0,0);
 	octomap::point3d laser_origin (laser_pose.trans());
-	
-	ROS_INFO("Received point cloud");
-	
-	
+
+	ROS_INFO("viewpoint [%f %f %f]", pt.x(), pt.y(), pt.z());
+
+
 	//Converting PointCloud2 msg format to pcl pointcloud format in order to read the 3d data
 	pcl::fromROSMsg(*pointcloud2_msg, pointcloud2_pcl);
-	
+
 	if (octree_ == NULL) {
 		octomap_graph_ = new octomap::ScanGraph();
 		octree_ = new octomap::OcTreePCL(octree_res_);
 	}
 
-	createOctree(pointcloud2_pcl, laser_pose);		
-	
+	createOctree(pointcloud2_pcl, laser_pose);
+
 	//assign points to Leaf Nodes  and cast rays from laser pos to point
 	BOOST_FOREACH (const pcl::PointXYZ& pcl_pt, pointcloud2_pcl.points) {
 		octomap_point3d(0) = pcl_pt.x;
@@ -163,24 +165,24 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
 						ROS_DEBUG("free node at x=%f y=%f z=%f not found", pt(0), pt(1), pt(2));
 				}
 			} else {
-				ROS_DEBUG("could not compute ray from [%f %f %f] to [%f %f %f]", 
+				ROS_DEBUG("could not compute ray from [%f %f %f] to [%f %f %f]",
 							laser_pose.x(), laser_pose.y(), laser_pose.z(), pcl_pt.x, pcl_pt.y, pcl_pt.z);
 			}
-			
+
 			octree_node1->set3DPointInliers(0);
 			octree_node1->setLabel(occupied_label_);
 		} else {
 			ROS_DEBUG("ERROR: node at [%f %f %f] not found", pcl_pt.x, pcl_pt.y, pcl_pt.z);
 		}
 	}
-	
+
 	// publish binary octree
 	octomap_server::OctomapBinary octree_msg;
 	octomap_server::octomapMapToMsg(*octree_, octree_msg);
 	octree_pub_.publish(octree_msg);
 	ROS_INFO("Octree built and published");
-	
-	
+
+
   //**********************************************************************************
   //Visualization of Octree
   //**********************************************************************************
@@ -197,10 +199,10 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
       octree_->getLeafNodes(all_cells, 0);
       for (it = all_cells.begin(); it != all_cells.end(); ++it)
       {
-        geometry_msgs::Point cube_center;
-        cube_center.x = it->first.x();
-        cube_center.y = it->first.y();
-        cube_center.z = it->first.z();
+	geometry_msgs::Point cube_center;
+	cube_center.x = it->first.x();
+	cube_center.y = it->first.y();
+	cube_center.z = it->first.z();
 	octomap::point3d octo_point (cube_center.x, cube_center.y, cube_center.z);
 	octomap::OcTreeNodePCL * node = octree_->search(octo_point);
 	if (node != NULL) {
@@ -212,27 +214,39 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
 			octree_marker_array_msg_.markers[2].points.push_back(cube_center);
 	}
       }
-      
+      geometry_msgs::Point viewpoint;
+      viewpoint.x = pt.x();
+      viewpoint.y = pt.y();
+      viewpoint.z = pt.z();
+      octree_marker_array_msg_.markers[3].points.push_back(viewpoint);
+
       // occupied cells
       octree_marker_array_msg_.markers[0].ns = "Occupied cells";
       octree_marker_array_msg_.markers[0].color.r = 1.0f;
       octree_marker_array_msg_.markers[0].color.g = 0.0f;
       octree_marker_array_msg_.markers[0].color.b = 0.0f;
       octree_marker_array_msg_.markers[0].color.a = 0.5f;
-      
+
       // free cells
       octree_marker_array_msg_.markers[1].ns ="Free cells";
       octree_marker_array_msg_.markers[1].color.r = 0.0f;
       octree_marker_array_msg_.markers[1].color.g = 1.0f;
       octree_marker_array_msg_.markers[1].color.b = 0.0f;
       octree_marker_array_msg_.markers[1].color.a = 0.5f;
-      
+
       // unknown cells
       octree_marker_array_msg_.markers[2].ns = "Unknown cells";
       octree_marker_array_msg_.markers[2].color.r = 0.0f;
       octree_marker_array_msg_.markers[2].color.g = 0.0f;
       octree_marker_array_msg_.markers[2].color.b = 1.0f;
       octree_marker_array_msg_.markers[2].color.a = 0.05f;
+
+      // viewpoint
+      octree_marker_array_msg_.markers[3].ns = "viewpoint";
+      octree_marker_array_msg_.markers[3].color.r = 1.0f;
+      octree_marker_array_msg_.markers[3].color.g = 1.0f;
+      octree_marker_array_msg_.markers[3].color.b = 0.0f;
+      octree_marker_array_msg_.markers[3].color.a = 0.8f;
 
     for (unsigned i = 0; i < octree_marker_array_msg_.markers.size(); ++i)
     {
@@ -245,23 +259,23 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
       octree_marker_array_msg_.markers[i].scale.x = lowestRes;
       octree_marker_array_msg_.markers[i].scale.y = lowestRes;
       octree_marker_array_msg_.markers[i].scale.z = lowestRes;
-	
-	
+
+
       if (octree_marker_array_msg_.markers[i].points.size() > 0)
-        octree_marker_array_msg_.markers[i].action = visualization_msgs::Marker::ADD;
+	octree_marker_array_msg_.markers[i].action = visualization_msgs::Marker::ADD;
       else
-        octree_marker_array_msg_.markers[i].action = visualization_msgs::Marker::DELETE;
-		
+	octree_marker_array_msg_.markers[i].action = visualization_msgs::Marker::DELETE;
+
     }
 
     octree_marker_array_publisher_.publish(octree_marker_array_msg_);
-    
-     
+
+
     for (unsigned int i = 0; i < octree_marker_array_msg_.markers.size(); i++)
     {
       if (!octree_marker_array_msg_.markers[i].points.empty())
       {
-        octree_marker_array_msg_.markers[i].points.clear();
+	octree_marker_array_msg_.markers[i].points.clear();
       }
     }
     octree_marker_array_msg_.markers.clear();
@@ -276,7 +290,7 @@ void Nbv::createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap
 
 	octomap::point3d octomap_3d_point;
 	octomap::Pointcloud octomap_pointcloud;
-	
+
 	//Reading from pcl point cloud and saving it into octomap point cloud
 	BOOST_FOREACH (const pcl::PointXYZ& pt, pointcloud2_pcl.points) {
 		octomap_3d_point(0) = pt.x;
@@ -293,9 +307,9 @@ void Nbv::createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap
 
 	// Converting from octomap graph to octomap tree (octree)
 	octree_->insertScan(*scan_node, octree_maxrange_, false);
-	
+
 	octree_->expand();
-	
+
 	//
 	// create nodes that are unknown
 	//
@@ -304,7 +318,7 @@ void Nbv::createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap
 	octree_->getMetricMax(max(0), max(1), max(2));
 	//ROS_INFO("octree min bounds [%f %f %f]", min(0), min(1), min(2));
 	//ROS_INFO("octree max bounds [%f %f %f]", max(0), max(1), max(2));
-	
+
 	double x,y,z;
 	for (x = min(0)+octree_res_/2; x < max(0)-octree_res_/2; x+=octree_res_) {
 		for (y = min(1)+octree_res_/2; y < max(1)-octree_res_/2; y+=octree_res_) {
@@ -325,15 +339,15 @@ void Nbv::createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap
 			}
 		}
 	}
-	
-	
+
+
 	if (check_centroids_) {
 		//int cnt = 0;
 		// get all existing leaves
 		std::list<octomap::OcTreeVolume> leaves;
 		octree_->getLeafNodes(leaves);
 		std::list<octomap::OcTreeVolume>::iterator it1;
-		
+
 		//find Leaf Nodes' centroids, assign controid coordinates to Leaf Node
 		for( it1 = leaves.begin(); it1 != leaves.end(); ++it1) {
 			//ROS_DEBUG("Leaf Node %d : x = %f y = %f z = %f side length = %f ", cnt++, it1->first.x(), it1->first.y(), it1->first.z(), it1->second);
