@@ -175,10 +175,9 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   std::vector<octomap::point3d> border_list;
   std::list<octomap::OcTreeVolume> leaves;
   octree_->getLeafNodes(leaves);
-  std::list<octomap::OcTreeVolume>::iterator it1;
-  for( it1 = leaves.begin(); it1 != leaves.end(); ++it1) {
+  BOOST_FOREACH(octomap::OcTreeVolume vol, leaves) {
     octomap::point3d centroid;
-    centroid(0) = it1->first.x(),  centroid(1) = it1->first.y(),  centroid(2) = it1->first.z();
+    centroid(0) = vol.first.x(),  centroid(1) = vol.first.y(),  centroid(2) = vol.first.z();
     octomap::OcTreeNodePCL *octree_node = octree_->search(centroid);
     
     // if free voxel -> check for unknown neighbors
@@ -293,13 +292,12 @@ void Nbv::createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap
     // get all existing leaves
     std::list<octomap::OcTreeVolume> leaves;
     octree_->getLeafNodes(leaves);
-    std::list<octomap::OcTreeVolume>::iterator it1;
 
     //find Leaf Nodes' centroids, assign controid coordinates to Leaf Node
-    for( it1 = leaves.begin(); it1 != leaves.end(); ++it1) {
+    BOOST_FOREACH(octomap::OcTreeVolume vol, leaves) {
       //ROS_DEBUG("Leaf Node %d : x = %f y = %f z = %f side length = %f ", cnt++, it1->first.x(), it1->first.y(), it1->first.z(), it1->second);
       octomap::point3d centroid;
-      centroid(0) = it1->first.x(),  centroid(1) = it1->first.y(),  centroid(2) = it1->first.z();
+      centroid(0) = vol.first.x(), centroid(1) = vol.first.y(), centroid(2) = vol.first.z();
       octomap::OcTreeNodePCL *octree_node = octree_->search(centroid);
       if (octree_node != NULL) {
         octomap::point3d test_centroid;
@@ -319,17 +317,16 @@ void Nbv::visualizeOctree(const sensor_msgs::PointCloud2ConstPtr& pointcloud2_ms
   octree_marker_array_msg_.markers.resize(16);
   double lowestRes = octree_->getResolution();
   //ROS_INFO_STREAM("lowest resolution: " << lowestRes);
-  std::list<octomap::OcTreeVolume>::iterator it;
 
   std::list<octomap::OcTreeVolume> all_cells;
   //getting the cells at level 0
   octree_->getLeafNodes(all_cells, 0);
-  for (it = all_cells.begin(); it != all_cells.end(); ++it)
+  BOOST_FOREACH(octomap::OcTreeVolume vol, all_cells)
   {
     geometry_msgs::Point cube_center;
-    cube_center.x = it->first.x();
-    cube_center.y = it->first.y();
-    cube_center.z = it->first.z();
+    cube_center.x = vol.first.x();
+    cube_center.y = vol.first.y();
+    cube_center.z = vol.first.z();
     octomap::point3d octo_point (cube_center.x, cube_center.y, cube_center.z);
     octomap::OcTreeNodePCL * node = octree_->search(octo_point);
     if (node != NULL) {
