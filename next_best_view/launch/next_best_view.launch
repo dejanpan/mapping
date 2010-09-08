@@ -1,0 +1,30 @@
+<launch>
+
+  <!-- PCL Manager -->
+  <node pkg="nodelet" type="nodelet" name="next_best_view_pcl_manager" args="manager" output="screen"/>
+
+  <!-- Run a passthrough filter to downsample and delimit in x direction -->
+  <node pkg="nodelet" type="nodelet" name="nbv_downsample" args="load pcl/VoxelGrid next_best_view_pcl_manager" output="screen">
+    <remap from="~input" to="/points2_out"/>
+    <remap from="~output" to="/nbv_cloud"/>
+    <rosparam>
+      leaf_size: 0.02
+      filter_field_name: z
+      filter_limit_min: -1.0
+      filter_limit_max: 100.0
+    </rosparam>
+  </node>
+
+  <node pkg="point_cloud_converter" type="point_cloud_converter" name="point_cloud_converter" output="screen" respawn="false">
+    <remap from="/points_in" to="/shoulder_cloud"/>
+  </node>
+
+  <node pkg="next_best_view" type="next_best_view" name="next_best_view" output="screen" respawn="false">
+    <param name="laser_frame" value="/laser_tilt_link"/>
+    <param name="octree_resolution" value="0.1"/>
+    <param name="octree_maxrange" value="-1"/>
+    <param name="input_cloud_topic" value="/nbv_cloud"/>
+    <param name="visualize_octree" value="true"/>
+  </node>
+
+</launch>
