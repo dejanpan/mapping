@@ -1,12 +1,16 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
+
 #include "octomap/octomap.h"
 #include <octomap_server/OctomapBinary.h>
 #include "pcl_to_octree/octree/OcTreePCL.h"
 #include "pcl_to_octree/octree/OcTreeNodePCL.h"
 #include "pcl_to_octree/octree/OcTreeServerPCL.h"
+
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
+#include <pcl/features/normal_3d.h>
+
 #include <tf/transform_listener.h>
 
 #include <visualization_msgs/MarkerArray.h>
@@ -34,6 +38,8 @@ class Nbv
 {
 protected:
   ros::NodeHandle nh_;
+
+  //parameters
   std::string input_cloud_topic_;
   std::string output_octree_topic_;
   std::string laser_frame_;
@@ -41,16 +47,19 @@ protected:
   ros::Subscriber cloud_sub_;
   ros::Publisher octree_pub_;
 
-  sensor_msgs::PointCloud2 cloud_in_;
-
-  octomap::OcTreePCL* octree_;
-  octomap::ScanGraph* octomap_graph_;
   double octree_res_, octree_maxrange_;
   int level_, free_label_, occupied_label_, unknown_label_;
   bool check_centroids_;
   bool visualize_octree_;
 
+  //objects needed
   tf::TransformListener tf_listener_;
+
+  //datasets
+  pcl::PointCloud<pcl::Normal> cloud_normals;
+  sensor_msgs::PointCloud2 cloud_in_;
+  octomap::OcTreePCL* octree_;
+  octomap::ScanGraph* octomap_graph_;
 
   // Publishes the octree in MarkerArray format so that it can be visualized in rviz
   ros::Publisher octree_marker_array_publisher_;
@@ -170,7 +179,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
       ROS_DEBUG("ERROR: node at [%f %f %f] not found", pcl_pt.x, pcl_pt.y, pcl_pt.z);
     }
   }
-  
+
   // find unknown voxels with free neighbors and add them to a pointcloud
   std::vector<octomap::point3d> border_list;
   std::list<octomap::OcTreeVolume> leaves;
@@ -179,7 +188,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
     octomap::point3d centroid;
     centroid(0) = vol.first.x(),  centroid(1) = vol.first.y(),  centroid(2) = vol.first.z();
     octomap::OcTreeNodePCL *octree_node = octree_->search(centroid);
-    
+
     // if free voxel -> check for unknown neighbors
     if (octree_node != NULL && octree_node->getLabel() == free_label_) {
       for (int i=0; i<3; i++) {
@@ -206,7 +215,16 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
     border_cloud.points[i].y = border_list[i].y();
     border_cloud.points[i].z = border_list[i].z();
   }
+
+//TODO Estimate point normals
+//   pcl::NormalEstimation<PointT, pcl::Normal> ne;
+//   ne.setSearchMethod (tree);
+//   ne.setInputCloud (boost::make_shared<pcl::PointCloud<PointT> >(cloud_filtered));
+//   ne.setKSearch (50);
+//   ne.compute (cloud_normals);
   
+//TODO use pcl::extractEuclideanClusters
+
 
   // publish binary octree
   octomap_server::OctomapBinary octree_msg;
@@ -395,7 +413,7 @@ void Nbv::visualizeOctree(const sensor_msgs::PointCloud2ConstPtr& pointcloud2_ms
       octree_marker_array_msg_.markers[i].points.clear();
     }
   }
-  octree_marker_array_msg_.markers.clear(); 
+  octree_marker_array_msg_.markers.clear();
 }
 
 
