@@ -266,9 +266,9 @@ int
       eye[0] = vx;//0.0;
       eye[1] = vy;//-0.26;
       eye[2] = vz;//-0.86;
-      viewray[0] = vx - tx;
-      viewray[1] = vy - ty;
-      viewray[2] = vz - tz;
+      viewray[0] = tx - vx;
+      viewray[1] = ty - vy;
+      viewray[2] = tz - vz;
       double len = sqrt (viewray[0]*viewray[0] + viewray[1]*viewray[1] + viewray[2]*viewray[2]);
       if (len == 0)
       {
@@ -292,6 +292,25 @@ int
     if (fabs(up[0]) < EPS) up[0] = 0;
     if (fabs(up[1]) < EPS) up[1] = 0;
     if (fabs(up[2]) < EPS) up[2] = 0;
+
+    if (!object_coordinates)
+    {
+      // Normalization
+      double right_len = sqrt (right[0]*right[0] + right[1]*right[1] + right[2]*right[2]);
+      right[0] /= right_len;
+      right[1] /= right_len;
+      right[2] /= right_len;
+      double up_len = sqrt (up[0]*up[0] + up[1]*up[1] + up[2]*up[2]);
+      up[0] /= up_len;
+      up[1] /= up_len;
+      up[2] /= up_len;
+    
+      // Output resulting vectors
+      cerr << "Viewray Right Up:" << endl;
+      cerr << viewray[0] << " " << viewray[1] << " " << viewray[2] << " " << endl;
+      cerr << right[0] << " " << right[1] << " " << right[2] << " " << endl;
+      cerr << up[0] << " " << up[1] << " " << up[2] << " " << endl;
+    }
 
     // Create a transformation
     vtkGeneralTransform* tr1 = vtkGeneralTransform::New ();
@@ -337,12 +356,12 @@ int
           }
           else
           {
-            // x axis is the viewray
-            // z axis is up
-            // y axis is -right (negative because x*z=-y but viewray*up=right)
-            pt.x = viewray[0]*x[0] - right[0]*x[1] + up[0]*x[2];
-            pt.x = viewray[1]*x[0] - right[1]*x[1] + up[2]*x[2];
-            pt.x = viewray[2]*x[0] - right[2]*x[1] + up[1]*x[2];
+            // z axis is the viewray
+            // y axis is up
+            // x axis is -right (negative because z*y=-x but viewray*up=right)
+            pt.x = -right[0]*x[1] + up[0]*x[2] + viewray[0]*x[0] + eye[0];
+            pt.y = -right[1]*x[1] + up[1]*x[2] + viewray[1]*x[0] + eye[1];
+            pt.z = -right[2]*x[1] + up[2]*x[2] + viewray[2]*x[0] + eye[2];
             pt.vx = pt.vy = pt.vz = 0.0;
           }
           cloud.points.push_back(pt);
