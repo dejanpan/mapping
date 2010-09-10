@@ -21,7 +21,7 @@
 
   <node pkg="next_best_view" type="next_best_view" name="next_best_view" output="screen" respawn="false">
     <param name="laser_frame" value="/laser_tilt_link"/>
-    <param name="octree_resolution" value="0.1"/>
+    <param name="octree_resolution" value="0.2"/>
     <param name="octree_maxrange" value="-1"/>
     <param name="input_cloud_topic" value="/nbv_cloud"/>
     <param name="visualize_octree" value="true"/>

@@ -11,6 +11,8 @@
 #include <pcl/point_types.h>
 #include <pcl/features/normal_3d.h>
 
+#include <pcl_ros/publisher.h>
+
 #include <tf/transform_listener.h>
 
 #include <visualization_msgs/MarkerArray.h>
@@ -46,6 +48,8 @@ protected:
 
   ros::Subscriber cloud_sub_;
   ros::Publisher octree_pub_;
+  ros::Publisher border_cloud_pub_;
+  //point_cloud::Publisher<pcl::PointXYZ> border_cloud_pub_;
 
   double octree_res_, octree_maxrange_;
   int level_, free_label_, occupied_label_, unknown_label_;
@@ -57,9 +61,11 @@ protected:
 
   //datasets
   pcl::PointCloud<pcl::Normal> cloud_normals;
-  sensor_msgs::PointCloud2 cloud_in_;
   octomap::OcTreePCL* octree_;
   octomap::ScanGraph* octomap_graph_;
+  
+  sensor_msgs::PointCloud2 cloud_in_;
+  sensor_msgs::PointCloud2 border_cloud_msg_;
 
   // Publishes the octree in MarkerArray format so that it can be visualized in rviz
   ros::Publisher octree_marker_array_publisher_;
@@ -95,6 +101,8 @@ Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
 
   cloud_sub_ = nh_.subscribe (input_cloud_topic_, 1, &Nbv::cloud_cb, this);
   octree_pub_ = nh_.advertise<octomap_server::OctomapBinary> (output_octree_topic_, 1);
+  border_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("border_cloud", 1);
+  //point_cloud::Publisher<pcl::PointXYZ> border_cloud_pub_(nh_, "border_cloud", 1);
 
   octree_marker_array_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
   octree_marker_publisher_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 100);
@@ -148,7 +156,9 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   // create or update the octree
   createOctree(pointcloud2_pcl, laser_pose);
 
-  //assign new points to Leaf Nodes  and cast rays from laser pos to point
+  /*
+   * assign new points to Leaf Nodes  and cast rays from laser pos to point
+   */
   BOOST_FOREACH (const pcl::PointXYZ& pcl_pt, pointcloud2_pcl.points) {
     octomap_point3d(0) = pcl_pt.x;
     octomap_point3d(1) = pcl_pt.y;
@@ -180,7 +190,9 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
     }
   }
 
-  // find unknown voxels with free neighbors and add them to a pointcloud
+  /*
+   * find unknown voxels with free neighbors and add them to a pointcloud
+   */
   std::vector<octomap::point3d> border_list;
   std::list<octomap::OcTreeVolume> leaves;
   octree_->getLeafNodes(leaves);
@@ -205,23 +217,34 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
       }
     }
   }
+
   // put points into pcl pointcloud
   pcl::PointCloud<pcl::PointXYZ> border_cloud;
   border_cloud.width = border_list.size();
   border_cloud.height = 1;
   border_cloud.points.resize(border_cloud.width * border_cloud.height);
-  for (size_t i = 0; i < border_cloud.points.size (); ++i) {
+  border_cloud.header.frame_id = pointcloud2_msg->header.frame_id;
+  border_cloud.header.stamp = ros::Time::now();
+  for (size_t i = 0; i < border_cloud.points.size(); ++i) {
     border_cloud.points[i].x = border_list[i].x();
     border_cloud.points[i].y = border_list[i].y();
     border_cloud.points[i].z = border_list[i].z();
   }
 
-//TODO Estimate point normals
-//   pcl::NormalEstimation<PointT, pcl::Normal> ne;
-//   ne.setSearchMethod (tree);
-//   ne.setInputCloud (boost::make_shared<pcl::PointCloud<PointT> >(cloud_filtered));
-//   ne.setKSearch (50);
-//   ne.compute (cloud_normals);
+  ROS_INFO("%d points in border cloud", (int)border_list.size());
+
+  //publish border cloud for visualization
+  pcl::toROSMsg(border_cloud, border_cloud_msg_);
+  border_cloud_pub_.publish(border_cloud_msg_);
+
+// Estimate point normals
+  pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
+  pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+  ne.setSearchMethod(tree);
+  ne.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> >(border_cloud));
+  ne.setRadiusSearch(0.25);
+  ne.setKSearch(0);
+  ne.compute (cloud_normals);
   
 //TODO use pcl::extractEuclideanClusters
 
@@ -328,6 +351,7 @@ void Nbv::createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap
       }
     }
   }
+
 }
 
 void Nbv::visualizeOctree(const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg, geometry_msgs::Point viewpoint) {
