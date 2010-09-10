@@ -11,6 +11,8 @@
 #include <pcl/point_types.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/segmentation/extract_clusters.h>
+#include "pcl/filters/extract_indices.h"
+
 
 #include <pcl_ros/publisher.h>
 
@@ -50,6 +52,7 @@ protected:
   ros::Subscriber cloud_sub_;
   ros::Publisher octree_pub_;
   pcl_ros::Publisher<pcl::PointXYZ> border_cloud_pub_;
+  pcl_ros::Publisher<pcl::PointXYZ> cluster_cloud_pub_;
 
   double octree_res_, octree_maxrange_;
   int level_, free_label_, occupied_label_, unknown_label_;
@@ -109,6 +112,7 @@ Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
   cloud_sub_ = nh_.subscribe (input_cloud_topic_, 1, &Nbv::cloud_cb, this);
   octree_pub_ = nh_.advertise<octomap_server::OctomapBinary> (output_octree_topic_, 1);
   border_cloud_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "border_cloud", 1);
+  cluster_cloud_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud", 1);
 
   octree_marker_array_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
   octree_marker_publisher_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 100);
@@ -245,13 +249,35 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   ne.compute(*border_normals);
   
   // Decompose a region of space into clusters based on the euclidean distance between points, and the normal
-  //unsigned int min_pts_per_cluster = 10;
-  //double eps_angle = 0.3;
-  //float tolerance = 1.5;
+  unsigned int min_pts_per_cluster = 10;
+  double eps_angle = 0.5;
+  float tolerance = 0.5;
   std::vector<pcl::PointIndices> clusters;
-  extractClusters(*border_cloud, *border_normals, 1.5, tree, clusters, 0.3, (unsigned int) 10);
+  extractClusters(*border_cloud, *border_normals, tolerance, tree, clusters, eps_angle, min_pts_per_cluster);
   //pcl::extractEuclideanClusters(*border_cloud, *border_normals, 1.5, tree, clusters, 0.3, (unsigned int) 10);
 
+  
+  // get the biggest cluster
+  pcl::PointIndices biggest_cluster;
+  unsigned int max_inliers = 1;
+  BOOST_FOREACH(pcl::PointIndices cluster, clusters) {
+    ROS_INFO("cluster has: %d data points.", (int)cluster.indices.size());
+    if (cluster.indices.size() > max_inliers) {
+      max_inliers = cluster.indices.size();
+      biggest_cluster = cluster;
+    }
+  }
+  
+  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > cluster_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  // Create the filtering object
+  pcl::ExtractIndices<pcl::PointXYZ> extract;
+  extract.setInputCloud(border_cloud);
+  extract.setIndices(boost::make_shared<pcl::PointIndices> (biggest_cluster));
+  extract.setNegative(false);
+  extract.filter(*cluster_cloud);
+  ROS_INFO ("PointCloud representing the cluster: %d data points.", cluster_cloud->width * cluster_cloud->height);
+
+  cluster_cloud_pub_.publish(*cluster_cloud);
 
   // publish binary octree
   octomap_server::OctomapBinary octree_msg;
