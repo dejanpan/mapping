@@ -48,8 +48,7 @@ protected:
 
   ros::Subscriber cloud_sub_;
   ros::Publisher octree_pub_;
-  ros::Publisher border_cloud_pub_;
-  //point_cloud::Publisher<pcl::PointXYZ> border_cloud_pub_;
+  pcl_ros::Publisher<pcl::PointXYZ> border_cloud_pub_;
 
   double octree_res_, octree_maxrange_;
   int level_, free_label_, occupied_label_, unknown_label_;
@@ -65,7 +64,6 @@ protected:
   octomap::ScanGraph* octomap_graph_;
   
   sensor_msgs::PointCloud2 cloud_in_;
-  sensor_msgs::PointCloud2 border_cloud_msg_;
 
   // Publishes the octree in MarkerArray format so that it can be visualized in rviz
   ros::Publisher octree_marker_array_publisher_;
@@ -101,8 +99,7 @@ Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
 
   cloud_sub_ = nh_.subscribe (input_cloud_topic_, 1, &Nbv::cloud_cb, this);
   octree_pub_ = nh_.advertise<octomap_server::OctomapBinary> (output_octree_topic_, 1);
-  border_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("border_cloud", 1);
-  //point_cloud::Publisher<pcl::PointXYZ> border_cloud_pub_(nh_, "border_cloud", 1);
+  border_cloud_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "border_cloud", 1);
 
   octree_marker_array_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
   octree_marker_publisher_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 100);
@@ -193,7 +190,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   /*
    * find unknown voxels with free neighbors and add them to a pointcloud
    */
-  std::vector<octomap::point3d> border_list;
+  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > border_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   std::list<octomap::OcTreeVolume> leaves;
   octree_->getLeafNodes(leaves);
   BOOST_FOREACH(octomap::OcTreeVolume vol, leaves) {
@@ -204,13 +201,14 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
     // if free voxel -> check for unknown neighbors
     if (octree_node != NULL && octree_node->getLabel() == free_label_) {
       for (int i=0; i<3; i++) {
-        octomap::point3d offset (0, 0, 0);
+        octomap::point3d neighbor_centroid = centroid;
         for (int j=-1; j<2; j+=2) {
-          offset(i) = j * octree_res_;
-          octomap::OcTreeNodePCL *neighbor = octree_->search(centroid + offset);
+          neighbor_centroid(i) += j * octree_res_;
+          octomap::OcTreeNodePCL *neighbor = octree_->search(neighbor_centroid);
           if (neighbor != NULL && neighbor->getLabel() == unknown_label_) {
             // add to list of border voxels
-            border_list.push_back(centroid + offset);
+            pcl::PointXYZ border_pt (neighbor_centroid.x(), neighbor_centroid.y(), neighbor_centroid.z());
+            border_cloud->points.push_back(border_pt);
             break;
           }
         }
@@ -218,30 +216,19 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
     }
   }
 
-  // put points into pcl pointcloud
-  pcl::PointCloud<pcl::PointXYZ> border_cloud;
-  border_cloud.width = border_list.size();
-  border_cloud.height = 1;
-  border_cloud.points.resize(border_cloud.width * border_cloud.height);
-  border_cloud.header.frame_id = pointcloud2_msg->header.frame_id;
-  border_cloud.header.stamp = ros::Time::now();
-  for (size_t i = 0; i < border_cloud.points.size(); ++i) {
-    border_cloud.points[i].x = border_list[i].x();
-    border_cloud.points[i].y = border_list[i].y();
-    border_cloud.points[i].z = border_list[i].z();
-  }
+  border_cloud->header.frame_id = pointcloud2_msg->header.frame_id;
+  border_cloud->header.stamp = ros::Time::now();
 
-  ROS_INFO("%d points in border cloud", (int)border_list.size());
+  ROS_INFO("%d points in border cloud", (int)border_cloud->points.size());
 
   //publish border cloud for visualization
-  pcl::toROSMsg(border_cloud, border_cloud_msg_);
-  border_cloud_pub_.publish(border_cloud_msg_);
+  border_cloud_pub_.publish(*border_cloud);
 
 // Estimate point normals
   pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
   pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
   ne.setSearchMethod(tree);
-  ne.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> >(border_cloud));
+  ne.setInputCloud(border_cloud);
   ne.setRadiusSearch(0.25);
   ne.setKSearch(0);
   ne.compute (cloud_normals);
