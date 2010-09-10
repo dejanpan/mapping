@@ -59,6 +59,10 @@ protected:
   bool check_centroids_;
   bool visualize_octree_;
 
+  int min_pts_per_cluster_;
+  double eps_angle_;
+  double tolerance_;
+
   //objects needed
   tf::TransformListener tf_listener_;
 
@@ -108,6 +112,10 @@ Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
   nh_.param("occupied_label", occupied_label_, 1);
   nh_.param("unknown_label", unknown_label_, -1);
   nh_.param("visualize_octree", visualize_octree_, true);
+
+  nh_.param("min_pts_per_cluster", min_pts_per_cluster_, 10);
+  nh_.param("eps_angle", eps_angle_, 0.5);
+  nh_.param("tolerance", tolerance_, 0.4);
 
   cloud_sub_ = nh_.subscribe (input_cloud_topic_, 1, &Nbv::cloud_cb, this);
   octree_pub_ = nh_.advertise<octomap_server::OctomapBinary> (output_octree_topic_, 1);
@@ -234,8 +242,6 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
 
   ROS_INFO("%d points in border cloud", (int)border_cloud->points.size());
 
-  //publish border cloud for visualization
-  border_cloud_pub_.publish(*border_cloud);
 
   pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
   
@@ -248,15 +254,16 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   ne.setKSearch(0);
   ne.compute(*border_normals);
   
+  //get the latest parameters
+  nh_.getParam("min_pts_per_cluster", min_pts_per_cluster_);
+  nh_.getParam("eps_angle", eps_angle_);
+  nh_.getParam("tolerance", tolerance_);
+
   // Decompose a region of space into clusters based on the euclidean distance between points, and the normal
-  unsigned int min_pts_per_cluster = 10;
-  double eps_angle = 0.5;
-  float tolerance = 0.5;
   std::vector<pcl::PointIndices> clusters;
-  extractClusters(*border_cloud, *border_normals, tolerance, tree, clusters, eps_angle, min_pts_per_cluster);
+  extractClusters(*border_cloud, *border_normals, tolerance_, tree, clusters, eps_angle_, min_pts_per_cluster_);
   //pcl::extractEuclideanClusters(*border_cloud, *border_normals, 1.5, tree, clusters, 0.3, (unsigned int) 10);
 
-  
   // get the biggest cluster
   pcl::PointIndices biggest_cluster;
   unsigned int max_inliers = 1;
@@ -275,16 +282,20 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   extract.setIndices(boost::make_shared<pcl::PointIndices> (biggest_cluster));
   extract.setNegative(false);
   extract.filter(*cluster_cloud);
-  ROS_INFO ("PointCloud representing the cluster: %d data points.", cluster_cloud->width * cluster_cloud->height);
+  ROS_INFO ("PointCloud representing the biggest cluster: %d data points.", cluster_cloud->width * cluster_cloud->height);
 
+
+  //publish border cloud for visualization
+  border_cloud_pub_.publish(*border_cloud);
+  //publish the largest cluster for visualization
   cluster_cloud_pub_.publish(*cluster_cloud);
 
   // publish binary octree
   octomap_server::OctomapBinary octree_msg;
   octomap_server::octomapMapToMsg(*octree_, octree_msg);
   octree_pub_.publish(octree_msg);
-  ROS_INFO("Octree built and published");
 
+  ROS_INFO("All computed and published");
 
   //**********************************************************************************
   //Visualization of Octree
