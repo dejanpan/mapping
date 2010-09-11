@@ -245,7 +245,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
           octomap::OcTreeNodePCL *neighbor = octree_->search(neighbor_centroid);
           if (neighbor != NULL && neighbor->getLabel() == unknown_label_) {
             // add to list of border voxels
-            pcl::PointXYZ border_pt (neighbor_centroid.x(), neighbor_centroid.y(), neighbor_centroid.z());
+            pcl::PointXYZ border_pt (centroid.x(), centroid.y(), centroid.z());
             border_cloud->points.push_back(border_pt);
             break;
           }
@@ -255,7 +255,6 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   }
   ROS_INFO("%d points in border cloud", (int)border_cloud->points.size());
 
-  //pcl::PointCloud<PointXYZ> cloud_filtered;
   // Create the filtering object
   pcl::PassThrough<pcl::PointXYZ> pass;
   pass.setInputCloud (border_cloud);
@@ -426,7 +425,7 @@ void Nbv::createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap
 
 void Nbv::visualizeOctree(const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg, geometry_msgs::Point viewpoint) {
   // each array stores all cubes of a different size, one for each depth level:
-  octree_marker_array_msg_.markers.resize(16);
+  octree_marker_array_msg_.markers.resize(4);
   double lowestRes = octree_->getResolution();
   //ROS_INFO_STREAM("lowest resolution: " << lowestRes);
 
