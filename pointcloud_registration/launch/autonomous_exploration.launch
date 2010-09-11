@@ -1,0 +1,11 @@
+<launch>
+  <!--node pkg="pointcloud_registration" type="pointcloud_registration" name="pointcloud_registration" output="screen" respawn="false" launch-prefix="xterm -e gdb -args"-->
+  
+  <node pkg="pointcloud_registration" type="autonomous_exploration" name="autonomous_exploration" output="screen" respawn="false">
+    
+    <!-- Topic to subscribe for the pose --> 
+    <param name="subscribe_pose_topic" value="/robot_pose"/>
+ 
+ </node>
+
+</launch>
