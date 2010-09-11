@@ -49,6 +49,7 @@ protected:
   //parameters
   std::string input_cloud_topic_;
   std::string output_octree_topic_;
+  std::string output_pose_topic_;
   std::string laser_frame_;
 
   double octree_res_, octree_maxrange_;
@@ -67,8 +68,9 @@ protected:
   //datasets
   octomap::OcTreePCL* octree_;
   octomap::ScanGraph* octomap_graph_;
-  
+
   sensor_msgs::PointCloud2 cloud_in_;
+  geometry_msgs::Pose nbv_pose_;
 
   ros::Subscriber cloud_sub_;
   ros::Publisher octree_pub_;
@@ -76,6 +78,7 @@ protected:
   pcl_ros::Publisher<pcl::PointXYZ> cluster_cloud_pub_;
   pcl_ros::Publisher<pcl::PointXYZ> cluster_cloud2_pub_;
   pcl_ros::Publisher<pcl::PointXYZ> cluster_cloud3_pub_;
+  ros::Publisher pose_pub_;
 
   // Publishes the octree in MarkerArray format so that it can be visualized in rviz
   ros::Publisher octree_marker_array_publisher_;
@@ -90,13 +93,13 @@ protected:
   void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg);
   void createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap::pose6d laser_pose);
   void visualizeOctree(const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg, geometry_msgs::Point viewpoint);
-  
-  void extractClusters (const pcl::PointCloud<pcl::PointXYZ> &cloud, 
+
+  void extractClusters (const pcl::PointCloud<pcl::PointXYZ> &cloud,
                                  const pcl::PointCloud<pcl::Normal> &normals,
-                                 float tolerance, 
+                                 float tolerance,
                                  const boost::shared_ptr<pcl::KdTree<pcl::PointXYZ> > &tree,
-                                 std::vector<pcl::PointIndices> &clusters, double eps_angle, 
-                                 unsigned int min_pts_per_cluster = 1, 
+                                 std::vector<pcl::PointIndices> &clusters, double eps_angle,
+                                 unsigned int min_pts_per_cluster = 1,
                                  unsigned int max_pts_per_cluster = std::numeric_limits<int>::max ());
 
 
@@ -109,6 +112,7 @@ public:
 Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
   nh_.param("input_cloud_topic", input_cloud_topic_, std::string("/points2_out"));
   nh_.param("output_octree_topic", output_octree_topic_, std::string("/nbv_octree"));
+  nh_.param("output_pose_topic", output_pose_topic_, std::string("/nbv_pose"));
   nh_.param("laser_frame", laser_frame_, std::string("/laser_tilt_link"));
   nh_.param("octree_resolution", octree_res_, 0.1);
 
@@ -131,6 +135,7 @@ Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
   cluster_cloud_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud", 1);
   cluster_cloud2_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud2", 1);
   cluster_cloud3_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud3", 1);
+  pose_pub_ = nh_.advertise<geometry_msgs::Pose> (output_pose_topic_, 1);
 
   octree_marker_array_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
   octree_marker_publisher_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 100);
@@ -265,7 +270,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
 
   // tree object used for search
   pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
-  
+
   // Estimate point normals
   boost::shared_ptr<pcl::PointCloud<pcl::Normal> > border_normals(new pcl::PointCloud<pcl::Normal>);
   pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
@@ -308,6 +313,20 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   extract.setNegative(false);
   extract.filter(*cluster_cloud3);
   ROS_INFO ("PointCloud representing the third cluster: %d data points.", cluster_cloud3->width * cluster_cloud3->height);
+
+  pcl::PointXYZ cluster_centroid (0, 0, 0);
+  BOOST_FOREACH (const pcl::PointXYZ& pcl_pt, cluster_cloud->points) {
+    cluster_centroid.x += pcl_pt.x;
+    cluster_centroid.y += pcl_pt.y;
+  }
+  cluster_centroid.x /= cluster_cloud->points.size();
+  cluster_centroid.y /= cluster_cloud->points.size();
+
+  //publish cluster centroid as next best view pose
+  nbv_pose_.position.x = cluster_centroid.x;
+  nbv_pose_.position.y = cluster_centroid.y;
+  pose_pub_.publish(nbv_pose_);
+
 
   //publish border cloud for visualization
   border_cloud_pub_.publish(*border_cloud);
@@ -521,12 +540,12 @@ void Nbv::visualizeOctree(const sensor_msgs::PointCloud2ConstPtr& pointcloud2_ms
   * \param eps_angle the maximum allowed difference between normals in degrees for cluster/region growing
   * \param min_pts_per_cluster minimum number of points that a cluster may contain (default = 1)
   */
-void Nbv::extractClusters (const pcl::PointCloud<pcl::PointXYZ> &cloud, 
+void Nbv::extractClusters (const pcl::PointCloud<pcl::PointXYZ> &cloud,
                                  const pcl::PointCloud<pcl::Normal> &normals,
-                                 float tolerance, 
+                                 float tolerance,
                                  const boost::shared_ptr<pcl::KdTree<pcl::PointXYZ> > &tree,
-                                 std::vector<pcl::PointIndices> &clusters, double eps_angle, 
-                                 unsigned int min_pts_per_cluster, 
+                                 std::vector<pcl::PointIndices> &clusters, double eps_angle,
+                                 unsigned int min_pts_per_cluster,
                                  unsigned int max_pts_per_cluster)
 {
   ROS_ASSERT (tree->getInputCloud ()->points.size () == cloud.points.size ());
