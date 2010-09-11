@@ -6,6 +6,9 @@
 #include "actionlib/client/simple_action_client.h"
 #include "pcl/common/angles.h"
 #include "LinearMath/btQuaternion.h"
+#include <pr2_controllers_msgs/SingleJointPositionAction.h>
+
+typedef actionlib::SimpleActionClient<pr2_controllers_msgs::SingleJointPositionAction> TorsoClient;
 
 class AutonomousExploration
 {
@@ -15,6 +18,7 @@ class AutonomousExploration
     void autonomousExplorationCallBack(const geometry_msgs::Pose& pose_msg);
     void pointcloudCallBack(const sensor_msgs::PointCloud& pointcloud_msg);
     void moveRobot(geometry_msgs::Pose goal_pose);
+  void moveTorso(double position, double velocity, std::string direction);
     void run();
     void spin();
 
@@ -27,6 +31,7 @@ class AutonomousExploration
     boost::thread spin_thread_;
     geometry_msgs::Pose pose_msg_;
     bool get_pointcloud_, received_pose_;
+    TorsoClient *torso_client_;
 };
 
 AutonomousExploration::AutonomousExploration():nh_("~")
@@ -35,10 +40,18 @@ AutonomousExploration::AutonomousExploration():nh_("~")
   ROS_INFO("autonomous_exploration node is up and running.");
   get_pointcloud_ = false;
   received_pose_ = false;
+  torso_client_ = new TorsoClient("torso_controller/position_joint_action", true);
+  
+  //wait for the action server to come up
+  while(!torso_client_->waitForServer(ros::Duration(5.0)))
+  {
+    ROS_INFO("Waiting for the torso action server to come up");
+  }
   run();
 }
 AutonomousExploration::~AutonomousExploration()
 {
+  delete torso_client_;
   ROS_INFO("Shutting down autonomous_exploration node.");
 }
 
@@ -60,7 +73,8 @@ void AutonomousExploration::spin()
     {
       //move robot to the received pose
       moveRobot(pose_msg_);
-
+      //rise the spine up to scan
+      moveTorso(0.3, 1.0, "up");
       double angles = 0.0;
       while(angles != 360)
       {
@@ -84,6 +98,8 @@ void AutonomousExploration::spin()
         angles += 30.0;
       }
       received_pose_ = false;
+      //lower the spine to navigate some place else
+      moveTorso(0.01, 1.0, "down");
     }
   }
 }
@@ -119,6 +135,27 @@ void AutonomousExploration::moveRobot(geometry_msgs::Pose goal_pose)
   {
     ROS_ERROR("Error in moving robot to goal pose.");
     ROS_BREAK();
+  }
+}
+
+void AutonomousExploration::moveTorso(double position, double velocity, std::string direction)
+{
+  pr2_controllers_msgs::SingleJointPositionGoal goal;
+  goal.position = position;  //all the way up is 0.3
+  goal.min_duration = ros::Duration(2.0);
+  goal.max_velocity = velocity;
+  
+  ROS_INFO("Sending %s goal", direction.c_str());
+  torso_client_->sendGoal(goal);
+  torso_client_->waitForResult();
+  
+  if(torso_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+  {
+    ROS_INFO("Torso moved %s.", direction.c_str());
+  }
+  else
+  {
+    ROS_ERROR("Error in moving torso %s.", direction.c_str());
   }
 }
 
