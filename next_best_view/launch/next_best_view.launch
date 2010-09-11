@@ -25,6 +25,9 @@
     <param name="octree_maxrange" value="-1"/>
     <param name="input_cloud_topic" value="/nbv_cloud"/>
     <param name="visualize_octree" value="true"/>
+    <param name="min_pts_per_cluster" value="10"/>
+    <param name="tolerance" value="0.4"/>
+    <param name="eps_angle" value="0.4"/>
   </node>
 
 </launch>
