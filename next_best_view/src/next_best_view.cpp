@@ -12,6 +12,8 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include "pcl/filters/extract_indices.h"
+#include "pcl/filters/passthrough.h"
+
 
 
 #include <pcl_ros/publisher.h>
@@ -49,11 +51,6 @@ protected:
   std::string output_octree_topic_;
   std::string laser_frame_;
 
-  ros::Subscriber cloud_sub_;
-  ros::Publisher octree_pub_;
-  pcl_ros::Publisher<pcl::PointXYZ> border_cloud_pub_;
-  pcl_ros::Publisher<pcl::PointXYZ> cluster_cloud_pub_;
-
   double octree_res_, octree_maxrange_;
   int level_, free_label_, occupied_label_, unknown_label_;
   bool check_centroids_;
@@ -72,6 +69,13 @@ protected:
   
   sensor_msgs::PointCloud2 cloud_in_;
 
+  ros::Subscriber cloud_sub_;
+  ros::Publisher octree_pub_;
+  pcl_ros::Publisher<pcl::PointXYZ> border_cloud_pub_;
+  pcl_ros::Publisher<pcl::PointXYZ> cluster_cloud_pub_;
+  pcl_ros::Publisher<pcl::PointXYZ> cluster_cloud2_pub_;
+  pcl_ros::Publisher<pcl::PointXYZ> cluster_cloud3_pub_;
+
   // Publishes the octree in MarkerArray format so that it can be visualized in rviz
   ros::Publisher octree_marker_array_publisher_;
   /* The following publisher, even though not required, is used because otherwise rviz
@@ -79,6 +83,8 @@ protected:
   ros::Publisher octree_marker_publisher_;
   // Marker array to visualize the octree. It displays the occuplied cells of the octree
   visualization_msgs::MarkerArray octree_marker_array_msg_;
+
+  static bool compareClusters(pcl::PointIndices c1, pcl::PointIndices c2) { return (c1.indices.size() < c2.indices.size()); }
 
   void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg);
   void createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap::pose6d laser_pose);
@@ -121,6 +127,8 @@ Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
   octree_pub_ = nh_.advertise<octomap_server::OctomapBinary> (output_octree_topic_, 1);
   border_cloud_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "border_cloud", 1);
   cluster_cloud_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud", 1);
+  cluster_cloud2_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud2", 1);
+  cluster_cloud3_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud3", 1);
 
   octree_marker_array_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
   octree_marker_publisher_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 100);
@@ -147,6 +155,11 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
 
   ROS_INFO("Received point cloud");
 
+  //get the latest parameters
+  nh_.getParam("min_pts_per_cluster", min_pts_per_cluster_);
+  nh_.getParam("eps_angle", eps_angle_);
+  nh_.getParam("tolerance", tolerance_);
+
   //get the viewpoint (position of laser) from tf
   tf::StampedTransform transform;
   try {
@@ -166,12 +179,11 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   //Converting PointCloud2 msg format to pcl pointcloud format in order to read the 3d data
   pcl::fromROSMsg(*pointcloud2_msg, pointcloud2_pcl);
 
+  // create or update the octree
   if (octree_ == NULL) {
     octomap_graph_ = new octomap::ScanGraph();
     octree_ = new octomap::OcTreePCL(octree_res_);
   }
-
-  // create or update the octree
   createOctree(pointcloud2_pcl, laser_pose);
 
   /*
@@ -212,6 +224,8 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
    * find unknown voxels with free neighbors and add them to a pointcloud
    */
   boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > border_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  border_cloud->header.frame_id = pointcloud2_msg->header.frame_id;
+  border_cloud->header.stamp = ros::Time::now();
   std::list<octomap::OcTreeVolume> leaves;
   octree_->getLeafNodes(leaves);
   BOOST_FOREACH(octomap::OcTreeVolume vol, leaves) {
@@ -236,13 +250,18 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
       }
     }
   }
-
-  border_cloud->header.frame_id = pointcloud2_msg->header.frame_id;
-  border_cloud->header.stamp = ros::Time::now();
-
   ROS_INFO("%d points in border cloud", (int)border_cloud->points.size());
 
+  //pcl::PointCloud<PointXYZ> cloud_filtered;
+  // Create the filtering object
+  pcl::PassThrough<pcl::PointXYZ> pass;
+  pass.setInputCloud (border_cloud);
+  pass.setFilterFieldName ("z");
+  pass.setFilterLimits (0, 2.2);
+  pass.filter(*border_cloud);
+  ROS_INFO("%d points in border cloud after filtering", (int)border_cloud->points.size());
 
+  // tree object used for search
   pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
   
   // Estimate point normals
@@ -253,47 +272,54 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   ne.setRadiusSearch(0.25);
   ne.setKSearch(0);
   ne.compute(*border_normals);
-  
-  //get the latest parameters
-  nh_.getParam("min_pts_per_cluster", min_pts_per_cluster_);
-  nh_.getParam("eps_angle", eps_angle_);
-  nh_.getParam("tolerance", tolerance_);
 
   // Decompose a region of space into clusters based on the euclidean distance between points, and the normal
   std::vector<pcl::PointIndices> clusters;
   extractClusters(*border_cloud, *border_normals, tolerance_, tree, clusters, eps_angle_, min_pts_per_cluster_);
   //pcl::extractEuclideanClusters(*border_cloud, *border_normals, 1.5, tree, clusters, 0.3, (unsigned int) 10);
 
-  // get the biggest cluster
-  pcl::PointIndices biggest_cluster;
-  unsigned int max_inliers = 1;
-  BOOST_FOREACH(pcl::PointIndices cluster, clusters) {
-    ROS_INFO("cluster has: %d data points.", (int)cluster.indices.size());
-    if (cluster.indices.size() > max_inliers) {
-      max_inliers = cluster.indices.size();
-      biggest_cluster = cluster;
-    }
-  }
-  
-  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > cluster_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  // Create the filtering object
+  // sort the clusters according to number of points they contain
+  std::sort(clusters.begin(), clusters.end(), compareClusters);
+
+  // Create the filtering object for cluster extraction based on indices
   pcl::ExtractIndices<pcl::PointXYZ> extract;
+  //extract first cluster
+  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > cluster_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   extract.setInputCloud(border_cloud);
-  extract.setIndices(boost::make_shared<pcl::PointIndices> (biggest_cluster));
+  extract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.back()));
   extract.setNegative(false);
   extract.filter(*cluster_cloud);
   ROS_INFO ("PointCloud representing the biggest cluster: %d data points.", cluster_cloud->width * cluster_cloud->height);
 
+  //extract second cluster
+  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > cluster_cloud2(new pcl::PointCloud<pcl::PointXYZ>);
+  extract.setInputCloud(border_cloud);
+  extract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.at(clusters.size()-2)));
+  extract.setNegative(false);
+  extract.filter(*cluster_cloud2);
+  ROS_INFO ("PointCloud representing the second cluster: %d data points.", cluster_cloud2->width * cluster_cloud2->height);
+
+  //extract second cluster
+  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > cluster_cloud3(new pcl::PointCloud<pcl::PointXYZ>);
+  extract.setInputCloud(border_cloud);
+  extract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.at(clusters.size()-3)));
+  extract.setNegative(false);
+  extract.filter(*cluster_cloud3);
+  ROS_INFO ("PointCloud representing the third cluster: %d data points.", cluster_cloud3->width * cluster_cloud3->height);
 
   //publish border cloud for visualization
   border_cloud_pub_.publish(*border_cloud);
-  //publish the largest cluster for visualization
+  //publish the clusters for visualization
   cluster_cloud_pub_.publish(*cluster_cloud);
+  cluster_cloud2_pub_.publish(*cluster_cloud2);
+  cluster_cloud3_pub_.publish(*cluster_cloud3);
 
   // publish binary octree
-  octomap_server::OctomapBinary octree_msg;
-  octomap_server::octomapMapToMsg(*octree_, octree_msg);
-  octree_pub_.publish(octree_msg);
+  if (0) {
+    octomap_server::OctomapBinary octree_msg;
+    octomap_server::octomapMapToMsg(*octree_, octree_msg);
+    octree_pub_.publish(octree_msg);
+  }
 
   ROS_INFO("All computed and published");
 
