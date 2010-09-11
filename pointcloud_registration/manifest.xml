@@ -20,9 +20,12 @@
    <!-- ROS DEPENDENCIES -->
    <depend package="pcl"/>
    <depend package="roscpp"/>
+   <depend package="actionlib"/>
 
    <!-- MSG DEPENDENCIES -->
    <depend package="sensor_msgs"/>
+   <depend package="geometry_msgs"/>
+   <depend package="move_base_msgs"/>
 
    <export>
      <cpp cflags="-I${prefix}/include -I${prefix}/src"/>
