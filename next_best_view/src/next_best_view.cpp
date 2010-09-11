@@ -56,6 +56,7 @@ protected:
   bool check_centroids_;
   bool visualize_octree_;
 
+  double normal_search_radius_;
   int min_pts_per_cluster_;
   double eps_angle_;
   double tolerance_;
@@ -119,9 +120,10 @@ Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
   nh_.param("unknown_label", unknown_label_, -1);
   nh_.param("visualize_octree", visualize_octree_, true);
 
+  nh_.param("normal_search_radius", normal_search_radius_, 0.6);
   nh_.param("min_pts_per_cluster", min_pts_per_cluster_, 10);
-  nh_.param("eps_angle", eps_angle_, 0.5);
-  nh_.param("tolerance", tolerance_, 0.4);
+  nh_.param("eps_angle", eps_angle_, 0.25);
+  nh_.param("tolerance", tolerance_, 0.3);
 
   cloud_sub_ = nh_.subscribe (input_cloud_topic_, 1, &Nbv::cloud_cb, this);
   octree_pub_ = nh_.advertise<octomap_server::OctomapBinary> (output_octree_topic_, 1);
@@ -156,6 +158,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   ROS_INFO("Received point cloud");
 
   //get the latest parameters
+  nh_.getParam("normal_search_radius", normal_search_radius_);
   nh_.getParam("min_pts_per_cluster", min_pts_per_cluster_);
   nh_.getParam("eps_angle", eps_angle_);
   nh_.getParam("tolerance", tolerance_);
@@ -269,7 +272,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
   ne.setSearchMethod(tree);
   ne.setInputCloud(border_cloud);
-  ne.setRadiusSearch(0.25);
+  ne.setRadiusSearch(normal_search_radius_);
   ne.setKSearch(0);
   ne.compute(*border_normals);
 
