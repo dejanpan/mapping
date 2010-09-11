@@ -28,6 +28,7 @@
    <depend package="sensor_msgs"/>
    <depend package="geometry_msgs"/>
    <depend package="move_base_msgs"/>
+   <depend package="pr2_controllers_msgs"/>
 
    <export>
      <cpp cflags="-I${prefix}/include -I${prefix}/src"/>
