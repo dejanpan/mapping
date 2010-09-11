@@ -14,7 +14,7 @@
 #include "pcl/filters/extract_indices.h"
 #include "pcl/filters/passthrough.h"
 
-
+#include "LinearMath/btTransform.h"
 
 #include <pcl_ros/publisher.h>
 
@@ -88,11 +88,16 @@ protected:
   // Marker array to visualize the octree. It displays the occuplied cells of the octree
   visualization_msgs::MarkerArray octree_marker_array_msg_;
 
+  ros::Publisher normals_marker_array_publisher_;
+  ros::Publisher normals_marker_publisher_;
+  visualization_msgs::MarkerArray normals_marker_array_msg_;
+
   static bool compareClusters(pcl::PointIndices c1, pcl::PointIndices c2) { return (c1.indices.size() < c2.indices.size()); }
 
   void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg);
   void createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap::pose6d laser_pose);
   void visualizeOctree(const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg, geometry_msgs::Point viewpoint);
+  void visualizeNormals(const pcl::PointCloud<pcl::PointXYZ> &points, const pcl::PointCloud<pcl::Normal>& normals);
 
   void extractClusters (const pcl::PointCloud<pcl::PointXYZ> &cloud,
                                  const pcl::PointCloud<pcl::Normal> &normals,
@@ -139,6 +144,8 @@ Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
 
   octree_marker_array_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
   octree_marker_publisher_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 100);
+  normals_marker_array_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("normals_marker_array", 100);
+  normals_marker_publisher_ = nh_.advertise<visualization_msgs::Marker>("normals_marker", 100);
 
   octree_ = NULL;
 }
@@ -149,6 +156,8 @@ Nbv::~Nbv()
 
   octree_marker_array_publisher_.shutdown();
   octree_marker_publisher_.shutdown();
+  normals_marker_array_publisher_.shutdown();
+  normals_marker_publisher_.shutdown();
 }
 
 /**
@@ -231,9 +240,9 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   /*
    * find unknown voxels with free neighbors and add them to a pointcloud
    */
-  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > border_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  border_cloud->header.frame_id = pointcloud2_msg->header.frame_id;
-  border_cloud->header.stamp = ros::Time::now();
+  pcl::PointCloud<pcl::PointXYZ> border_cloud;
+  border_cloud.header.frame_id = pointcloud2_msg->header.frame_id;
+  border_cloud.header.stamp = ros::Time::now();
   std::list<octomap::OcTreeVolume> leaves;
   octree_->getLeafNodes(leaves);
   BOOST_FOREACH(octomap::OcTreeVolume vol, leaves) {
@@ -251,89 +260,125 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
           if (neighbor != NULL && neighbor->getLabel() == unknown_label_) {
             // add to list of border voxels
             pcl::PointXYZ border_pt (centroid.x(), centroid.y(), centroid.z());
-            border_cloud->points.push_back(border_pt);
+            border_cloud.points.push_back(border_pt);
             break;
           }
         }
       }
     }
   }
-  ROS_INFO("%d points in border cloud", (int)border_cloud->points.size());
+  ROS_INFO("%d points in border cloud", (int)border_cloud.points.size());
 
-  // Create the filtering object
+  // Create the filtering objects
   pcl::PassThrough<pcl::PointXYZ> pass;
-  pass.setInputCloud (border_cloud);
+  pcl::ExtractIndices<pcl::PointXYZ> extract;
+  pcl::ExtractIndices<pcl::Normal> nextract;
+  pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+
+  //creating datasets
+  pcl::PointCloud<pcl::Normal> border_normals;
+
+  //filter out ceiling
+  pass.setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
   pass.setFilterFieldName ("z");
   pass.setFilterLimits (0, 2.2);
-  pass.filter(*border_cloud);
-  ROS_INFO("%d points in border cloud after filtering", (int)border_cloud->points.size());
+  pass.filter(border_cloud);
 
   // tree object used for search
   pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
 
   // Estimate point normals
-  boost::shared_ptr<pcl::PointCloud<pcl::Normal> > border_normals(new pcl::PointCloud<pcl::Normal>);
-  pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
   ne.setSearchMethod(tree);
-  ne.setInputCloud(border_cloud);
+  ne.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
   ne.setRadiusSearch(normal_search_radius_);
-  ne.setKSearch(0);
-  ne.compute(*border_normals);
+  //ne.setKSearch(0);
+  ne.compute(border_normals);
 
+  //filter again to remove spurious NaNs
+  pcl::PointIndices nan_indices;
+  for (unsigned int i = 0; i < border_normals.points.size(); i++)
+    {
+      if (isnan(border_normals.points[i].normal[0]))
+        nan_indices.indices.push_back(i);
+    }
+         ROS_INFO("%d NaNs found", (int)nan_indices.indices.size());
+  //in pointcloud
+  extract.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
+  extract.setIndices(boost::make_shared<pcl::PointIndices> (nan_indices));
+  extract.setNegative(true);
+  extract.filter(border_cloud);
+  ROS_INFO("%d points in border cloud after filtering and NaN removal", (int)border_cloud.points.size());
+  //and in the normals
+  nextract.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::Normal> > (border_normals));
+  nextract.setIndices(boost::make_shared<pcl::PointIndices> (nan_indices));
+  nextract.setNegative(true);
+  nextract.filter(border_normals);
+  ROS_INFO("%d points in normals cloud after NaN removal", (int)border_normals.points.size());
+
+  // tree object used for search
+  pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree2 = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
+
+       tree2->setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
   // Decompose a region of space into clusters based on the euclidean distance between points, and the normal
   std::vector<pcl::PointIndices> clusters;
-  extractClusters(*border_cloud, *border_normals, tolerance_, tree, clusters, eps_angle_, min_pts_per_cluster_);
+  extractClusters(border_cloud, border_normals, tolerance_, tree2, clusters, eps_angle_, min_pts_per_cluster_);
   //pcl::extractEuclideanClusters(*border_cloud, *border_normals, 1.5, tree, clusters, 0.3, (unsigned int) 10);
 
-  // sort the clusters according to number of points they contain
-  std::sort(clusters.begin(), clusters.end(), compareClusters);
 
-  // Create the filtering object for cluster extraction based on indices
-  pcl::ExtractIndices<pcl::PointXYZ> extract;
-  //extract first cluster
-  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > cluster_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  extract.setInputCloud(border_cloud);
-  extract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.back()));
-  extract.setNegative(false);
-  extract.filter(*cluster_cloud);
-  ROS_INFO ("PointCloud representing the biggest cluster: %d data points.", cluster_cloud->width * cluster_cloud->height);
+  pcl::PointCloud<pcl::PointXYZ> cluster_cloud;
+  pcl::PointCloud<pcl::PointXYZ> cluster_cloud2;
+  pcl::PointCloud<pcl::PointXYZ> cluster_cloud3;
+  if (clusters.size() > 0) {
+    ROS_INFO ("%d clusters found.", (int)clusters.size());
+    // sort the clusters according to number of points they contain
+    std::sort(clusters.begin(), clusters.end(), compareClusters);
 
-  //extract second cluster
-  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > cluster_cloud2(new pcl::PointCloud<pcl::PointXYZ>);
-  extract.setInputCloud(border_cloud);
-  extract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.at(clusters.size()-2)));
-  extract.setNegative(false);
-  extract.filter(*cluster_cloud2);
-  ROS_INFO ("PointCloud representing the second cluster: %d data points.", cluster_cloud2->width * cluster_cloud2->height);
+    //extract first cluster
+    extract.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
+    extract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.back()));
+    extract.setNegative(false);
+    extract.filter(cluster_cloud);
+    ROS_INFO ("PointCloud representing the biggest cluster: %d data points.", cluster_cloud.width * cluster_cloud.height);
 
-  //extract second cluster
-  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > cluster_cloud3(new pcl::PointCloud<pcl::PointXYZ>);
-  extract.setInputCloud(border_cloud);
-  extract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.at(clusters.size()-3)));
-  extract.setNegative(false);
-  extract.filter(*cluster_cloud3);
-  ROS_INFO ("PointCloud representing the third cluster: %d data points.", cluster_cloud3->width * cluster_cloud3->height);
+    //extract second cluster
+    extract.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
+    extract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.at(clusters.size()-2)));
+    extract.setNegative(false);
+    extract.filter(cluster_cloud2);
+    ROS_INFO ("PointCloud representing the second cluster: %d data points.", cluster_cloud2.width * cluster_cloud2.height);
 
-  pcl::PointXYZ cluster_centroid (0, 0, 0);
-  BOOST_FOREACH (const pcl::PointXYZ& pcl_pt, cluster_cloud->points) {
-    cluster_centroid.x += pcl_pt.x;
-    cluster_centroid.y += pcl_pt.y;
+    //extract second cluster
+    extract.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
+    extract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.at(clusters.size()-3)));
+    extract.setNegative(false);
+    extract.filter(cluster_cloud3);
+    ROS_INFO ("PointCloud representing the third cluster: %d data points.", cluster_cloud3.width * cluster_cloud3.height);
+
+    pcl::PointXYZ cluster_centroid (0, 0, 0);
+    BOOST_FOREACH (const pcl::PointXYZ& pcl_pt, cluster_cloud.points) {
+      cluster_centroid.x += pcl_pt.x;
+      cluster_centroid.y += pcl_pt.y;
+    }
+    cluster_centroid.x /= cluster_cloud.points.size();
+    cluster_centroid.y /= cluster_cloud.points.size();
+
+    //publish cluster centroid as next best view pose
+    nbv_pose_.position.x = cluster_centroid.x;
+    nbv_pose_.position.y = cluster_centroid.y;
+    pose_pub_.publish(nbv_pose_);
   }
-  cluster_centroid.x /= cluster_cloud->points.size();
-  cluster_centroid.y /= cluster_cloud->points.size();
-
-  //publish cluster centroid as next best view pose
-  nbv_pose_.position.x = cluster_centroid.x;
-  nbv_pose_.position.y = cluster_centroid.y;
-  pose_pub_.publish(nbv_pose_);
-
+  else {
+    ROS_INFO ("No clusters found!");
+  }
 
   //publish border cloud for visualization
-  border_cloud_pub_.publish(*border_cloud);
+  border_cloud_pub_.publish(border_cloud);
+  //visualize normals of border cloud
+  visualizeNormals(border_cloud, border_normals);
   //publish the clusters for visualization
-  cluster_cloud_pub_.publish(*cluster_cloud);
-  cluster_cloud2_pub_.publish(*cluster_cloud2);
-  cluster_cloud3_pub_.publish(*cluster_cloud3);
+  cluster_cloud_pub_.publish(cluster_cloud);
+  cluster_cloud2_pub_.publish(cluster_cloud2);
+  cluster_cloud3_pub_.publish(cluster_cloud3);
 
   // publish binary octree
   if (0) {
@@ -442,6 +487,60 @@ void Nbv::createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap
 
 }
 
+void Nbv::visualizeNormals(const pcl::PointCloud<pcl::PointXYZ>& pointcloud, const pcl::PointCloud<pcl::Normal>& normals) {
+  static unsigned int lastsize = 0;
+  if (normals.points.size() >= lastsize) {
+      normals_marker_array_msg_.markers.resize(normals.points.size());
+  }
+
+  //BOOST_FOREACH(const pcl::PointXYZ& pt, pointcloud)
+  for (unsigned int i = 0; i < normals.points.size(); ++i)
+  {
+    geometry_msgs::Point pos;
+    pos.x = pointcloud.points[i].x;
+    pos.y = pointcloud.points[i].y;
+    pos.z = pointcloud.points[i].z;
+    normals_marker_array_msg_.markers[i].pose.position = pos;
+    //float nlength = sqrtf(normals.points[i].normal[0]*normals.points[i].normal[0] + normals.points[i].normal[1]*normals.points[i].normal[1] + normals.points[i].normal[2]*normals.points[i].normal[2]);
+    //ROS_INFO("normal: [%f %f %f] length: %f", normals.points[i].normal[0], normals.points[i].normal[1], normals.points[i].normal[2], nlength);
+    btVector3 axis(0, -normals.points[i].normal[2], normals.points[i].normal[1]);
+    btQuaternion quat(axis, axis.length());
+    //btQuaternion quat(0,0,0,1);
+    geometry_msgs::Quaternion quat_msg;
+    tf::quaternionTFToMsg(quat, quat_msg);
+    normals_marker_array_msg_.markers[i].pose.orientation = quat_msg;
+  }
+
+  for (unsigned int i = 0; i < normals_marker_array_msg_.markers.size(); ++i)
+  {
+    normals_marker_array_msg_.markers[i].header.frame_id = normals.header.frame_id;
+    normals_marker_array_msg_.markers[i].header.stamp = normals.header.stamp;
+    normals_marker_array_msg_.markers[i].id = i;
+    normals_marker_array_msg_.markers[i].ns = "Normals";
+    normals_marker_array_msg_.markers[i].color.r = 1.0f;
+    normals_marker_array_msg_.markers[i].color.g = 0.0f;
+    normals_marker_array_msg_.markers[i].color.b = 0.0f;
+    normals_marker_array_msg_.markers[i].color.a = 0.5f;
+    //normals_marker_array_msg_.markers[i].lifetime = ros::Duration::Duration();
+    normals_marker_array_msg_.markers[i].type = visualization_msgs::Marker::ARROW;
+    normals_marker_array_msg_.markers[i].scale.x = 0.2;
+    normals_marker_array_msg_.markers[i].scale.y = 0.2;
+    normals_marker_array_msg_.markers[i].scale.z = 0.2;
+
+    normals_marker_array_msg_.markers[i].action = visualization_msgs::Marker::ADD;
+  }
+
+  if (lastsize > normals.points.size()) {
+    for (unsigned int i = normals.points.size(); i < lastsize; ++i) {
+      normals_marker_array_msg_.markers[i].action = visualization_msgs::Marker::DELETE;
+    }
+  }
+  lastsize = normals.points.size();
+
+  normals_marker_array_publisher_.publish(normals_marker_array_msg_);
+}
+
+
 void Nbv::visualizeOctree(const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg, geometry_msgs::Point viewpoint) {
   // each array stores all cubes of a different size, one for each depth level:
   octree_marker_array_msg_.markers.resize(4);
@@ -548,6 +647,7 @@ void Nbv::extractClusters (const pcl::PointCloud<pcl::PointXYZ> &cloud,
                                  unsigned int min_pts_per_cluster,
                                  unsigned int max_pts_per_cluster)
 {
+  ROS_INFO("extracting clusters");
   ROS_ASSERT (tree->getInputCloud ()->points.size () == cloud.points.size ());
   ROS_ASSERT (cloud.points.size () == normals.points.size ());
 
