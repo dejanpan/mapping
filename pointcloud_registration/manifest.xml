@@ -21,6 +21,8 @@
    <depend package="pcl"/>
    <depend package="roscpp"/>
    <depend package="actionlib"/>
+   <depend package="tf"/>
+   <depend package="bullet"/>
 
    <!-- MSG DEPENDENCIES -->
    <depend package="sensor_msgs"/>
