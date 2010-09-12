@@ -8,7 +8,9 @@
 #include <pr2_controllers_msgs/SingleJointPositionAction.h>
 #include <pr2_msgs/SetPeriodicCmd.h>
 #include <pr2_msgs/PeriodicCmd.h>
-
+#include <pr2_msgs/LaserTrajCmd.h>
+#include <pr2_msgs/SetLaserTrajCmd.h>
+#include "pr2_msgs/LaserScannerSignal.h"
 class AutonomousExploration
 {
   public:
@@ -16,6 +18,7 @@ class AutonomousExploration
     ~AutonomousExploration();
     void autonomousExplorationCallBack(const geometry_msgs::Pose& pose_msg);
     void pointcloudCallBack(const sensor_msgs::PointCloud& pointcloud_msg);
+    void laserScannerSignalCallBack(const pr2_msgs::LaserScannerSignal laser_scanner_signal_msg);
     void moveRobot(geometry_msgs::Pose goal_pose);
     void moveTorso(double position, double velocity, std::string direction);
     void setLaserProfile(std::string mode);
@@ -26,13 +29,14 @@ class AutonomousExploration
     ros::NodeHandle nh_;
     ros::Subscriber pose_subscriber_;
     ros::Subscriber pointcloud_subscriber_;
+    ros::Subscriber laser_signal_subscriber_;
     ros::Publisher pointcloud_publisher_;
     ros::Publisher tilt_laser_publisher_;
+    ros::Publisher tilt_laser_traj_cmd_publisher_;
     std::string subscribe_pose_topic_;
     boost::thread spin_thread_;
     geometry_msgs::Pose pose_msg_;
-    bool get_pointcloud_, received_pose_;
-    //! Client for changing laser scan speed
+    bool get_pointcloud_, received_pose_, received_laser_signal_;
     //ros::ServiceClient tilt_laser_client_;
 };
 
@@ -42,6 +46,7 @@ AutonomousExploration::AutonomousExploration():nh_("~")
   ROS_INFO("autonomous_exploration node is up and running.");
   get_pointcloud_ = false;
   received_pose_ = false;
+  received_laser_signal_ = false;
   run();
 }
 AutonomousExploration::~AutonomousExploration()
@@ -55,7 +60,9 @@ void AutonomousExploration::run()
   pointcloud_publisher_ = nh_.advertise<sensor_msgs::PointCloud>("pointcloud", 100);
   tilt_laser_publisher_ = nh_.advertise<pr2_msgs::PeriodicCmd>("/laser_tilt_controller/set_periodic_cmd", 1);
   pointcloud_subscriber_ = nh_.subscribe("/shoulder_cloud", 100, &AutonomousExploration::pointcloudCallBack, this);
+  laser_signal_subscriber_ = nh_.subscribe("/laser_tilt_controller/laser_scanner_signal", 1, &AutonomousExploration::laserScannerSignalCallBack, this);
  // tilt_laser_client_ = nh_.serviceClient<pr2_msgs::SetPeriodicCmd>("laser_tilt_controller/set_periodic_cmd");
+  tilt_laser_traj_cmd_publisher_ = nh_.advertise<pr2_msgs::LaserTrajCmd>("/laser_tilt_controller/set_traj_cmd", 1);
   spin_thread_ = boost::thread (boost::bind (&ros::spin));
   //ros::spin();
 }
@@ -84,14 +91,21 @@ void AutonomousExploration::spin()
         new_pose.orientation.y = q.y();
         new_pose.orientation.z = q.z();
         new_pose.orientation.w = q.w();
+        //setLaserProfile("scan");
         moveRobot(new_pose);
+        //setLaserProfile("navigation");
 
-        //get a point cloud
-        //get_pointcloud_ = true;
+        received_laser_signal_ = false;
+        while(!received_laser_signal_)
+        {
+          loop.sleep();
+        }
 
         //TODO: Use laser service to sync
         //Wait 11 seconds before taking a scan
-        sleep(2);
+        sleep(11);
+        //get a point cloud
+        get_pointcloud_ = true;
         angles += 30.0;
       }
       received_pose_ = false;
@@ -171,7 +185,6 @@ void AutonomousExploration::setLaserProfile(std::string mode)
   //  ROS_INFO("Waiting for tilt laser periodic command service to come up");
   //}
 
-  pr2_msgs::PeriodicCmd periodic_cmd_msg;
   //pr2_msgs::SetPeriodicCmd::Request req;
   //pr2_msgs::SetPeriodicCmd::Response res;
   //req.command.header.frame_id = "/map";
@@ -179,22 +192,50 @@ void AutonomousExploration::setLaserProfile(std::string mode)
   //req.command.header.seq = 0;
 
   //req.command.profile = "linear";
-  periodic_cmd_msg.header.frame_id = "/map";
-  periodic_cmd_msg.header.stamp = ros::Time::now();
-
-  periodic_cmd_msg.profile = "linear";
 
   if(mode == "scan")
   {
+    pr2_msgs::PeriodicCmd periodic_cmd_msg;
+
+    periodic_cmd_msg.header.frame_id = "/map";
+    periodic_cmd_msg.header.stamp = ros::Time::now();
+
+    periodic_cmd_msg.profile = "linear";
     periodic_cmd_msg.offset = 0.3;
     periodic_cmd_msg.period = 20.0;
     periodic_cmd_msg.amplitude = 0.8;
     //req.command.period = 20.0;
     //req.command.amplitude = 0.8;
     //req.command.offset = 0.3;
+    tilt_laser_publisher_.publish(periodic_cmd_msg);
+    ROS_INFO("Tilt laser successfully published. Mode: %s", mode.c_str());
   }
   else if(mode == "navigation")
   {
+    pr2_msgs::LaserTrajCmd laser_traj_cmd_msg;
+
+    laser_traj_cmd_msg.header.frame_id = "/map";
+    laser_traj_cmd_msg.header.stamp = ros::Time::now();
+
+    laser_traj_cmd_msg.profile = "blended_linear";
+    laser_traj_cmd_msg.position.resize(3);
+    ROS_INFO("Resized");
+    laser_traj_cmd_msg.position[0] = 1.05;
+    laser_traj_cmd_msg.position[1] = -0.7;
+    laser_traj_cmd_msg.position[2] = 1.05;
+
+    ros::Duration dur;
+    laser_traj_cmd_msg.time_from_start.resize(3);
+    ROS_INFO("Resized time_from_start");
+    laser_traj_cmd_msg.time_from_start[0] = dur.fromSec(0.0);
+    laser_traj_cmd_msg.time_from_start[1] = dur.fromSec(1.8);
+    laser_traj_cmd_msg.time_from_start[2] = dur.fromSec(2.3125);
+
+    laser_traj_cmd_msg.max_velocity = 10;
+    laser_traj_cmd_msg.max_acceleration = 30;
+    tilt_laser_traj_cmd_publisher_.publish(laser_traj_cmd_msg);
+    ROS_INFO("Tilt Laser Traj Command successfully called. Mode: %s\n", mode.c_str());
+
   }
   //if(!tilt_laser_client_.call(req,res))
   //{
@@ -205,8 +246,13 @@ void AutonomousExploration::setLaserProfile(std::string mode)
   //{
   //  ROS_INFO("Tilt laser service successfully called.\n");
   //}
-  tilt_laser_publisher_.publish(periodic_cmd_msg);
-  ROS_INFO("Tilt laser successfully published. Mode: %s", mode.c_str());
+}
+void AutonomousExploration::laserScannerSignalCallBack(const pr2_msgs::LaserScannerSignal laser_scanner_signal_msg)
+{
+  if(!received_laser_signal_)
+  {
+    received_laser_signal_ = true;
+  }
 }
 void AutonomousExploration::pointcloudCallBack(const sensor_msgs::PointCloud& pointcloud_msg)
 {
