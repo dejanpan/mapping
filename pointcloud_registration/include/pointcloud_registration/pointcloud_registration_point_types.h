@@ -64,16 +64,16 @@ namespace pcl
 //                                   (float, normal[2], normal_z)
 //                                   (float, curvature, curvature)
 //);
-POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PointXYZRGBNormalScanIndex,
+POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PointXYZIRGBNormal,
                                    (float, x, x)
                                    (float, y, y)
                                    (float, z, z)
+                                   (float, intensity, intensity)
                                    (float, rgb, rgb)
                                    (float, normal[0], normal_x)
                                    (float, normal[1], normal_y)
                                    (float, normal[2], normal_z)
                                    (float, curvature, curvature)
-                                   (uint32_t, scan_index, scan_index)
 );
 
 POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::SpinImageLocal,
