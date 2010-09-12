@@ -46,18 +46,18 @@ namespace pcl
   //  return os;
   //}
 
-struct PointXYZRGBNormalScanIndex
+struct PointXYZIRGBNormal
 {
   PCL_ADD_POINT4D;
+  float intensity;
   float rgb;
   PCL_ADD_NORMAL4D;
   float curvature;
-  uint32_t scan_index;
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 } EIGEN_ALIGN_128;
-inline std::ostream& operator<<(std::ostream& os, const PointXYZRGBNormalScanIndex& p)
+inline std::ostream& operator<<(std::ostream& os, const PointXYZIRGBNormal& p)
 {
-  os << "("<<p.x<<","<<p.y<<","<<p.z<<" - "<<p.rgb<<" - "<<p.normal[0]<<","<<p.normal[1]<<","<<p.normal[2]<<" - "<<p.curvature<<" - "<<p.scan_index<<")";
+  os << "("<<p.x<<","<<p.y<<","<<p.z<<" - "<<p.intensity<<" - "<<p.rgb<<" - "<<p.normal[0]<<","<<p.normal[1]<<","<<p.normal[2]<<" - "<<p.curvature<<")";
   return os;
 }
 
