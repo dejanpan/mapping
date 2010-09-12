@@ -7,6 +7,7 @@
 #include "LinearMath/btQuaternion.h"
 #include <pr2_controllers_msgs/SingleJointPositionAction.h>
 #include <pr2_msgs/SetPeriodicCmd.h>
+#include <pr2_msgs/PeriodicCmd.h>
 
 class AutonomousExploration
 {
@@ -26,12 +27,13 @@ class AutonomousExploration
     ros::Subscriber pose_subscriber_;
     ros::Subscriber pointcloud_subscriber_;
     ros::Publisher pointcloud_publisher_;
+    ros::Publisher tilt_laser_publisher_;
     std::string subscribe_pose_topic_;
     boost::thread spin_thread_;
     geometry_msgs::Pose pose_msg_;
     bool get_pointcloud_, received_pose_;
     //! Client for changing laser scan speed
-    ros::ServiceClient tilt_laser_client_;
+    //ros::ServiceClient tilt_laser_client_;
 };
 
 AutonomousExploration::AutonomousExploration():nh_("~")
@@ -51,8 +53,9 @@ void AutonomousExploration::run()
 {
   pose_subscriber_ = nh_.subscribe(subscribe_pose_topic_, 100, &AutonomousExploration::autonomousExplorationCallBack, this);
   pointcloud_publisher_ = nh_.advertise<sensor_msgs::PointCloud>("pointcloud", 100);
+  tilt_laser_publisher_ = nh_.advertise<pr2_msgs::PeriodicCmd>("/laser_tilt_controller/set_periodic_cmd", 1);
   pointcloud_subscriber_ = nh_.subscribe("/shoulder_cloud", 100, &AutonomousExploration::pointcloudCallBack, this);
-  tilt_laser_client_ = nh_.serviceClient<pr2_msgs::SetPeriodicCmd>("laser_tilt_controller/set_periodic_cmd");
+ // tilt_laser_client_ = nh_.serviceClient<pr2_msgs::SetPeriodicCmd>("laser_tilt_controller/set_periodic_cmd");
   spin_thread_ = boost::thread (boost::bind (&ros::spin));
   //ros::spin();
 }
@@ -163,38 +166,47 @@ void AutonomousExploration::moveTorso(double position, double velocity, std::str
 
 void AutonomousExploration::setLaserProfile(std::string mode)
 {
-  while ( !ros::service::waitForService("laser_tilt_controller/set_periodic_cmd", ros::Duration(2.0)) && nh_.ok() )
-  {
-    ROS_INFO("Waiting for tilt laser periodic command service to come up");
-  }
+  //while ( !ros::service::waitForService("laser_tilt_controller/set_periodic_cmd", ros::Duration(2.0)) && nh_.ok() )
+  //{
+  //  ROS_INFO("Waiting for tilt laser periodic command service to come up");
+  //}
 
-  pr2_msgs::SetPeriodicCmd::Request req;
-  pr2_msgs::SetPeriodicCmd::Response res;
-  req.command.header.frame_id = "/map";
-  req.command.header.stamp = ros::Time::now();
-  req.command.header.seq = 0;
+  pr2_msgs::PeriodicCmd periodic_cmd_msg;
+  //pr2_msgs::SetPeriodicCmd::Request req;
+  //pr2_msgs::SetPeriodicCmd::Response res;
+  //req.command.header.frame_id = "/map";
+  //req.command.header.stamp = ros::Time::now();
+  //req.command.header.seq = 0;
 
-  req.command.profile = "linear";
+  //req.command.profile = "linear";
+  periodic_cmd_msg.header.frame_id = "/map";
+  periodic_cmd_msg.header.stamp = ros::Time::now();
+
+  periodic_cmd_msg.profile = "linear";
 
   if(mode == "scan")
   {
-    req.command.period = 20.0;
-    req.command.amplitude = 0.8;
-    req.command.offset = 0.3;
+    periodic_cmd_msg.offset = 0.3;
+    periodic_cmd_msg.period = 20.0;
+    periodic_cmd_msg.amplitude = 0.8;
+    //req.command.period = 20.0;
+    //req.command.amplitude = 0.8;
+    //req.command.offset = 0.3;
   }
   else if(mode == "navigation")
   {
   }
-  if(!tilt_laser_client_.call(req,res))
-  {
-    ROS_ERROR("Tilt laser service call failed.\n");
-    exit(1);
-  }
-  else
-  {
-    ROS_INFO("Tilt laser service successfully called.\n");
-  }
-
+  //if(!tilt_laser_client_.call(req,res))
+  //{
+  //  ROS_ERROR("Tilt laser service call failed.\n");
+  //  exit(1);
+  //}
+  //else
+  //{
+  //  ROS_INFO("Tilt laser service successfully called.\n");
+  //}
+  tilt_laser_publisher_.publish(periodic_cmd_msg);
+  ROS_INFO("Tilt laser successfully published. Mode: %s", mode.c_str());
 }
 void AutonomousExploration::pointcloudCallBack(const sensor_msgs::PointCloud& pointcloud_msg)
 {
