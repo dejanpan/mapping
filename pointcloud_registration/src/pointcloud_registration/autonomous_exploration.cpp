@@ -74,6 +74,7 @@ void AutonomousExploration::spin()
       //move robot to the received pose
       moveRobot(pose_msg_);
       //rise the spine up to scan
+      //setLaserProfile(slow);
       moveTorso(0.3, 1.0, "up");
       double angles = 0.0;
       while(angles != 360)
@@ -100,6 +101,7 @@ void AutonomousExploration::spin()
       received_pose_ = false;
       //lower the spine to navigate some place else
       moveTorso(0.01, 1.0, "down");
+      //setLaserProfile(fast);
     }
   }
 }
