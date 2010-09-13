@@ -29,7 +29,7 @@
     <param name="tolerance" value="0.4"/>
     <param name="eps_angle" value="0.4"/>
     <param name="normal_search_radius" value="0.5"/>
-    <param name="boundary_angle_threshold" value="3.1"/>
+    <param name="boundary_angle_threshold" value="3.2"/>
   </node>
 
 </launch>
