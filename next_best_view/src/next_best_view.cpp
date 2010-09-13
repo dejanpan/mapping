@@ -10,6 +10,7 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/features/normal_3d.h>
+#include <pcl/features/boundary.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include "pcl/filters/extract_indices.h"
 #include "pcl/filters/passthrough.h"
@@ -360,6 +361,23 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
     cluster_centroid.x /= cluster_cloud.points.size();
     cluster_centroid.y /= cluster_cloud.points.size();
 
+    pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree3 = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
+    pcl::PointCloud<pcl::Boundary> boundary_cloud;
+    pcl::BoundaryEstimation<pcl::PointXYZ, pcl::Normal, pcl::Boundary> be;
+    be.setSearchMethod(tree3);
+    be.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
+    be.setInputNormals(boost::make_shared<pcl::PointCloud<pcl::Normal> > (border_normals));
+    be.setIndices(boost::make_shared<pcl::PointIndices> (clusters.back()));
+    be.setRadiusSearch(.5);
+    be.angle_threshold_ = M_PI;
+    be.compute(boundary_cloud);
+    unsigned int nbp = 0;
+    BOOST_FOREACH(const pcl::Boundary& bp, boundary_cloud.points) {
+      if (bp.boundary_point)
+        nbp++;
+    }
+    ROS_INFO ("%d boundary points in the first cluster.", nbp);
+
     //publish cluster centroid as next best view pose
     nbv_pose_.position.x = cluster_centroid.x;
     nbv_pose_.position.y = cluster_centroid.y;
@@ -371,8 +389,6 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
 
   //publish border cloud for visualization
   border_cloud_pub_.publish(border_cloud);
-  //visualize normals of border cloud
-  visualizeNormals(border_cloud, border_normals);
   //publish the clusters for visualization
   cluster_cloud_pub_.publish(cluster_cloud);
   cluster_cloud2_pub_.publish(cluster_cloud2);
@@ -388,7 +404,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   ROS_INFO("All computed and published");
 
   //**********************************************************************************
-  //Visualization of Octree
+  //Visualization
   //**********************************************************************************
   if (visualize_octree_)
   {
@@ -398,6 +414,8 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
     viewpoint.z = pt.z();
     visualizeOctree(pointcloud2_msg, viewpoint);
   }
+  //visualize normals of border cloud
+  visualizeNormals(border_cloud, border_normals);
 }
 
 
@@ -491,7 +509,6 @@ void Nbv::visualizeNormals(const pcl::PointCloud<pcl::PointXYZ>& pointcloud, con
       normals_marker_array_msg_.markers.resize(normals.points.size());
   }
 
-  //BOOST_FOREACH(const pcl::PointXYZ& pt, pointcloud)
   for (unsigned int i = 0; i < normals.points.size(); ++i)
   {
     geometry_msgs::Point pos;
@@ -499,11 +516,8 @@ void Nbv::visualizeNormals(const pcl::PointCloud<pcl::PointXYZ>& pointcloud, con
     pos.y = pointcloud.points[i].y;
     pos.z = pointcloud.points[i].z;
     normals_marker_array_msg_.markers[i].pose.position = pos;
-    //float nlength = sqrtf(normals.points[i].normal[0]*normals.points[i].normal[0] + normals.points[i].normal[1]*normals.points[i].normal[1] + normals.points[i].normal[2]*normals.points[i].normal[2]);
-    //ROS_INFO("normal: [%f %f %f] length: %f", normals.points[i].normal[0], normals.points[i].normal[1], normals.points[i].normal[2], nlength);
     btVector3 axis(0, -normals.points[i].normal[2], normals.points[i].normal[1]);
     btQuaternion quat(axis, axis.length());
-    //btQuaternion quat(0,0,0,1);
     geometry_msgs::Quaternion quat_msg;
     tf::quaternionTFToMsg(quat, quat_msg);
     normals_marker_array_msg_.markers[i].pose.orientation = quat_msg;
