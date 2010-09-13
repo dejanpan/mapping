@@ -64,6 +64,7 @@ protected:
   int min_pts_per_cluster_;
   double eps_angle_;
   double tolerance_;
+  double boundary_angle_threshold_;
 
   //objects needed
   tf::TransformListener tf_listener_;
@@ -138,6 +139,7 @@ Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
   nh_.param("min_pts_per_cluster", min_pts_per_cluster_, 10);
   nh_.param("eps_angle", eps_angle_, 0.25);
   nh_.param("tolerance", tolerance_, 0.3);
+  nh_.param("boundary_angle_threshold", boundary_angle_threshold_, 2.5);
 
   cloud_sub_ = nh_.subscribe (input_cloud_topic_, 1, &Nbv::cloud_cb, this);
   octree_pub_ = nh_.advertise<octomap_server::OctomapBinary> (output_octree_topic_, 1);
@@ -181,6 +183,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   nh_.getParam("min_pts_per_cluster", min_pts_per_cluster_);
   nh_.getParam("eps_angle", eps_angle_);
   nh_.getParam("tolerance", tolerance_);
+  nh_.getParam("boundary_angle_threshold", boundary_angle_threshold_);
 
   //get the viewpoint (position of laser) from tf
   tf::StampedTransform transform;
@@ -302,16 +305,22 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
     extract.filter(cluster_cloud3);
     ROS_INFO ("PointCloud representing the third cluster: %d data points.", cluster_cloud3.width * cluster_cloud3.height);
 
+    //extract normals for first cluster
+    pcl::PointCloud<pcl::Normal> cluster_normals;
+    nextract.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::Normal> > (border_normals));
+    nextract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.back()));
+    nextract.setNegative(false);
+    nextract.filter(cluster_normals);
+
     // find boundary points of cluster
     pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree3 = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
     pcl::PointCloud<pcl::Boundary> boundary_cloud;
     pcl::BoundaryEstimation<pcl::PointXYZ, pcl::Normal, pcl::Boundary> be;
     be.setSearchMethod(tree3);
-    be.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
-    be.setInputNormals(boost::make_shared<pcl::PointCloud<pcl::Normal> > (border_normals));
-    be.setIndices(boost::make_shared<pcl::PointIndices> (clusters.back()));
+    be.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (cluster_cloud));
+    be.setInputNormals(boost::make_shared<pcl::PointCloud<pcl::Normal> > (cluster_normals));
     be.setRadiusSearch(.5);
-    be.angle_threshold_ = 2.5;
+    be.angle_threshold_ = boundary_angle_threshold_;
     be.compute(boundary_cloud);
 
     nbv_pose_array_.poses.clear();
