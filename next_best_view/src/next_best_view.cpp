@@ -320,8 +320,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   tree2->setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
   // Decompose a region of space into clusters based on the euclidean distance between points, and the normal
   std::vector<pcl::PointIndices> clusters;
-  extractClusters(border_cloud, border_normals, tolerance_, tree2, clusters, eps_angle_, min_pts_per_cluster_);
-  //pcl::extractEuclideanClusters(*border_cloud, *border_normals, 1.5, tree, clusters, 0.3, (unsigned int) 10);
+  pcl::extractEuclideanClusters <pcl::PointXYZ, pcl::Normal> (border_cloud, border_normals, tolerance_, tree2, clusters, eps_angle_, min_pts_per_cluster_);
 
 
   pcl::PointCloud<pcl::PointXYZ> cluster_cloud;
@@ -624,93 +623,6 @@ void Nbv::visualizeOctree(const sensor_msgs::PointCloud2ConstPtr& pointcloud2_ms
     }
   }
   octree_marker_array_msg_.markers.clear();
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/** \brief Decompose a region of space into clusters based on the euclidean distance between points, and the normal
-  * angular deviation
-  * \param cloud the point cloud message
-  * \param normals the point cloud message containing normal information
-  * \param tree the spatial locator (e.g., kd-tree) used for nearest neighbors searching
-  * \note the tree has to be created as a spatial locator on \a cloud
-  * \param tolerance the spatial cluster tolerance as a measure in the L2 Euclidean space
-  * \param clusters the resultant clusters containing point indices (as a vector of PointIndices)
-  * \param eps_angle the maximum allowed difference between normals in degrees for cluster/region growing
-  * \param min_pts_per_cluster minimum number of points that a cluster may contain (default = 1)
-  */
-void Nbv::extractClusters (const pcl::PointCloud<pcl::PointXYZ> &cloud,
-                                 const pcl::PointCloud<pcl::Normal> &normals,
-                                 float tolerance,
-                                 const boost::shared_ptr<pcl::KdTree<pcl::PointXYZ> > &tree,
-                                 std::vector<pcl::PointIndices> &clusters, double eps_angle,
-                                 unsigned int min_pts_per_cluster,
-                                 unsigned int max_pts_per_cluster)
-{
-  ROS_INFO("extracting clusters");
-  ROS_ASSERT (tree->getInputCloud ()->points.size () == cloud.points.size ());
-  ROS_ASSERT (cloud.points.size () == normals.points.size ());
-
-  // Create a bool vector of processed point indices, and initialize it to false
-  std::vector<bool> processed (cloud.points.size (), false);
-
-  std::vector<int> nn_indices;
-  std::vector<float> nn_distances;
-  // Process all points in the indices vector
-  for (size_t i = 0; i < cloud.points.size (); ++i)
-  {
-    if (processed[i])
-      continue;
-
-    std::vector<unsigned int> seed_queue;
-    int sq_idx = 0;
-    seed_queue.push_back (i);
-
-    processed[i] = true;
-
-    while (sq_idx < (int)seed_queue.size ())
-    {
-      // Search for sq_idx
-      if (!tree->radiusSearch (seed_queue[sq_idx], tolerance, nn_indices, nn_distances))
-      {
-        sq_idx++;
-        continue;
-      }
-
-      for (size_t j = 1; j < nn_indices.size (); ++j)             // nn_indices[0] should be sq_idx
-      {
-        if (processed[nn_indices[j]])                         // Has this point been processed before ?
-          continue;
-
-        processed[nn_indices[j]] = true;
-        // [-1;1]
-        double dot_p = normals.points[i].normal[0] * normals.points[nn_indices[j]].normal[0] +
-                       normals.points[i].normal[1] * normals.points[nn_indices[j]].normal[1] +
-                       normals.points[i].normal[2] * normals.points[nn_indices[j]].normal[2];
-        if ( fabs (acos (dot_p)) < eps_angle )
-        {
-          processed[nn_indices[j]] = true;
-          seed_queue.push_back (nn_indices[j]);
-        }
-      }
-
-      sq_idx++;
-    }
-
-    // If this queue is satisfactory, add to the clusters
-    if (seed_queue.size () >= min_pts_per_cluster && seed_queue.size () <= max_pts_per_cluster)
-    {
-      pcl::PointIndices r;
-      r.indices.resize (seed_queue.size ());
-      for (size_t j = 0; j < seed_queue.size (); ++j)
-        r.indices[j] = seed_queue[j];
-
-      sort (r.indices.begin (), r.indices.end ());
-      r.indices.erase (unique (r.indices.begin (), r.indices.end ()), r.indices.end ());
-
-      r.header = cloud.header;
-      clusters.push_back (r);   // We could avoid a copy by working directly in the vector
-    }
-  }
 }
 
 int main (int argc, char* argv[])
