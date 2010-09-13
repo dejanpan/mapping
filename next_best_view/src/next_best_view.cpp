@@ -331,10 +331,11 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
         nbv_pose.position.x = cluster_cloud.points[i].x;
         nbv_pose.position.y = cluster_cloud.points[i].y;
         nbv_pose.position.z = cluster_cloud.points[i].z;
-        nbv_pose.orientation.x = 0.0;
-        nbv_pose.orientation.y = 0.0;
-        nbv_pose.orientation.z = 0.0;
-        nbv_pose.orientation.w = 1.0;
+        btVector3 axis(0, -cluster_normals.points[i].normal[2], cluster_normals.points[i].normal[1]);
+        btQuaternion quat(axis, axis.length());
+        geometry_msgs::Quaternion quat_msg;
+        tf::quaternionTFToMsg(quat, quat_msg);
+        nbv_pose.orientation = quat_msg;
         nbv_pose_array_.poses.push_back(nbv_pose);
         nbp++;
       }
