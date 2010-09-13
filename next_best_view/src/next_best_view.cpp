@@ -296,12 +296,11 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
 
   //filter again to remove spurious NaNs
   pcl::PointIndices nan_indices;
-  for (unsigned int i = 0; i < border_normals.points.size(); i++)
-    {
-      if (isnan(border_normals.points[i].normal[0]))
-        nan_indices.indices.push_back(i);
-    }
-         ROS_INFO("%d NaNs found", (int)nan_indices.indices.size());
+  for (unsigned int i = 0; i < border_normals.points.size(); i++) {
+    if (isnan(border_normals.points[i].normal[0]))
+      nan_indices.indices.push_back(i);
+  }
+  ROS_INFO("%d NaNs found", (int)nan_indices.indices.size());
   //in pointcloud
   extract.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
   extract.setIndices(boost::make_shared<pcl::PointIndices> (nan_indices));
@@ -318,7 +317,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   // tree object used for search
   pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree2 = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
 
-       tree2->setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
+  tree2->setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
   // Decompose a region of space into clusters based on the euclidean distance between points, and the normal
   std::vector<pcl::PointIndices> clusters;
   extractClusters(border_cloud, border_normals, tolerance_, tree2, clusters, eps_angle_, min_pts_per_cluster_);
