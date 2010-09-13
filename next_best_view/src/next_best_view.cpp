@@ -104,6 +104,7 @@ protected:
   void visualizeNormals(const pcl::PointCloud<pcl::PointXYZ> &points, const pcl::PointCloud<pcl::Normal>& normals);
   void castRayAndLabel(pcl::PointCloud<pcl::PointXYZ>& cloud, octomap::pose6d origin);
   void findBorderPoints(pcl::PointCloud<pcl::PointXYZ>& border_cloud, std::string frame_id);
+  void computeBoundaryPoints(pcl::PointCloud<pcl::PointXYZ>& border_cloud, pcl::PointCloud<pcl::Normal>& border_normals, std::vector<pcl::PointIndices>& clusters, pcl::PointCloud<pcl::PointXYZ>* cluster_clouds);
 
   void extractClusters (const pcl::PointCloud<pcl::PointXYZ> &cloud,
                                  const pcl::PointCloud<pcl::Normal> &normals,
@@ -275,87 +276,22 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   std::vector<pcl::PointIndices> clusters;
   pcl::extractEuclideanClusters <pcl::PointXYZ, pcl::Normal> (border_cloud, border_normals, tolerance_, tree2, clusters, eps_angle_, min_pts_per_cluster_);
 
+  pcl::PointCloud<pcl::PointXYZ> cluster_clouds[3];
 
-  pcl::PointCloud<pcl::PointXYZ> cluster_cloud;
-  pcl::PointCloud<pcl::PointXYZ> cluster_cloud2;
-  pcl::PointCloud<pcl::PointXYZ> cluster_cloud3;
-  if (clusters.size() > 0) {
-    ROS_INFO ("%d clusters found.", (int)clusters.size());
-    // sort the clusters according to number of points they contain
-    std::sort(clusters.begin(), clusters.end(), compareClusters);
+  /*
+   * compute boundary points from clusters and put them into pose array
+   */
+  computeBoundaryPoints(border_cloud, border_normals, clusters, cluster_clouds);
 
-    //extract first cluster
-    extract.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
-    extract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.back()));
-    extract.setNegative(false);
-    extract.filter(cluster_cloud);
-    ROS_INFO ("PointCloud representing the biggest cluster: %d data points.", cluster_cloud.width * cluster_cloud.height);
-
-    //extract second cluster
-    extract.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
-    extract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.at(clusters.size()-2)));
-    extract.setNegative(false);
-    extract.filter(cluster_cloud2);
-    ROS_INFO ("PointCloud representing the second cluster: %d data points.", cluster_cloud2.width * cluster_cloud2.height);
-
-    //extract second cluster
-    extract.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
-    extract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.at(clusters.size()-3)));
-    extract.setNegative(false);
-    extract.filter(cluster_cloud3);
-    ROS_INFO ("PointCloud representing the third cluster: %d data points.", cluster_cloud3.width * cluster_cloud3.height);
-
-    //extract normals for first cluster
-    pcl::PointCloud<pcl::Normal> cluster_normals;
-    nextract.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::Normal> > (border_normals));
-    nextract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.back()));
-    nextract.setNegative(false);
-    nextract.filter(cluster_normals);
-
-    // find boundary points of cluster
-    pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree3 = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
-    pcl::PointCloud<pcl::Boundary> boundary_cloud;
-    pcl::BoundaryEstimation<pcl::PointXYZ, pcl::Normal, pcl::Boundary> be;
-    be.setSearchMethod(tree3);
-    be.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (cluster_cloud));
-    be.setInputNormals(boost::make_shared<pcl::PointCloud<pcl::Normal> > (cluster_normals));
-    be.setRadiusSearch(.5);
-    be.angle_threshold_ = boundary_angle_threshold_;
-    be.compute(boundary_cloud);
-
-    nbv_pose_array_.poses.clear();
-    geometry_msgs::Pose nbv_pose;
-    unsigned int nbp = 0;
-    for (unsigned int i = 0; i < boundary_cloud.points.size(); ++i) {
-      if (boundary_cloud.points[i].boundary_point) {
-        nbv_pose.position.x = cluster_cloud.points[i].x;
-        nbv_pose.position.y = cluster_cloud.points[i].y;
-        nbv_pose.position.z = cluster_cloud.points[i].z;
-        btVector3 axis(0, -cluster_normals.points[i].normal[2], cluster_normals.points[i].normal[1]);
-        btQuaternion quat(axis, axis.length());
-        geometry_msgs::Quaternion quat_msg;
-        tf::quaternionTFToMsg(quat, quat_msg);
-        nbv_pose.orientation = quat_msg;
-        nbv_pose_array_.poses.push_back(nbv_pose);
-        nbp++;
-      }
-    }
-    ROS_INFO ("%d boundary points in the first cluster.", nbp);
-    nbv_pose_array_.header.frame_id = cluster_cloud.header.frame_id;
-    nbv_pose_array_.header.stamp = ros::Time::now();
-
-    pose_pub_.publish(nbv_pose_array_);
-  }
-  else {
-    ROS_INFO ("No clusters found!");
-  }
+  //publish poses
+  pose_pub_.publish(nbv_pose_array_);
 
   //publish border cloud for visualization
   border_cloud_pub_.publish(border_cloud);
   //publish the clusters for visualization
-  cluster_cloud_pub_.publish(cluster_cloud);
-  cluster_cloud2_pub_.publish(cluster_cloud2);
-  cluster_cloud3_pub_.publish(cluster_cloud3);
+  cluster_cloud_pub_.publish(cluster_clouds[0]);
+  cluster_cloud2_pub_.publish(cluster_clouds[1]);
+  cluster_cloud3_pub_.publish(cluster_clouds[2]);
 
   // publish binary octree
   if (0) {
@@ -379,6 +315,81 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   }
   //visualize normals of border cloud
   visualizeNormals(border_cloud, border_normals);
+}
+
+void Nbv::computeBoundaryPoints(pcl::PointCloud<pcl::PointXYZ>& border_cloud, pcl::PointCloud<pcl::Normal>& border_normals, std::vector<pcl::PointIndices>& clusters, pcl::PointCloud<pcl::PointXYZ>* cluster_clouds) {
+  //clear old poses
+  nbv_pose_array_.poses.clear();
+
+  if (clusters.size() > 0) {
+    ROS_INFO ("%d clusters found.", (int)clusters.size());
+    // sort the clusters according to number of points they contain
+    std::sort(clusters.begin(), clusters.end(), compareClusters);
+
+    pcl::ExtractIndices<pcl::PointXYZ> extract;
+    pcl::ExtractIndices<pcl::Normal> nextract;
+
+    for (unsigned int nc = 0; nc < clusters.size(); nc++) {
+      //extract maximum of 3 biggest clusters
+      if (nc == 3)
+        break;
+
+      //extract a cluster
+      pcl::PointCloud<pcl::PointXYZ> cluster_cloud;
+      extract.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
+      extract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.back()));
+      extract.setNegative(false);
+      extract.filter(cluster_cloud);
+      ROS_INFO ("PointCloud representing the cluster %d: %d data points.", nc, cluster_cloud.width * cluster_cloud.height);
+
+      //extract normals of cluster
+      pcl::PointCloud<pcl::Normal> cluster_normals;
+      nextract.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::Normal> > (border_normals));
+      nextract.setIndices(boost::make_shared<pcl::PointIndices> (clusters.back()));
+      nextract.setNegative(false);
+      nextract.filter(cluster_normals);
+
+      // find boundary points of cluster
+      pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree3 = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
+      pcl::PointCloud<pcl::Boundary> boundary_cloud;
+      pcl::BoundaryEstimation<pcl::PointXYZ, pcl::Normal, pcl::Boundary> be;
+      be.setSearchMethod(tree3);
+      be.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (cluster_cloud));
+      be.setInputNormals(boost::make_shared<pcl::PointCloud<pcl::Normal> > (cluster_normals));
+      be.setRadiusSearch(.5);
+      be.angle_threshold_ = boundary_angle_threshold_;
+      be.compute(boundary_cloud);
+
+      geometry_msgs::Pose nbv_pose;
+      unsigned int nbp = 0;
+      for (unsigned int i = 0; i < boundary_cloud.points.size(); ++i) {
+        if (boundary_cloud.points[i].boundary_point) {
+          nbv_pose.position.x = cluster_cloud.points[i].x;
+          nbv_pose.position.y = cluster_cloud.points[i].y;
+          nbv_pose.position.z = cluster_cloud.points[i].z;
+          btVector3 axis(0, -cluster_normals.points[i].normal[2], cluster_normals.points[i].normal[1]);
+          btQuaternion quat(axis, axis.length());
+          geometry_msgs::Quaternion quat_msg;
+          tf::quaternionTFToMsg(quat, quat_msg);
+          nbv_pose.orientation = quat_msg;
+          nbv_pose_array_.poses.push_back(nbv_pose);
+          nbp++;
+        }
+      }
+      ROS_INFO ("%d boundary points in cluster %d.", nbp, nc);
+
+      //save this cluster pointcloud for visualization
+      cluster_clouds[nc] = cluster_cloud;
+
+      //pop the just used cluster from indices
+      clusters.pop_back();
+    }
+    nbv_pose_array_.header.frame_id = border_cloud.header.frame_id;
+    nbv_pose_array_.header.stamp = ros::Time::now();
+  }
+  else {
+    ROS_INFO ("No clusters found!");
+  }
 }
 
 void Nbv::castRayAndLabel(pcl::PointCloud<pcl::PointXYZ>& cloud, octomap::pose6d origin) {
