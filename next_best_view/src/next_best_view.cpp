@@ -101,6 +101,8 @@ protected:
   void createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap::pose6d laser_pose);
   void visualizeOctree(const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg, geometry_msgs::Point viewpoint);
   void visualizeNormals(const pcl::PointCloud<pcl::PointXYZ> &points, const pcl::PointCloud<pcl::Normal>& normals);
+  void castRayAndLabel(pcl::PointCloud<pcl::PointXYZ>& cloud, octomap::pose6d origin);
+  void findBorderPoints(pcl::PointCloud<pcl::PointXYZ>& border_cloud, std::string frame_id);
 
   void extractClusters (const pcl::PointCloud<pcl::PointXYZ> &cloud,
                                  const pcl::PointCloud<pcl::Normal> &normals,
@@ -209,68 +211,13 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   /*
    * assign new points to Leaf Nodes  and cast rays from laser pos to point
    */
-  BOOST_FOREACH (const pcl::PointXYZ& pcl_pt, pointcloud2_pcl.points) {
-    octomap_point3d(0) = pcl_pt.x;
-    octomap_point3d(1) = pcl_pt.y;
-    octomap_point3d(2) = pcl_pt.z;
-    octomap::OcTreeNodePCL * octree_node1 = octree_->search(octomap_point3d);
-    if (octree_node1 != NULL) {
-       // Get the nodes along the ray and label them as free
-      std::vector<octomap::point3d> ray;
-      if (octree_->computeRay(laser_pose.trans(), octomap_point3d, ray)) {
-        BOOST_FOREACH (const octomap::point3d& pt, ray) {
-          octomap::OcTreeNodePCL * free_node = octree_->search(pt);
-          if (free_node != NULL) {
-            if (free_node->getLabel() != occupied_label_)
-               free_node->setLabel(free_label_);
-          }
-          else
-            ROS_DEBUG("free node at x=%f y=%f z=%f not found", pt(0), pt(1), pt(2));
-        }
-      }
-      else {
-        ROS_DEBUG("could not compute ray from [%f %f %f] to [%f %f %f]",
-              laser_pose.x(), laser_pose.y(), laser_pose.z(), pcl_pt.x, pcl_pt.y, pcl_pt.z);
-      }
-      octree_node1->set3DPointInliers(0);
-      octree_node1->setLabel(occupied_label_);
-    }
-    else {
-      ROS_DEBUG("ERROR: node at [%f %f %f] not found", pcl_pt.x, pcl_pt.y, pcl_pt.z);
-    }
-  }
+  castRayAndLabel(pointcloud2_pcl, laser_pose);
 
   /*
    * find unknown voxels with free neighbors and add them to a pointcloud
    */
   pcl::PointCloud<pcl::PointXYZ> border_cloud;
-  border_cloud.header.frame_id = pointcloud2_msg->header.frame_id;
-  border_cloud.header.stamp = ros::Time::now();
-  std::list<octomap::OcTreeVolume> leaves;
-  octree_->getLeafNodes(leaves);
-  BOOST_FOREACH(octomap::OcTreeVolume vol, leaves) {
-    octomap::point3d centroid;
-    centroid(0) = vol.first.x(),  centroid(1) = vol.first.y(),  centroid(2) = vol.first.z();
-    octomap::OcTreeNodePCL *octree_node = octree_->search(centroid);
-
-    // if free voxel -> check for unknown neighbors
-    if (octree_node != NULL && octree_node->getLabel() == free_label_) {
-      for (int i=0; i<3; i++) {
-        octomap::point3d neighbor_centroid = centroid;
-        for (int j=-1; j<2; j+=2) {
-          neighbor_centroid(i) += j * octree_res_;
-          octomap::OcTreeNodePCL *neighbor = octree_->search(neighbor_centroid);
-          if (neighbor != NULL && neighbor->getLabel() == unknown_label_) {
-            // add to list of border voxels
-            pcl::PointXYZ border_pt (centroid.x(), centroid.y(), centroid.z());
-            border_cloud.points.push_back(border_pt);
-            break;
-          }
-        }
-      }
-    }
-  }
-  ROS_INFO("%d points in border cloud", (int)border_cloud.points.size());
+  findBorderPoints(border_cloud, pointcloud2_msg->header.frame_id);
 
   // Create the filtering objects
   pcl::PassThrough<pcl::PointXYZ> pass;
@@ -364,7 +311,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
     be.setInputNormals(boost::make_shared<pcl::PointCloud<pcl::Normal> > (border_normals));
     be.setIndices(boost::make_shared<pcl::PointIndices> (clusters.back()));
     be.setRadiusSearch(.5);
-    be.angle_threshold_ = M_PI;
+    be.angle_threshold_ = 2.5;
     be.compute(boundary_cloud);
 
     nbv_pose_array_.poses.clear();
@@ -387,15 +334,6 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
     nbv_pose_array_.header.frame_id = cluster_cloud.header.frame_id;
     nbv_pose_array_.header.stamp = ros::Time::now();
 
-    /*pcl::PointXYZ cluster_centroid (0, 0, 0);
-    BOOST_FOREACH (const pcl::PointXYZ& pcl_pt, cluster_cloud.points) {
-      cluster_centroid.x += pcl_pt.x;
-      cluster_centroid.y += pcl_pt.y;
-    }
-    cluster_centroid.x /= cluster_cloud.points.size();
-    cluster_centroid.y /= cluster_cloud.points.size();
-    nbv_pose_.position.x = cluster_centroid.x;
-    nbv_pose_.position.y = cluster_centroid.y;*/
     pose_pub_.publish(nbv_pose_array_);
   }
   else {
@@ -433,6 +371,70 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   visualizeNormals(border_cloud, border_normals);
 }
 
+void Nbv::castRayAndLabel(pcl::PointCloud<pcl::PointXYZ>& cloud, octomap::pose6d origin) {
+  octomap::point3d octomap_point3d;
+
+  BOOST_FOREACH (const pcl::PointXYZ& pcl_pt, cloud.points) {
+    octomap_point3d(0) = pcl_pt.x;
+    octomap_point3d(1) = pcl_pt.y;
+    octomap_point3d(2) = pcl_pt.z;
+    octomap::OcTreeNodePCL * octree_node1 = octree_->search(octomap_point3d);
+    if (octree_node1 != NULL) {
+      // Get the nodes along the ray and label them as free
+      std::vector<octomap::point3d> ray;
+      if (octree_->computeRay(origin.trans(), octomap_point3d, ray)) {
+        BOOST_FOREACH (const octomap::point3d& pt, ray) {
+          octomap::OcTreeNodePCL * free_node = octree_->search(pt);
+          if (free_node != NULL) {
+            if (free_node->getLabel() != occupied_label_)
+              free_node->setLabel(free_label_);
+          }
+          else
+            ROS_DEBUG("free node at x=%f y=%f z=%f not found", pt(0), pt(1), pt(2));
+        }
+      }
+      else {
+        ROS_DEBUG("could not compute ray from [%f %f %f] to [%f %f %f]",
+                  origin.x(), origin.y(), origin.z(), pcl_pt.x, pcl_pt.y, pcl_pt.z);
+      }
+      octree_node1->set3DPointInliers(0);
+      octree_node1->setLabel(occupied_label_);
+    }
+    else {
+      ROS_DEBUG("ERROR: node at [%f %f %f] not found", pcl_pt.x, pcl_pt.y, pcl_pt.z);
+    }
+  }
+}
+
+void Nbv::findBorderPoints(pcl::PointCloud<pcl::PointXYZ>& border_cloud, std::string frame_id) {
+  border_cloud.header.frame_id = frame_id;
+  border_cloud.header.stamp = ros::Time::now();
+  std::list<octomap::OcTreeVolume> leaves;
+  octree_->getLeafNodes(leaves);
+  BOOST_FOREACH(octomap::OcTreeVolume vol, leaves) {
+    octomap::point3d centroid;
+    centroid(0) = vol.first.x(),  centroid(1) = vol.first.y(),  centroid(2) = vol.first.z();
+    octomap::OcTreeNodePCL *octree_node = octree_->search(centroid);
+
+    // if free voxel -> check for unknown neighbors
+    if (octree_node != NULL && octree_node->getLabel() == free_label_) {
+      for (int i=0; i<3; i++) {
+        octomap::point3d neighbor_centroid = centroid;
+        for (int j=-1; j<2; j+=2) {
+          neighbor_centroid(i) += j * octree_res_;
+          octomap::OcTreeNodePCL *neighbor = octree_->search(neighbor_centroid);
+          if (neighbor != NULL && neighbor->getLabel() == unknown_label_) {
+            // add to list of border voxels
+            pcl::PointXYZ border_pt (centroid.x(), centroid.y(), centroid.z());
+            border_cloud.points.push_back(border_pt);
+            break;
+          }
+        }
+      }
+    }
+  }
+  ROS_INFO("%d points in border cloud", (int)border_cloud.points.size());
+}
 
 /**
 * creating an octree from pcl data
