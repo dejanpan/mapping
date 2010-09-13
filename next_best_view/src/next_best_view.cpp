@@ -1,6 +1,8 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 
+#include <geometry_msgs/PoseArray.h>
+
 #include "octomap/octomap.h"
 #include <octomap_server/OctomapBinary.h>
 #include "pcl_to_octree/octree/OcTreePCL.h"
@@ -12,8 +14,8 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/boundary.h>
 #include <pcl/segmentation/extract_clusters.h>
-#include "pcl/filters/extract_indices.h"
-#include "pcl/filters/passthrough.h"
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/passthrough.h>
 
 #include "LinearMath/btTransform.h"
 
@@ -71,7 +73,7 @@ protected:
   octomap::ScanGraph* octomap_graph_;
 
   sensor_msgs::PointCloud2 cloud_in_;
-  geometry_msgs::Pose nbv_pose_;
+  geometry_msgs::PoseArray nbv_pose_array_;
 
   ros::Subscriber cloud_sub_;
   ros::Publisher octree_pub_;
@@ -141,7 +143,7 @@ Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
   cluster_cloud_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud", 1);
   cluster_cloud2_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud2", 1);
   cluster_cloud3_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud3", 1);
-  pose_pub_ = nh_.advertise<geometry_msgs::Pose> (output_pose_topic_, 1);
+  pose_pub_ = nh_.advertise<geometry_msgs::PoseArray> (output_pose_topic_, 1);
 
   octree_marker_array_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
   octree_marker_publisher_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 100);
@@ -353,14 +355,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
     extract.filter(cluster_cloud3);
     ROS_INFO ("PointCloud representing the third cluster: %d data points.", cluster_cloud3.width * cluster_cloud3.height);
 
-    pcl::PointXYZ cluster_centroid (0, 0, 0);
-    BOOST_FOREACH (const pcl::PointXYZ& pcl_pt, cluster_cloud.points) {
-      cluster_centroid.x += pcl_pt.x;
-      cluster_centroid.y += pcl_pt.y;
-    }
-    cluster_centroid.x /= cluster_cloud.points.size();
-    cluster_centroid.y /= cluster_cloud.points.size();
-
+    // find boundary points of cluster
     pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree3 = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
     pcl::PointCloud<pcl::Boundary> boundary_cloud;
     pcl::BoundaryEstimation<pcl::PointXYZ, pcl::Normal, pcl::Boundary> be;
@@ -371,17 +366,37 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
     be.setRadiusSearch(.5);
     be.angle_threshold_ = M_PI;
     be.compute(boundary_cloud);
+
+    nbv_pose_array_.poses.clear();
+    geometry_msgs::Pose nbv_pose;
     unsigned int nbp = 0;
-    BOOST_FOREACH(const pcl::Boundary& bp, boundary_cloud.points) {
-      if (bp.boundary_point)
+    for (unsigned int i = 0; i < boundary_cloud.points.size(); ++i) {
+      if (boundary_cloud.points[i].boundary_point) {
+        nbv_pose.position.x = cluster_cloud.points[i].x;
+        nbv_pose.position.y = cluster_cloud.points[i].y;
+        nbv_pose.position.z = cluster_cloud.points[i].z;
+        nbv_pose.orientation.x = 0.0;
+        nbv_pose.orientation.y = 0.0;
+        nbv_pose.orientation.z = 0.0;
+        nbv_pose.orientation.w = 1.0;
+        nbv_pose_array_.poses.push_back(nbv_pose);
         nbp++;
+      }
     }
     ROS_INFO ("%d boundary points in the first cluster.", nbp);
+    nbv_pose_array_.header.frame_id = cluster_cloud.header.frame_id;
+    nbv_pose_array_.header.stamp = ros::Time::now();
 
-    //publish cluster centroid as next best view pose
+    /*pcl::PointXYZ cluster_centroid (0, 0, 0);
+    BOOST_FOREACH (const pcl::PointXYZ& pcl_pt, cluster_cloud.points) {
+      cluster_centroid.x += pcl_pt.x;
+      cluster_centroid.y += pcl_pt.y;
+    }
+    cluster_centroid.x /= cluster_cloud.points.size();
+    cluster_centroid.y /= cluster_cloud.points.size();
     nbv_pose_.position.x = cluster_centroid.x;
-    nbv_pose_.position.y = cluster_centroid.y;
-    pose_pub_.publish(nbv_pose_);
+    nbv_pose_.position.y = cluster_centroid.y;*/
+    pose_pub_.publish(nbv_pose_array_);
   }
   else {
     ROS_INFO ("No clusters found!");
