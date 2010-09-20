@@ -16,7 +16,8 @@ def buildConfusionMatrix(path,nr):
             conf_array.append(0)
         for line in input.xreadlines():
             #print "line: ", line.split()
-            j = [int(line.split()[0])/10, int(line.split()[1])/10]
+#            j = [int(line.split()[0])/10, int(line.split()[1])/10]
+            j = [int(line.split()[0]), int(line.split()[1])]
             if i == int(j[1]):
                conf_array[int(j[0]) - 1] =  conf_array[int(j[0]) - 1] + 1
             #nr of lines
@@ -45,9 +46,12 @@ def plot_confusion_matrix(conf_arr, nr):
 
     plt.clf()
     fig = plt.figure()
-    plt.xticks( arange(nr), ('SmallCylinder',  'FlatBigBox',  'TetraPak',  'MediumBox',  'Teapot',  'TallCylinder'), rotation=90)
-    plt.yticks( arange(nr), ('SmallCylinder',  'FlatBigBox',  'TetraPak',  'MediumBox',  'Teapot',  'TallCylinder') )
-    plt.title('GRSD Confusion Matrix for Testing Views')
+#    plt.xticks( arange(nr), ('SmallCylinder',  'FlatBigBox',  'TetraPak',  'MediumBox',  'Teapot',  'TallCylinder'), rotation=90)
+#    plt.yticks( arange(nr), ('SmallCylinder',  'FlatBigBox',  'TetraPak',  'MediumBox',  'Teapot',  'TallCylinder') )
+    plt.xticks( arange(nr), ('bowl',  'box_medium',  'box_small',  'cylinder_big',  'cylinder_short',  'cylinder_small', 'flat_big', 'flat_small', 'mug', 'pan', 'plate', 'tetrapak'), rotation=90)
+    plt.yticks( arange(nr), ('bowl',  'box_medium',  'box_small',  'cylinder_big',  'cylinder_short',  'cylinder_small', 'flat_big', 'flat_small', 'mug', 'pan', 'plate', 'tetrapak') )
+#    plt.title('GRSD Confusion Matrix for Training Views')
+    plt.title('GRSD Confusion Matrix for Training Objects')
     ax = fig.add_subplot(111)
     res = ax.imshow(array(norm_conf),  cmap=cm.jet, interpolation='nearest', aspect='auto')
     cb = fig.colorbar(res)
