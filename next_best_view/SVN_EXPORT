@@ -1,0 +1,137 @@
+commit 13d0aef8b0a2e2bf0b7cbe13f4a23919a13ee6b9
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Mon Sep 13 19:17:36 2010 +0200
+
+    refactor computeBoundaryPoints and add boundary points from three biggest clusters to poseArray
+
+commit a57cf4bb3357f35cbb0af1a0ee1a9c0904632eaa
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Mon Sep 13 18:15:30 2010 +0200
+
+    use normals as pose orientation
+
+commit 07116b2b647767219a7c6a9ea0f5089d82f243dc
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Mon Sep 13 17:28:19 2010 +0200
+
+    extract normals from cluster first and make angle_threshold for boundary estimation a parameter
+
+commit 2c3f47ffaec96d0e00668269ddfc3c792a7e6eab
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Mon Sep 13 17:08:44 2010 +0200
+
+    refactor a little
+
+commit fb9fabaef04bda369693a55acfba30745ea08e3a
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Mon Sep 13 16:34:27 2010 +0200
+
+    publish PoseArray instead of pose
+
+commit 95fe310f1709c7f0715ffb0c1c9b2ebb2651350a
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Mon Sep 13 15:56:31 2010 +0200
+
+    added boundary estimation for largest cluster
+
+commit 4e3b50d87194b57af4f59e57de098bf5e9220aa0
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Mon Sep 13 11:48:46 2010 +0200
+
+    remove temporary extractClusters function, use pcl one
+
+commit 08ef3dee046ea59b6dfa4fd531faea27274baf47
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Mon Sep 13 11:05:33 2010 +0200
+
+    indentation
+
+commit 1f65f6dd994afd85c41a5dadcc438f1c5adcebc1
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Sun Sep 12 00:07:28 2010 +0200
+
+    added normal visualization and fixed boost shared pointers of pointclouds
+
+commit e1337048e4b029ce74637bcd4bd0c2bf3abaf2e6
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Sat Sep 11 18:19:43 2010 +0200
+
+    publish centroid of biggest cluster as nbv pose
+
+commit 01361e12720879ff32e342150509db24577df634
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Sat Sep 11 17:38:55 2010 +0200
+
+    take centroid of free space voxel as coordinate of border points
+
+commit 706b0175e5c473616c6a13af7c68c9ba450d4a4a
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Sat Sep 11 16:42:41 2010 +0200
+
+    add searchRadius for normal estimation as a parameter
+
+commit dacf4cb1b9b1d3d9aa63fe8c1168b2382ddeeed1
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Sat Sep 11 16:08:13 2010 +0200
+
+    add a passthrough filter to the border cloud and publish 3 largest clusters
+
+commit 78677fd0f328fe7a2f2a7e59035cfae32c351fb4
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Fri Sep 10 21:35:57 2010 +0200
+
+    made clustering paramters changeable during runtime
+
+commit aa83c261a8c5e8a46e512b7ed5f5d86ed1e3c459
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Fri Sep 10 20:55:26 2010 +0200
+
+    extract biggest cluster and publish it
+
+commit bc18ee43d99c0b54e720cec4fbefdb8597634039
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Fri Sep 10 19:59:51 2010 +0200
+
+    temporarily add extract clusters
+
+commit 8b8293a731303f98b26e214cd1c0deccfc14f27e
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Fri Sep 10 17:10:57 2010 +0200
+
+    publish pcl pointcloud directly without converting it to sensor messages fist; get rid of extra border points vector and push to point cloud (boost shared pointer) directly
+
+commit 8af4c75dee3da4a989f904e89a47fb166f611f93
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Fri Sep 10 16:20:28 2010 +0200
+
+    publish border cloud and estimate normals
+
+commit 324915a96f676a6f30e90efce7a9dc53df3d513f
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Wed Sep 8 21:19:43 2010 +0200
+
+    started to add normal estimation
+
+commit c1ef12a7d5d7613d92927b3864c0d4c332f61f93
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Wed Sep 8 20:32:06 2010 +0200
+
+    use BOOST_FOREACH
+
+commit 20f86a2a9b390901b805426eb43d68b6ab3070a1
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Wed Sep 8 19:23:06 2010 +0200
+
+    build border pointcloud and added lauchfile
+
+commit bfc82fcd295dd1dd141ac03604fdbf555b3d83ef
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Wed Sep 8 14:15:50 2010 +0200
+
+    add viewpoint marker and clean up whitespaces
+
+commit 85e89482226aa537b48529dc897de41a32122fe1
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Mon Sep 6 20:02:12 2010 +0200
+
+    added next_best_view
