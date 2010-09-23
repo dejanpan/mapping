@@ -2,25 +2,34 @@
 \mainpage
 \htmlinclude manifest.html
 
-\b next_best_view is ... 
++++General Approach:+++
+As the robot enters the kitchen, it turns and scans repeatedly
+to get as much information as possible about its surroundings.
+Then it drives to a selected reachable location in the provided
+2D map that would increase the coverage of the scans further, and
+repeat the process until it is deemed that the remaining occlusions
+are either too small or not scannable by the sensor setup.
 
-<!-- 
-Provide an overview of your package.
--->
++++Details:+++
+In greater detail, to obtain a list of suggested new scanning poses, we make the following steps:
 
+1# marking each voxel in the volume of the kitchen as free,
+ocupied or unknown (the remaning ones) based on a
+raytracing approach;
 
-\section codeapi Code API
+2# selecting those unknown voxels which have at least one free
+neighbor (meaning  that they  could be scanned  in the next  steps);
 
-<!--
-Provide links to specific auto-generated API documentation within your
-package that is of particular interest to a reader. Doxygen will
-document pretty much every part of your code, so do your best here to
-point the reader to the actual API.
+3# estimating the normals in some of the points of this boundary surface;
 
-If your codebase is fairly large or has different sets of APIs, you
-should use the doxygen 'group' tag to keep these APIs together. For
-example, the roscpp documentation has 'libros' group.
--->
+4# marking the connected components that have similar surface
+normals and filtering those that are either too high or too low,
+as they are outside of the sensor's reach;
 
+5# assuming that the biggest surface patches cover bigger unknown
+volumes, multiple scan poses are generated that are directed towards
+the surface.
 
+These scan poses are then evaluated by the path planner and the most
+appropriate one selected for the next scan.
 */
