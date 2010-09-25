@@ -1,23 +1,50 @@
-commit 7c8ba87e05fb4b3f41dbf2185bfd6d26f21752a0
+commit f695425a961b2e0240ad5afb2ce2319ee9982581
 Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
-Date:   Sun Sep 5 19:58:48 2010 +0200
+Date:   Sun Sep 12 21:25:28 2010 +0200
 
-    Adapting to changes in pcl.
+    setLaserProfile for fast and slow works.
+    TODO:
+    1.Sort out navigation with spine up while scanning in 360.
+    2.Get RGB Values for the whole cloud
 
-commit 4bca4b7e85b4ef6e8611cb4f3ee94d3800790339
+commit 9fcac847c242ab4ad3f110e9657f1f382d652433
 Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
-Date:   Thu Sep 2 19:01:03 2010 +0200
+Date:   Sun Sep 12 19:03:37 2010 +0200
 
-    Launch file modified based on new scans of IAS kitchen. cpp file modified for change in Point type.
+    Added functionality for setting laser scan profile. Only slowing the laser scan profile works now.
 
-commit aa3ce7781e2226f6753d1bdb56fb5b89c37da35d
+commit dadaced23ee8627a4acee0e15533ff648129aabf
 Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
-Date:   Fri Aug 27 11:06:43 2010 +0200
+Date:   Sun Sep 12 18:12:13 2010 +0200
 
-    Removed frame_id parameter from launch file. Now, the frame_id of the input cloud is used for the output cloud.
+    Modified point type.
 
-commit 08d126cdcfc9fa8e83fa64e632a98a1dd018a606
+commit 1a1617db5e15c26032926aa5d332ec68aec424be
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Sun Sep 12 15:06:48 2010 +0200
+
+    place holder for setLaserProfile
+
+commit ee6200a24a9d2ceba23d1d2e0d0198c11f725501
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Sat Sep 11 22:48:07 2010 +0200
+
+    move torso up when at scan pose
+
+commit b1f54af26423c35d838ea35352fa51eb6b2c501f
 Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
-Date:   Wed Aug 18 19:52:03 2010 +0200
+Date:   Sat Sep 11 20:59:43 2010 +0200
+
+    Added 360 scanning of environment
+
+commit af273f64cd4326c790c83e7baa15aa80c22e7db4
+Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
+Date:   Sat Sep 11 17:14:56 2010 +0200
+
+    Added Autonomous Exploration feature
+
+commit bf18ca9b58c5fdf7e6d0dbf41b5f38a20fcd10fa
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Mon Sep 6 16:08:51 2010 +0200
 
     public export
