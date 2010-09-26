@@ -25,7 +25,7 @@
   <!--depend package="tabletop_msgs" /-->
   <depend package="ias_descriptors_3d"/>
   <!--depend package="libsvm"/-->
-  <!--depend package="eigen"/-->
+  depend package="eigen3"/
   <depend package="pcl"/>
   <depend package="pcl_ros"/>
   <!--depend package="position_string_msgs"/-->
