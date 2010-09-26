@@ -77,9 +77,9 @@ namespace pcl
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Empty constructor. */
       RegistrationCorrespondencesCheck () : target_ (),
-                        final_transformation_ (Eigen::Matrix4f::Identity ()),
-                        transformation_ (Eigen::Matrix4f::Identity ()),
-                        previous_transformation_ (Eigen::Matrix4f::Identity ()),
+                        final_transformation_ (Eigen3::Matrix4f::Identity ()),
+                        transformation_ (Eigen3::Matrix4f::Identity ()),
+                        previous_transformation_ (Eigen3::Matrix4f::Identity ()),
                         transformation_epsilon_ (0.0), corr_dist_threshold_ (std::numeric_limits<double>::max ()),
                         converged_ (false), min_number_correspondences_ (3), k_ (1)
       {
@@ -103,11 +103,11 @@ namespace pcl
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Get the final transformation matrix estimated by the registration method. */
-      inline Eigen::Matrix4f getFinalTransformation () { return (final_transformation_); }
+      inline Eigen3::Matrix4f getFinalTransformation () { return (final_transformation_); }
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Get the last incremental transformation matrix estimated by the registration method. */
-      inline Eigen::Matrix4f getLastIncrementalTransformation () { return (transformation_); }
+      inline Eigen3::Matrix4f getLastIncrementalTransformation () { return (transformation_); }
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Set the maximum number of iterations the internal optimization should run for.
@@ -187,13 +187,13 @@ namespace pcl
       PointCloudTargetConstPtr target_;
 
       /** \brief The final transformation matrix estimated by the registration method after N iterations. */
-      Eigen::Matrix4f final_transformation_;
+      Eigen3::Matrix4f final_transformation_;
 
       /** \brief The transformation matrix estimated by the registration method. */
-      Eigen::Matrix4f transformation_;
+      Eigen3::Matrix4f transformation_;
 
       /** \brief The previous transformation matrix estimated by the registration method (used internally). */
-      Eigen::Matrix4f previous_transformation_;
+      Eigen3::Matrix4f previous_transformation_;
 
       /** \brief The maximum difference between two consecutive transformations in order to consider convergence (user defined). */
       double transformation_epsilon_;
