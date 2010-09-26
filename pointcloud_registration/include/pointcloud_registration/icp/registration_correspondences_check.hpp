@@ -68,7 +68,7 @@ template <typename PointSource, typename PointTarget> inline double
   int nr = 0;
   for (size_t i = 0; i < input_transformed.points.size (); ++i)
   {
-    Eigen::Vector4f p1 = Eigen::Vector4f (input_transformed.points[i].x,
+    Eigen3::Vector4f p1 = Eigen3::Vector4f (input_transformed.points[i].x,
                                           input_transformed.points[i].y,
                                           input_transformed.points[i].z, 0);
     // Find its nearest neighbor in the target
@@ -78,7 +78,7 @@ template <typename PointSource, typename PointTarget> inline double
     if (nn_dists[0] > max_range)
       continue;
 
-    Eigen::Vector4f p2 = Eigen::Vector4f (target_->points[nn_indices[0]].x,
+    Eigen3::Vector4f p2 = Eigen3::Vector4f (target_->points[nn_indices[0]].x,
                                           target_->points[nn_indices[0]].y,
                                           target_->points[nn_indices[0]].z, 0);
     // Calculate the fitness score
@@ -132,7 +132,7 @@ template <typename PointSource, typename PointTarget> inline void
 
   // Perform the actual transformation computation
   converged_ = false;
-  final_transformation_ = transformation_ = previous_transformation_ = Eigen::Matrix4f::Identity ();
+  final_transformation_ = transformation_ = previous_transformation_ = Eigen3::Matrix4f::Identity ();
   computeTransformation (output);
 
   deinitCompute ();
