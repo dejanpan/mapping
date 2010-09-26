@@ -59,7 +59,7 @@
 #include <tf/tf.h>
 
 // Eigen
-#include <Eigen/Array>
+#include <Eigen3/Core>
 
 #include <angles/angles.h>
 
@@ -230,14 +230,14 @@ boost::shared_ptr<pcl::PointCloud <pcl::PointXYZINormal> > BoxEstimation::getThr
   //  return getInliers ();
   //else
   //{
-    Eigen::Matrix3d axes = Eigen::Matrix3d::Map(&coeff_[6]).transpose ();
-    //Eigen::Matrix3f axes = Eigen::Matrix3d::Map(&coeff_[6]).cast<float> ().transpose ();
+    Eigen3::Matrix3d axes = Eigen3::Matrix3d::Map(&coeff_[6]).transpose ();
+    //Eigen3::Matrix3f axes = Eigen3::Matrix3d::Map(&coeff_[6]).cast<float> ().transpose ();
     boost::shared_ptr<pcl::PointCloud<pcl::PointXYZINormal> > ret (new pcl::PointCloud<pcl::PointXYZINormal> ());
     ret->points.reserve (inliers_.size ());
     ret->header = cloud_->header;
     for (unsigned int i = 0; i < inliers_.size (); i++)
     {
-      Eigen::Vector3d normal (cloud_->points.at (inliers_.at(i)).normal[0],
+      Eigen3::Vector3d normal (cloud_->points.at (inliers_.at(i)).normal[0],
                               cloud_->points.at (inliers_.at(i)).normal[1],
                               cloud_->points.at (inliers_.at(i)).normal[2]);
 
@@ -260,8 +260,8 @@ boost::shared_ptr<pcl::PointCloud <pcl::PointXYZINormal> > BoxEstimation::getThr
 
 void BoxEstimation::computeInAndOutliers (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormal> > cloud, std::vector<double> coeff, double threshold_in, double threshold_out)
 {
-  //Eigen::Matrix3f axes = Eigen::Matrix3d::Map(&coeff[6]).cast<float> ().transpose ();
-  Eigen::Matrix3d axes = Eigen::Matrix3d::Map(&coeff[6]).transpose ();
+  //Eigen3::Matrix3f axes = Eigen3::Matrix3d::Map(&coeff[6]).cast<float> ().transpose ();
+  Eigen3::Matrix3d axes = Eigen3::Matrix3d::Map(&coeff[6]).transpose ();
   //std::cerr << "the 3 axes:\n" << axes << std::endl;
   //std::cerr << "threshold: " << threshold << std::endl;
 
@@ -272,7 +272,7 @@ void BoxEstimation::computeInAndOutliers (boost::shared_ptr<const pcl::PointClou
   for (unsigned i = 0; i < cloud->points.size (); i++)
   {
     // compute point-center
-    Eigen::Vector3d centered (cloud->points[i].x - coeff[0], cloud->points[i].y - coeff[1], cloud->points[i].z - coeff[2]);
+    Eigen3::Vector3d centered (cloud->points[i].x - coeff[0], cloud->points[i].y - coeff[1], cloud->points[i].z - coeff[2]);
     // project (point-center) on axes and check if inside or outside the +/- dimensions
     bool inlier = false;
     bool outlier = false;
@@ -306,7 +306,7 @@ void BoxEstimation::computeInAndOutliers (boost::shared_ptr<const pcl::PointClou
  */
 bool BoxEstimation::find_model (boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZINormal> > cloud, std::vector<double> &coeff)
 {
-  //Eigen::Vector4f centroid;
+  //Eigen3::Vector4f centroid;
   //pcl::compute3DCentroid (*cloud, centroid);
   //coeff[0] = box_centroid_.x;
   //coeff[1] = box_centroid_.y;
