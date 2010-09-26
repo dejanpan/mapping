@@ -38,7 +38,7 @@ namespace pcl
     float scan;
     float line;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  } EIGEN_ALIGN_128;
+  } EIGEN_ALIGN16;
   inline std::ostream& operator<<(std::ostream& os, const PointXYZINormalScanLine& p)
   {
     os << "("<<p.x<<","<<p.y<<","<<p.z<<" - "<<p.intensity<<" - "<<p.normal[0]<<","<<p.normal[1]<<","<<p.normal[2]<<" - "<<p.scan<<" - "<<p.line<<")";
