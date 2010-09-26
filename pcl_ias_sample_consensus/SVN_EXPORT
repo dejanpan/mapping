@@ -1,35 +1,11 @@
-commit 5cf4efcd81d1ce5ffe4a0d4fd53af31e689a2032
+commit 752607b426f21b9869dacb8378717ccbb44db221
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Mon Sep 6 16:05:41 2010 +0200
+Date:   Sun Sep 26 22:44:27 2010 +0200
 
-    author
+    fixed Eigen -> Eigen3 issue in pcl_ias_sample_consensus
 
-commit 81bc6f84f958e0d878dc1fed3a68b9ea83dd3252
-Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
-Date:   Tue Aug 24 18:43:42 2010 +0200
-
-    Completed porting and preliminary testing of box fit algorithm to compy with PCL.
-
-commit f9fc072ad72d5c1e7d0203b3334b1c2ed879f7a4
-Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
-Date:   Fri Aug 13 13:34:37 2010 +0200
-
-    continued porting of ias_sample_consensus to pcl
-
-commit 0e0d8352eeefaff9387a9ef1658f736a823a4f47
-Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
-Date:   Thu Aug 12 19:25:16 2010 +0200
-
-    Porting of ias_sample_consensus to pcl_ias_sample_consensus to compile with pcl
-
-commit 4c08d920af1462e536525640e5a90ae6f0026dc1
-Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
-Date:   Thu Aug 5 16:29:24 2010 +0200
-
-    Ported ias_sample_consensus to pcl_ias_sample_consesus to work with pcl. This is first version and hasn't been tested yet. Tests to follow.
-
-commit 7de5f38173709bef9797af5e3922b448c3ba919a
+commit f62349a37d073d6efb1ddbfc46c7f5783766758c
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Wed Aug 4 15:58:47 2010 +0200
+Date:   Mon Sep 6 16:06:01 2010 +0200
 
-    preparation for porting of ias_sample_consensus to pcl
+    public export
