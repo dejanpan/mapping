@@ -39,7 +39,7 @@
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <pointcloud_registration/pointcloud_registration_point_types.h>
 #include <pcl/io/pcd_io.h>
-#include <Eigen/SVD>
+#include <Eigen3/SVD>
 
 #include "pcl/filters/statistical_outlier_removal.h" // to filter outliers
 
@@ -85,7 +85,7 @@ class PointCloudRegistration
     PointCloudRegistration();
     ~PointCloudRegistration();
     void pointcloudRegistrationCallBack(const sensor_msgs::PointCloud& msg);
-    Eigen::Matrix4f getOverlapTransformation();
+    Eigen3::Matrix4f getOverlapTransformation();
     void publishPointCloud(pcl::PointCloud<pcl::PointXYZINormal> &pointcloud);
     pcl::PointCloud<pcl::PointXYZINormal> convertFromMsgToPointCloud(const sensor_msgs::PointCloud& pointcloud_msg);
 
@@ -99,7 +99,7 @@ class PointCloudRegistration
     bool downsample_pointcloud_before_, downsample_pointcloud_after_, filter_outliers_, curvature_check_;
     int scan_index_;
     time_t start, end;
-    Eigen::Matrix4f final_transformation_;
+    Eigen3::Matrix4f final_transformation_;
     ros::Subscriber pointcloud_subscriber_;
     ros::Publisher pointcloud_merged_publisher_;
 
@@ -111,7 +111,7 @@ class PointCloudRegistration
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Eigen::Matrix4f PointCloudRegistration::getOverlapTransformation()
+Eigen3::Matrix4f PointCloudRegistration::getOverlapTransformation()
 {
   // In this function we extract the overlapped region of the two points cloud and compute
   // the transformation and return it.
@@ -129,10 +129,9 @@ Eigen::Matrix4f PointCloudRegistration::getOverlapTransformation()
     std::vector<float> nn_dists (max_nn_overlap_);
 
     pcl::PointCloud<pcl::PointXYZINormal> overlap_model, overlap_current;
-    Eigen::Matrix4f transformation;
+    Eigen3::Matrix4f transformation;
 
-    std::vector<pcl::PointXYZINormal>::iterator it;
-
+    std::vector<pcl:: PointXYZINormal, Eigen3::aligned_allocator<pcl:: PointXYZINormal> >::iterator it;
     for(size_t idx = 0 ; idx < pointcloud2_current_.points.size(); idx++ )
     {
       kdtree_.radiusSearch(pointcloud2_current_, idx, radius_overlap_, nn_indices, nn_dists, max_nn_overlap_);
