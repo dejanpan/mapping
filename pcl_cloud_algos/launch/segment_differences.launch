@@ -1,0 +1,12 @@
+<launch>
+<!-- <node pkg="point_cloud_converter" type="point_cloud_converter" name="point_cloud_converter" output="screen" respawn="true" > -->
+<!--   <remap from="/points_in" to="/shoulder_cloud"/> -->
+<!-- </node> -->
+
+  <node pkg="pcl_cloud_algos" type="segment_differences_node" name="segment_differences_node" output="screen" respawn="true" >
+    <param name="input_cloud_topic" value="/cloud_pcd" />
+    <param name="output_cloud_topic" value="difference" />
+    <param name="distance_threshold" value="0.0005" />
+  </node>
+<!--   launch-prefix="xterm -e gdb -args" -->
+</launch>
