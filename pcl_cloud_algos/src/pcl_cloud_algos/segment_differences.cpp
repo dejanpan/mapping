@@ -51,6 +51,7 @@
 #include <pcl/segmentation/segment_differences.h>
 
 #include "pcl_ros/publisher.h"
+#include "pcl_ros/subscriber.h"
 
 using namespace std;
 
@@ -60,77 +61,56 @@ protected:
   ros::NodeHandle nh_;
   
 public:
-  string output_cloud_topic_;
+  string output_cloud_topic_, input_cloud_topic_;
   string output_cloud1_topic_, output_cloud2_topic_;
   
   pcl_ros::Publisher<pcl::PointXYZ> pub_diff;
-  pcl_ros::Publisher<pcl::PointXYZ> pub_cloud1;
-  pcl_ros::Publisher<pcl::PointXYZ> pub_cloud2;
-  
+  pcl_ros::Subscriber<sensor_msgs::PointCloud2> sub_;
+  // Create the segmentation object
+  pcl::SegmentDifferences <pcl::PointXYZ> seg_;
   double rate_;
+  int counter_;
+  double distance_threshold_;
   ////////////////////////////////////////////////////////////////////////////////
   SegmentDifferencesNode  (ros::NodeHandle &n) : nh_(n)
   {
     // Maximum number of outgoing messages to be queued for delivery to subscribers = 1
-    output_cloud_topic_ = "difference";
-    output_cloud1_topic_ = "cloud1";
-    output_cloud2_topic_ = "cloud2";
+    nh_.param("input_cloud_topic", input_cloud_topic_, std::string("/cloud_pcd"));
+    nh_.param("output_cloud_topic", output_cloud_topic_, std::string("difference"));
+    nh_.param("distance_threshold", distance_threshold_, 0.0005);
+    ROS_INFO ("Distance threshold set to %lf.", distance_threshold_);
     pub_diff.advertise (nh_, output_cloud_topic_.c_str (), 1);
-    pub_cloud1.advertise (nh_, output_cloud1_topic_.c_str (), 1);
-    pub_cloud2.advertise (nh_, output_cloud2_topic_.c_str (), 1);
     ROS_INFO ("Publishing data on topic %s.", nh_.resolveName (output_cloud_topic_).c_str ());
+    sub_.subscribe (nh_, input_cloud_topic_, 1,  boost::bind (&SegmentDifferencesNode::cloud_cb, this, _1));
+    ROS_INFO ("Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
+    seg_.setDistanceThreshold (distance_threshold_);
     rate_ = 1;
+    counter_ = 0;
   }
 
   ////////////////////////////////////////////////////////////////////////////////
-  // Spin (!)
-  bool spin ()
+  // cloud_cb (!)
+  void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pc)
   {
-    pcl::PointCloud<pcl::PointXYZ> cloud;
-    pcl::PointCloud<pcl::PointXYZ> cloud1;
+    pcl::PointCloud<pcl::PointXYZ> cloud_in;
     pcl::PointCloud<pcl::PointXYZ> output;
+    pcl::fromROSMsg(*pc, cloud_in);
     
-    // Fill in the cloud data
-    cloud.width = 15;
-    cloud1.width  = 15;
-    cloud.height = 1;
-    cloud1.height  = 1;
-    cloud.points.resize (cloud.width * cloud.height);
-    cloud1.points.resize (cloud1.width * cloud1.height);
-    cloud.header.stamp = cloud1.header.stamp = ros::Time::now();
-    cloud.header.frame_id = cloud1.header.frame_id = "base_link";
-    
-    // Generate the data
-    for (size_t i = 0; i < cloud.points.size (); i++)
+    if (counter_ == 0)
     {
-      cloud.points[i].x = cloud1.points[i].x = 1024 * rand () / (RAND_MAX + 1.0);
-      cloud.points[i].y = cloud1.points[i].y = 1024 * rand () / (RAND_MAX + 1.0);
-      cloud.points[i].z = 1.0;
-      cloud1.points[i].z = 1.0;
+      ROS_INFO("Setting input cloud with %ld points", cloud_in.points.size());
+      seg_.setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointXYZ> >(cloud_in));
+      counter_++;
     }
-    // Set a few outliers
-    cloud.points[0].z = 2.0;
-    cloud.points[3].z = -2.0;
-    cloud.points[6].z = 4.0;
-    
-    
-    // Create the segmentation object
-    pcl::SegmentDifferences <pcl::PointXYZ> seg;
-    seg.setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointXYZ> >(cloud));
-    seg.setDistanceThreshold (0.00005);
-    seg.setTargetCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> >(cloud1));
-    seg.segment (output);
-    double interval = rate_ * 1e+6;
-     
-    while (nh_.ok ())
+    else
     {
+      ROS_INFO("Setting target cloud with %ld points", cloud_in.points.size());
+      seg_.setTargetCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ> >(cloud_in));
+      seg_.segment (output);
+      counter_ = 0;
+      ROS_INFO("Publishing difference cloud with %ld points", output.points.size());
       pub_diff.publish (output);
-      pub_cloud1.publish (cloud);
-      pub_cloud2.publish (cloud1);
-      usleep (interval);
-      ros::spinOnce ();
     }
-    return (true);
   }
 };
 
@@ -139,7 +119,7 @@ int main (int argc, char** argv)
   ros::init (argc, argv, "segment_difference_node");
   ros::NodeHandle n("~");
   SegmentDifferencesNode sd(n);
-  sd.spin ();
+  ros::spin ();
   return (0);
 }
 
