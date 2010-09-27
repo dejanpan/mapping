@@ -53,6 +53,8 @@
 #include "pcl_ros/publisher.h"
 #include "pcl_ros/subscriber.h"
 
+
+#include <pcl/filters/radius_outlier_removal.h>
 using namespace std;
 
 class SegmentDifferencesNode
@@ -62,12 +64,14 @@ protected:
   
 public:
   string output_cloud_topic_, input_cloud_topic_;
-  string output_cloud1_topic_, output_cloud2_topic_;
+  string output_filtered_cloud_topic_;
   
-  pcl_ros::Publisher<pcl::PointXYZ> pub_diff;
+  pcl_ros::Publisher<pcl::PointXYZ> pub_diff_;
+  pcl_ros::Publisher<pcl::PointXYZ> pub_filtered_;
   pcl_ros::Subscriber<sensor_msgs::PointCloud2> sub_;
   // Create the segmentation object
   pcl::SegmentDifferences <pcl::PointXYZ> seg_;
+  pcl::RadiusOutlierRemoval<pcl::PointXYZ> outrem_;
   double rate_;
   int counter_;
   double distance_threshold_;
@@ -77,13 +81,19 @@ public:
     // Maximum number of outgoing messages to be queued for delivery to subscribers = 1
     nh_.param("input_cloud_topic", input_cloud_topic_, std::string("/cloud_pcd"));
     nh_.param("output_cloud_topic", output_cloud_topic_, std::string("difference"));
+    nh_.param("output_filtered_cloud_topic", output_filtered_cloud_topic_, std::string("difference_filtered"));
     nh_.param("distance_threshold", distance_threshold_, 0.0005);
     ROS_INFO ("Distance threshold set to %lf.", distance_threshold_);
-    pub_diff.advertise (nh_, output_cloud_topic_.c_str (), 1);
+    pub_diff_.advertise (nh_, output_cloud_topic_.c_str (), 1);
     ROS_INFO ("Publishing data on topic %s.", nh_.resolveName (output_cloud_topic_).c_str ());
+    pub_filtered_.advertise (nh_, output_filtered_cloud_topic_.c_str (), 1);
+    ROS_INFO ("Publishing data on topic %s.", nh_.resolveName (output_filtered_cloud_topic_).c_str ());
+
     sub_.subscribe (nh_, input_cloud_topic_, 1,  boost::bind (&SegmentDifferencesNode::cloud_cb, this, _1));
     ROS_INFO ("Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
+    //set PCL classes
     seg_.setDistanceThreshold (distance_threshold_);
+    
     rate_ = 1;
     counter_ = 0;
   }
@@ -94,6 +104,7 @@ public:
   {
     pcl::PointCloud<pcl::PointXYZ> cloud_in;
     pcl::PointCloud<pcl::PointXYZ> output;
+    pcl::PointCloud<pcl::PointXYZ> output_filtered;
     pcl::fromROSMsg(*pc, cloud_in);
     
     if (counter_ == 0)
@@ -109,7 +120,12 @@ public:
       seg_.segment (output);
       counter_ = 0;
       ROS_INFO("Publishing difference cloud with %ld points", output.points.size());
-      pub_diff.publish (output);
+      pub_diff_.publish (output);
+      outrem_.setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointXYZ> >(output));
+      outrem_.setRadiusSearch (0.02);
+      outrem_.setMinNeighborsInRadius (15);
+      outrem_.filter (output_filtered);
+      pub_filtered_.publish (output_filtered);
     }
   }
 };
