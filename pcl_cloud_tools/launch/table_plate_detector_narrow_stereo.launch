@@ -1,0 +1,102 @@
+<launch>
+  <group ns="stereo_table_cluster_detector">
+    
+    <!-- PCL Manager -->
+    <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+    
+    <!-- Run a voxel_grid filter to clean NaNs -->
+    <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
+      <remap from="voxel_grid/input" to="/cloud_pcd" />
+      <rosparam>
+        leaf_size: 0.01
+        filter_field_name: z
+        filter_limit_min: 0.0
+        filter_limit_max: 1.5
+      </rosparam>
+    </node>
+
+    <!-- Estimate point normals -->
+    <node pkg="nodelet" type="nodelet" name="normal_estimation" args="load pcl/NormalEstimation pcl_manager" output="screen">
+      <remap from="normal_estimation/input"   to="voxel_grid/output" />
+      <rosparam>
+        k_search: 0
+        radius_search: 0.1
+        spatial_locator: 0
+      </rosparam>
+    </node>
+
+    <!-- Segment the table plane -->
+    <node pkg="nodelet" type="nodelet" name="planar_segmentation_stereo" args="load pcl/SACSegmentationFromNormals pcl_manager" output="screen">
+      <remap from="planar_segmentation_stereo/input" to="voxel_grid/output" />
+      <remap from="planar_segmentation_stereo/normals" to="normal_estimation/output" />
+      <rosparam>
+        model_type: 11
+        max_iterations: 1000
+        method_type: 0
+        model_threshold: 0.02
+        distance_threshold: 0.01
+        normal_distance_weight: 0.1
+        optimize_coefficients : true
+      </rosparam>
+    </node>
+
+    <!-- Project the planar inliers -->
+    <node pkg="nodelet" type="nodelet" name="project_planar_inliers" args="load pcl/ProjectInliers pcl_manager" output="screen">
+      <remap from="~input" to="voxel_grid/output" />
+      <remap from="~inliers" to="planar_segmentation_stereo/inliers" />
+      <remap from="~model" to="planar_segmentation_stereo/model" />
+      <rosparam>
+        model_type: 11
+        copy_all_data: false
+        copy_all_fields: false
+      </rosparam>
+    </node>
+
+    <!-- Compute the convex hull -->
+    <node pkg="nodelet" type="nodelet" name="table_convex_hull" args="load pcl/ConvexHull2D pcl_manager" output="screen">
+      <remap from="~input" to="project_planar_inliers/output" />
+    </node>
+
+    <!-- Extract the remaining of all-plane (XYZ) -->
+    <node pkg="nodelet" type="nodelet" name="extract_remaining_indices" args="load pcl/ExtractIndices pcl_manager" output="screen">
+      <remap from="extract_remaining_indices/input"   to="voxel_grid/output" />
+      <remap from="extract_remaining_indices/indices" to="planar_segmentation_stereo/inliers" />
+      <rosparam>
+        negative: true
+      </rosparam>
+    </node>
+
+
+    <!-- Extract the object clusters using a polygonal prism -->
+    <node pkg="nodelet" type="nodelet" name="table_object_candidates" args="load pcl/ExtractPolygonalPrismData pcl_manager" output="screen">
+      <remap from="~input" to="extract_remaining_indices/output" />
+      <remap from="~planar_hull"   to="table_convex_hull/output" />
+      <rosparam>
+        height_min: 0.01
+        height_max: 0.2
+        vpz: 1.3
+      </rosparam>
+    </node>
+
+    <node pkg="nodelet" type="nodelet" name="extract_table_object_candidates" args="load pcl/ExtractIndices pcl_manager" output="screen">
+      <!-- Extract_plane_indices needs to be negated for this work -->
+      <remap from="~input"   to="extract_remaining_indices/output" />
+      <remap from="~indices" to="table_object_candidates/output" />
+      <rosparam>
+        negative: false
+      </rosparam>
+    </node>
+
+
+    <!-- Cluster the remaining points (all-plane) -->
+<!--     <node pkg="nodelet" type="nodelet" name="extract_object_clusters" args="load pcl/EuclideanClusterExtraction pcl_manager" output="screen"> -->
+<!--       <remap from="extract_object_clusters/input" to="extract_object_indices_above_plane/output" /> -->
+<!--       <rosparam> -->
+<!--         max_queue_size: 10 -->
+<!--         cluster_tolerance: 0.06 -->
+<!--         spatial_locator: 0 -->
+<!--         cluster_min_size: 30 -->
+<!--       </rosparam> -->
+<!--     </node> -->
+  </group>
+</launch>
