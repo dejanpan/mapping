@@ -31,3 +31,4 @@ target_link_libraries (virtual_scanner vtkHybrid itpp)
 
 rosbuild_add_executable(pcl_hull_to_polygon src/pcl_hull_to_polygon.cpp)
 rosbuild_add_executable(transform_pointcloud_node src/transform_pointcloud.cpp)
+rosbuild_add_executable(pad_hull_node src/pad_hull.cpp)

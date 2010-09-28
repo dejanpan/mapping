@@ -4,6 +4,11 @@
     <node pkg="pcl_cloud_tools" type="transform_pointcloud_node" name="transform_pointcloud_node" output="screen">
       <remap from="/cloud_pcd" to="/narrow_stereo_textured/points2" />
     </node>
+
+    <node pkg="pcl_cloud_tools" type="pad_hull_node" name="pad_hull_node" output="screen">
+      <remap from="/cloud_pcd" to="table_convex_hull/output" />
+    </node>
+
     
     <!-- PCL Manager -->
     <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
@@ -64,7 +69,7 @@
     <!-- Extract the object clusters using a polygonal prism -->
     <node pkg="nodelet" type="nodelet" name="table_object_candidates" args="load pcl/ExtractPolygonalPrismData pcl_manager" output="screen">
       <remap from="~input" to="extract_remaining_indices/output" />
-      <remap from="~planar_hull"   to="table_convex_hull/output" />
+      <remap from="~planar_hull"   to="/cloud_pcd_padded" />
       <rosparam>
         height_min: 0.02
         height_max: 0.2
