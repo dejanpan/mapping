@@ -1,0 +1,7 @@
+<launch>
+
+  <node pkg="pcl_cloud_tools" type="pcl_normal_visualization" name="pcl_normal_visualization" output="screen" respawn="false">
+    <param name="input_cloud_topic" value="/next_best_view/border_cloud"/>
+  </node>
+
+</launch>
