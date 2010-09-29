@@ -17,8 +17,6 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/passthrough.h>
 
-#include "LinearMath/btTransform.h"
-
 #include <pcl_ros/publisher.h>
 
 #include <tf/transform_listener.h>
@@ -78,7 +76,7 @@ protected:
 
   ros::Subscriber cloud_sub_;
   ros::Publisher octree_pub_;
-  pcl_ros::Publisher<pcl::PointXYZ> border_cloud_pub_;
+  pcl_ros::Publisher<pcl::PointNormal> border_cloud_pub_;
   pcl_ros::Publisher<pcl::PointXYZ> cluster_cloud_pub_;
   pcl_ros::Publisher<pcl::PointXYZ> cluster_cloud2_pub_;
   pcl_ros::Publisher<pcl::PointXYZ> cluster_cloud3_pub_;
@@ -92,16 +90,11 @@ protected:
   // Marker array to visualize the octree. It displays the occuplied cells of the octree
   visualization_msgs::MarkerArray octree_marker_array_msg_;
 
-  ros::Publisher normals_marker_array_publisher_;
-  ros::Publisher normals_marker_publisher_;
-  visualization_msgs::MarkerArray normals_marker_array_msg_;
-
   static bool compareClusters(pcl::PointIndices c1, pcl::PointIndices c2) { return (c1.indices.size() < c2.indices.size()); }
 
   void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg);
   void createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap::pose6d laser_pose);
   void visualizeOctree(const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg, geometry_msgs::Point viewpoint);
-  void visualizeNormals(const pcl::PointCloud<pcl::PointXYZ> &points, const pcl::PointCloud<pcl::Normal>& normals);
   void castRayAndLabel(pcl::PointCloud<pcl::PointXYZ>& cloud, octomap::pose6d origin);
   void findBorderPoints(pcl::PointCloud<pcl::PointXYZ>& border_cloud, std::string frame_id);
   void computeBoundaryPoints(pcl::PointCloud<pcl::PointXYZ>& border_cloud, pcl::PointCloud<pcl::Normal>& border_normals, std::vector<pcl::PointIndices>& clusters, pcl::PointCloud<pcl::PointXYZ>* cluster_clouds);
@@ -144,7 +137,7 @@ Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
 
   cloud_sub_ = nh_.subscribe (input_cloud_topic_, 1, &Nbv::cloud_cb, this);
   octree_pub_ = nh_.advertise<octomap_server::OctomapBinary> (output_octree_topic_, 1);
-  border_cloud_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "border_cloud", 1);
+  border_cloud_pub_ = pcl_ros::Publisher<pcl::PointNormal> (nh_, "border_cloud", 1);
   cluster_cloud_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud", 1);
   cluster_cloud2_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud2", 1);
   cluster_cloud3_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud3", 1);
@@ -152,8 +145,6 @@ Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
 
   octree_marker_array_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
   octree_marker_publisher_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 100);
-  normals_marker_array_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("normals_marker_array", 100);
-  normals_marker_publisher_ = nh_.advertise<visualization_msgs::Marker>("normals_marker", 100);
 
   octree_ = NULL;
 }
@@ -164,8 +155,6 @@ Nbv::~Nbv()
 
   octree_marker_array_publisher_.shutdown();
   octree_marker_publisher_.shutdown();
-  normals_marker_array_publisher_.shutdown();
-  normals_marker_publisher_.shutdown();
 }
 
 /**
@@ -287,7 +276,10 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   pose_pub_.publish(nbv_pose_array_);
 
   //publish border cloud for visualization
-  border_cloud_pub_.publish(border_cloud);
+  pcl::PointCloud<pcl::PointNormal> border_pn_cloud;
+  pcl::concatenateFields(border_cloud, border_normals, border_pn_cloud);
+  border_cloud_pub_.publish(border_pn_cloud);
+
   //publish the clusters for visualization
   cluster_cloud_pub_.publish(cluster_clouds[0]);
   cluster_cloud2_pub_.publish(cluster_clouds[1]);
@@ -313,8 +305,6 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
     viewpoint.z = pt.z();
     visualizeOctree(pointcloud2_msg, viewpoint);
   }
-  //visualize normals of border cloud
-  visualizeNormals(border_cloud, border_normals);
 }
 
 void Nbv::computeBoundaryPoints(pcl::PointCloud<pcl::PointXYZ>& border_cloud, pcl::PointCloud<pcl::Normal>& border_normals, std::vector<pcl::PointIndices>& clusters, pcl::PointCloud<pcl::PointXYZ>* cluster_clouds) {
@@ -539,55 +529,6 @@ void Nbv::createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap
     }
   }
 
-}
-
-void Nbv::visualizeNormals(const pcl::PointCloud<pcl::PointXYZ>& pointcloud, const pcl::PointCloud<pcl::Normal>& normals) {
-  static unsigned int lastsize = 0;
-  if (normals.points.size() >= lastsize) {
-      normals_marker_array_msg_.markers.resize(normals.points.size());
-  }
-
-  for (unsigned int i = 0; i < normals.points.size(); ++i)
-  {
-    geometry_msgs::Point pos;
-    pos.x = pointcloud.points[i].x;
-    pos.y = pointcloud.points[i].y;
-    pos.z = pointcloud.points[i].z;
-    normals_marker_array_msg_.markers[i].pose.position = pos;
-    btVector3 axis(0, -normals.points[i].normal[2], normals.points[i].normal[1]);
-    btQuaternion quat(axis, axis.length());
-    geometry_msgs::Quaternion quat_msg;
-    tf::quaternionTFToMsg(quat, quat_msg);
-    normals_marker_array_msg_.markers[i].pose.orientation = quat_msg;
-  }
-
-  for (unsigned int i = 0; i < normals_marker_array_msg_.markers.size(); ++i)
-  {
-    normals_marker_array_msg_.markers[i].header.frame_id = normals.header.frame_id;
-    normals_marker_array_msg_.markers[i].header.stamp = normals.header.stamp;
-    normals_marker_array_msg_.markers[i].id = i;
-    normals_marker_array_msg_.markers[i].ns = "Normals";
-    normals_marker_array_msg_.markers[i].color.r = 1.0f;
-    normals_marker_array_msg_.markers[i].color.g = 0.0f;
-    normals_marker_array_msg_.markers[i].color.b = 0.0f;
-    normals_marker_array_msg_.markers[i].color.a = 0.5f;
-    //normals_marker_array_msg_.markers[i].lifetime = ros::Duration::Duration();
-    normals_marker_array_msg_.markers[i].type = visualization_msgs::Marker::ARROW;
-    normals_marker_array_msg_.markers[i].scale.x = 0.2;
-    normals_marker_array_msg_.markers[i].scale.y = 0.2;
-    normals_marker_array_msg_.markers[i].scale.z = 0.2;
-
-    normals_marker_array_msg_.markers[i].action = visualization_msgs::Marker::ADD;
-  }
-
-  if (lastsize > normals.points.size()) {
-    for (unsigned int i = normals.points.size(); i < lastsize; ++i) {
-      normals_marker_array_msg_.markers[i].action = visualization_msgs::Marker::DELETE;
-    }
-  }
-  lastsize = normals.points.size();
-
-  normals_marker_array_publisher_.publish(normals_marker_array_msg_);
 }
 
 
