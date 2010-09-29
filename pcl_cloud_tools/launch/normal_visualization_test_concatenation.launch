@@ -1,0 +1,51 @@
+<launch>
+  <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+
+  <!-- Run a passthrough filter to clean NaNs -->
+  <node pkg="nodelet" type="nodelet" name="passthrough" args="load pcl/PassThrough pcl_manager" output="screen">
+    <remap from="/passthrough/input"   to="/points2_out" />
+    <rosparam>
+      filter_field_name: z
+      filter_limit_min: 0.01
+      filter_limit_max: 1.5
+    </rosparam>
+  </node>
+
+  <!-- Estimate point normals -->
+  <node pkg="nodelet" type="nodelet" name="normal_estimation" args="load pcl/NormalEstimation pcl_manager" output="screen">
+    <remap from="/normal_estimation/input"   to="/passthrough/output" />
+    <rosparam>
+      # -[ Mandatory parameters
+      # Set either 'k_search' or 'radius_search'
+      k_search: 10
+      radius_search: 0
+      # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)
+      spatial_locator: 0
+    </rosparam>
+  </node>
+
+  <!-- MUX the data onto one topic -->
+  <node pkg="nodelet" type="nodelet" name="data_mux_1" args="load pcl/NodeletMUX pcl_manager" output="screen">
+    <rosparam>
+      input_topics: [/passthrough/output, /normal_estimation/output]
+    </rosparam>
+  </node>
+
+  <!-- Concatenate fields -->
+  <node pkg="nodelet" type="nodelet" name="concatenate_data" args="load pcl/PointCloudConcatenateFieldsSynchronizer pcl_manager" output="screen">
+    <remap from="concatenate_data/input" to="/data_mux_1/output" />
+    <rosparam>
+      # Number of messages to expect on the input topic
+      input_messages: 2
+    </rosparam>
+  </node>
+
+  <node pkg="point_cloud_converter" type="point_cloud_converter" name="point_cloud_converter" output="screen" respawn="false">
+    <remap from="/points_in" to="/autonomous_exploration/pointcloud"/>
+  </node>
+
+  <node pkg="pcl_cloud_tools" type="pcl_normal_visualization" name="pcl_normal_visualization" output="screen" respawn="false">
+    <param name="input_cloud_topic" value="/concatenate_data/output"/>
+  </node>
+
+</launch>
