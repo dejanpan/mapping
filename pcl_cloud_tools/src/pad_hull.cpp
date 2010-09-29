@@ -89,7 +89,7 @@ public:
     pub_ = nh_.advertise<sensor_msgs::PointCloud2>(output_cloud_topic_, 1);
     ROS_INFO ("Will be publishing data on topic %s.", nh_.resolveName (output_cloud_topic_).c_str ());
     vis_pub_ = nh_.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
-    padding_ = 0.4;
+    padding_ = 0.8;
   }
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -105,30 +105,37 @@ public:
     for (unsigned long i = 0; i < cloud_in_.points.size(); i++)
     {
       double dist_to_center = sqrt((point_center_.x - cloud_in_.points[i].x) * (point_center_.x - cloud_in_.points[i].x) + 
-                                   (point_center_.y - cloud_in_.points[i].y) * (point_center_.x - cloud_in_.points[i].x));
 
-      if ((fabs(point_center_.x) - fabs(cloud_in_.points[i].x)) < 0 && (fabs(point_center_.y) - fabs(cloud_in_.points[i].y)) < 0)
-      {
-        cloud_in_.points[i].y = cloud_in_.points[i].y - padding_ *dist_to_center;
-        cloud_in_.points[i].x = cloud_in_.points[i].x - padding_ *dist_to_center;
-      }
-      else if ((fabs(point_center_.x) - fabs(cloud_in_.points[i].x)) > 0 && (fabs(point_center_.y) - fabs(cloud_in_.points[i].y)) > 0)
-      {
-        cloud_in_.points[i].y = cloud_in_.points[i].y + padding_ *dist_to_center;
-        cloud_in_.points[i].x = cloud_in_.points[i].x + padding_ *dist_to_center;
-      }
-      else if ((fabs(point_center_.x) - fabs(cloud_in_.points[i].x)) < 0 && (fabs(point_center_.y) - fabs(cloud_in_.points[i].y)) > 0)
-      {
-        cloud_in_.points[i].x = cloud_in_.points[i].x - padding_ *dist_to_center;
-        cloud_in_.points[i].y = cloud_in_.points[i].y + padding_ *dist_to_center;
-      }
-      else if ((fabs(point_center_.x) - fabs(cloud_in_.points[i].x)) > 0 && (fabs(point_center_.y) - fabs(cloud_in_.points[i].y)) < 0)
-      {
-        cloud_in_.points[i].x = cloud_in_.points[i].x + padding_ *dist_to_center;
-        cloud_in_.points[i].y = cloud_in_.points[i].y - padding_ *dist_to_center;
-      }
-      else
-        ROS_WARN("Not possible!!!");
+                                   (point_center_.y - cloud_in_.points[i].y) * (point_center_.x - cloud_in_.points[i].x));
+      ROS_INFO("Dist to center: %lf", dist_to_center);
+      double angle;
+      angle= atan2((point_center_.x - cloud_in_.points[i].x), (point_center_.y - cloud_in_.points[i].y));
+      double new_dist_to_center = padding_ * dist_to_center;
+      cloud_in_.points[i].y = point_center_.y + sin(angle) * new_dist_to_center;
+      cloud_in_.points[i].x = point_center_.x + cos(angle) * new_dist_to_center;
+
+//       if ((fabs(point_center_.x) - fabs(cloud_in_.points[i].x)) < 0 && (fabs(point_center_.y) - fabs(cloud_in_.points[i].y)) < 0)
+//       {
+//         cloud_in_.points[i].y = cloud_in_.points[i].y - padding_ *dist_to_center;
+//         cloud_in_.points[i].x = cloud_in_.points[i].x - padding_ *dist_to_center;
+//       }
+//       else if ((fabs(point_center_.x) - fabs(cloud_in_.points[i].x)) > 0 && (fabs(point_center_.y) - fabs(cloud_in_.points[i].y)) > 0)
+//       {
+//         cloud_in_.points[i].y = cloud_in_.points[i].y + padding_ *dist_to_center;
+//         cloud_in_.points[i].x = cloud_in_.points[i].x + padding_ *dist_to_center;
+//       }
+//       else if ((fabs(point_center_.x) - fabs(cloud_in_.points[i].x)) < 0 && (fabs(point_center_.y) - fabs(cloud_in_.points[i].y)) > 0)
+//       {
+//         cloud_in_.points[i].x = cloud_in_.points[i].x - padding_ *dist_to_center;
+//         cloud_in_.points[i].y = cloud_in_.points[i].y + padding_ *dist_to_center;
+//       }
+//       else if ((fabs(point_center_.x) - fabs(cloud_in_.points[i].x)) > 0 && (fabs(point_center_.y) - fabs(cloud_in_.points[i].y)) < 0)
+//       {
+//         cloud_in_.points[i].x = cloud_in_.points[i].x + padding_ *dist_to_center;
+//         cloud_in_.points[i].y = cloud_in_.points[i].y - padding_ *dist_to_center;
+//       }
+//       else
+//         ROS_WARN("Not possible!!!");
     }
     pcl::toROSMsg (cloud_in_, output_cloud_);
     ROS_INFO("Published cloud to topic %s", output_cloud_topic_.c_str());
@@ -155,6 +162,11 @@ public:
     marker_.color.g = 1.0;
     marker_.color.b = 0.0;
     vis_pub_.publish( marker_ );
+  }
+
+  void publish_center_radius()
+  {
+    
   }
 };
 
