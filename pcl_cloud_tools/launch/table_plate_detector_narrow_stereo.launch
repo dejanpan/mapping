@@ -85,7 +85,7 @@
     </node>
     <node pkg="pcl_cloud_tools" type="pointcloud_minmax_3d_node" name="pointcloud_minmax_3d_node" output="screen">
       <param name="visualize" value="true"/>
-      <remap from="~cloud_pcd" to="extract_remaining_indices/output" />
+      <remap from="~cloud_pcd" to="extract_table_object_candidates/output" />
     </node>
 
   </group>
