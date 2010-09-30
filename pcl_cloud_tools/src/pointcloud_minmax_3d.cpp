@@ -80,6 +80,8 @@ public:
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_in_;
   pcl::PointXYZ point_min_;
   pcl::PointXYZ point_max_;
+  //  Eigen3::Vector4f point_min_;
+  //Eigen3::Vector4f point_max_;
   pcl::PointXYZ point_center_;
   visualization_msgs::Marker marker_center_;
   visualization_msgs::Marker marker_min_;
@@ -132,15 +134,16 @@ public:
     ROS_INFO ("[PointcloudMinMax3DNode] Number of clusters found matching the given constraints: %d.", (int)clusters.size ());
 
     pcl::PointCloud<pcl::PointXYZ> cloud_object_cluster;
-    if ((int)clusters.size() > 1)
+    if ((int)clusters.size() >= 1)
     {
-      ROS_INFO ("[PointcloudMinMax3DNode] Getting MinMax3D of biggest cluster");
       pcl::copyPointCloud (*cloud_in_, clusters[0], cloud_object_cluster);
+      ROS_INFO ("[PointcloudMinMax3DNode] Got MinMax3D of biggest cluster with points %ld", cloud_object_cluster.points.size());
     }
     else 
-      return
+      return;
 
-    getMinMax3D (cloud_object_cluster, point_min_, point_max_);
+    pcl::getMinMax3D (cloud_object_cluster, point_min_, point_max_);
+
     //Calculate the centroid of the hull
     output_cluster_.header.stamp = ros::Time::now();
     output_cluster_.header.frame_id = pc->header.frame_id;
@@ -158,7 +161,7 @@ public:
     output_cluster_.max_bound.z = point_max_.z;
     
 
-    ROS_INFO("[PointcloudMinMax3DNode:] Published cloud to topic %s", output_cluster_topic_.c_str());
+    ROS_INFO("[PointcloudMinMax3DNode:] Published cluster to topic %s", output_cluster_topic_.c_str());
     pub_.publish (output_cluster_);
     
     if (visualize_)
@@ -188,9 +191,9 @@ public:
     marker.pose.orientation.y = 0.0;
     marker.pose.orientation.z = 0.0;
     marker.pose.orientation.w = 1.0;
-    marker.scale.x = 0.1;
-    marker.scale.y = 0.1;
-    marker.scale.z = 0.1;
+    marker.scale.x = 0.05;
+    marker.scale.y = 0.05;
+    marker.scale.z = 0.05;
     marker.color.a = 1.0;
     marker.color.r = 0.0;
     marker.color.g = 1.0;
