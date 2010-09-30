@@ -1,65 +1,35 @@
-commit 15ee6aed03802ba156a02ea6558efae8702c22d9
+commit 7f31c6d6120f4188d671d0ba7cb967f64a10779c
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Thu Sep 30 02:59:20 2010 +0200
+Date:   Thu Sep 30 15:27:38 2010 +0200
 
-    added example file for normalization of normals
+    added param
 
-commit 0cae64d387ed2149540b3fa2a1593f6426603c14
+commit 8b70ea34a769e88eb641f6e87f0c74d033606403
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Thu Sep 30 02:58:46 2010 +0200
+Date:   Thu Sep 30 15:27:15 2010 +0200
 
-    fixed orientation of normals
+    renamed, added padding as parameter
 
-commit 4efdbaaf25e774386103544315823851ea5a3489
+commit 6dc9d4da914417102968fa14873dd0dce9540057
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Wed Sep 29 23:36:45 2010 +0200
+Date:   Thu Sep 30 15:16:48 2010 +0200
 
-    atan2
+    detection of plates works correct and reliably with pcl trunk version: Last Changed Rev: 32961
 
-commit 4cb11e865132bd80e7ca9ad3d8e8eab7c7441d77
-Author: Felix Ruess <felix.ruess@gmail.com>
-Date:   Wed Sep 29 20:13:37 2010 +0200
-
-    added pcl_normal_visualization node
-
-commit bc4c410f3846e036551704274d04844e74abc414
+commit 648eed7d3ac355b04af51247b92089f509d3f251
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Tue Sep 28 22:21:32 2010 +0200
+Date:   Thu Sep 30 15:15:57 2010 +0200
 
-    added contracting to the convex hull in order to get rid of the wall points as extracted by PolygonalPrismData
+    atan2 now used correct way
 
-commit dbc98dcd9b118e8dcace28954f7cde5040678489
+commit fabaa8c2716b29ec2be7401208fa500e8ee466cc
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Tue Sep 28 19:57:39 2010 +0200
+Date:   Thu Sep 30 15:15:29 2010 +0200
 
-    transforms point cloud from current frame to target frame
+    node name in ROS_INFO
 
-commit 248759dd3b8acc8c1646f49d2ab8a0aa4856272e
+commit 09cb3edf7ddb80a2a7ef6727526faf21e6cd3723
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Tue Sep 28 19:56:56 2010 +0200
-
-    plate detection works: TODO: get rid of 1.2 limit in x direction
-
-commit 295315662661fbec904f8c8799afab9a28fbff8e
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Tue Sep 28 14:44:53 2010 +0200
-
-    no need for clustering
-
-commit 2f1eb3c97b2df18037d2cc46ea897a20a8f634c5
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Tue Sep 28 02:18:50 2010 +0200
-
-    plate detector, TODO: move it into base_link frame, publish center, radius
-
-commit ed3aef424f2528db2b5a860676728dc9e919cf3a
-Author: Zoltan-Csaba Marton <marton@cs.tum.edu>
-Date:   Mon Sep 27 12:52:44 2010 +0200
-
-    I should automatize this script..
-
-commit 67b8710968d8cd20196173f30c5e33f59ff0fac4
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Sun Sep 26 23:20:15 2010 +0200
+Date:   Thu Sep 30 03:00:34 2010 +0200
 
     public export
