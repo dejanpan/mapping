@@ -107,7 +107,7 @@ public:
       double dist_to_center = sqrt((point_center_.x - cloud_in_.points[i].x) * (point_center_.x - cloud_in_.points[i].x) + 
 
                                    (point_center_.y - cloud_in_.points[i].y) * (point_center_.y - cloud_in_.points[i].y));
-      ROS_INFO("[HullContractNode:] Dist to center: %lf", dist_to_center);
+      ROS_DEBUG("[HullContractNode:] Dist to center: %lf", dist_to_center);
       double angle;
       angle= atan2((cloud_in_.points[i].y - point_center_.y), (cloud_in_.points[i].x - point_center_.x));
       double new_dist_to_center = padding_ * dist_to_center;
@@ -115,7 +115,7 @@ public:
       cloud_in_.points[i].x = point_center_.x + cos(angle) * new_dist_to_center;
     }
     pcl::toROSMsg (cloud_in_, output_cloud_);
-    ROS_INFO("[HullContractNode:] Published cloud to topic %s", output_cloud_topic_.c_str());
+    ROS_INFO("[HullContractNode:] Published contracted hull to topic %s", output_cloud_topic_.c_str());
     pub_.publish (output_cloud_);
 
     marker_.header.frame_id = output_cloud_.header.frame_id;
