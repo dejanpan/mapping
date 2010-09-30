@@ -76,14 +76,14 @@ public:
   TransformPointcloudNode  (ros::NodeHandle &n) : nh_(n)
   {
     // Maximum number of outgoing messages to be queued for delivery to subscribers = 1
-    nh_.param("input_cloud_topic", input_cloud_topic_, std::string("/cloud_pcd"));
+    nh_.param("input_cloud_topic", input_cloud_topic_, std::string("cloud_pcd"));
     output_cloud_topic_ = input_cloud_topic_ + "_transformed";
     nh_.param("to_frame", to_frame_, std::string("base_link"));
 
     sub_ = nh_.subscribe (input_cloud_topic_, 1,  &TransformPointcloudNode::cloud_cb, this);
-    ROS_INFO ("Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
+    ROS_INFO ("[TransformPointcloudNode:] Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
     pub_ = nh_.advertise<sensor_msgs::PointCloud2>(output_cloud_topic_, 1);
-    ROS_INFO ("Will be publishing data on topic %s.", nh_.resolveName (output_cloud_topic_).c_str ());
+    ROS_INFO ("[TransformPointcloudNode:] Will be publishing data on topic %s.", nh_.resolveName (output_cloud_topic_).c_str ());
   }
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -98,7 +98,7 @@ public:
       tf::StampedTransform transform;
       tf_.lookupTransform(to_frame_,pc->header.frame_id, pc->header.stamp, transform);
       pcl::transformPointCloud(to_frame_, transform, *pc, output_cloud_);
-      ROS_INFO("Point cloud published in frame %s", output_cloud_.header.frame_id.c_str());
+      ROS_INFO("[TransformPointcloudNode:] Point cloud published in frame %s", output_cloud_.header.frame_id.c_str());
       pub_.publish (output_cloud_);
     }
   }
