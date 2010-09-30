@@ -59,13 +59,16 @@ and publishes them along with the cloud's centroid.
 #include <ias_table_msgs/TableCluster.h>
 
 #include "pcl/segmentation/extract_clusters.h"
+#include "pcl/kdtree/kdtree.h"
+#include "pcl/kdtree/kdtree_ann.h"
+
 using namespace std;
 
 class PointcloudMinMax3DNode
 {
 protected:
   ros::NodeHandle nh_;
-  
+  typedef pcl::KdTree<pcl::PointXYZ>::Ptr KdTreePtr;
 public:
   string output_cluster_topic_, input_cloud_topic_;
   
@@ -74,7 +77,7 @@ public:
   ros::Publisher vis_pub_, max_pub_, min_pub_;
 
   ias_table_msgs::TableCluster output_cluster_;
-  pcl::PointCloud<pcl::PointXYZ> cloud_in_;
+  pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_in_;
   pcl::PointXYZ point_min_;
   pcl::PointXYZ point_max_;
   pcl::PointXYZ point_center_;
@@ -83,6 +86,8 @@ public:
   visualization_msgs::Marker marker_max_;
 
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> cluster_;
+  KdTreePtr clusters_tree_;
+  double object_cluster_tolerance_, object_cluster_min_size_;
 
   bool visualize_;
   ////////////////////////////////////////////////////////////////////////////////
@@ -92,6 +97,11 @@ public:
     nh_.param("input_cloud_topic", input_cloud_topic_, std::string("cloud_pcd"));
     nh_.param("output_cluster_topic", output_cluster_topic_, std::string("cluster"));
     nh_.param("visualize", visualize_, false);
+    //5 cm between cluster
+    nh_.param("object_cluster_tolerance", object_cluster_tolerance_, 0.05);
+    //min 100 points
+    nh_.param("object_cluster_min_size", object_cluster_min_size_, 100.00);
+    nh_.param("output_cluster_topic", output_cluster_topic_, std::string("cluster"));
     sub_ = nh_.subscribe (input_cloud_topic_, 1,  &PointcloudMinMax3DNode::cloud_cb, this);
     ROS_INFO ("[PointcloudMinMax3DNode:] Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
     pub_ = nh_.advertise<ias_table_msgs::TableCluster>(output_cluster_topic_, 1);
@@ -99,14 +109,38 @@ public:
     vis_pub_ = nh_.advertise<visualization_msgs::Marker>( "center_marker", 0 );
     min_pub_ = nh_.advertise<visualization_msgs::Marker>( "min_marker", 0 );
     max_pub_ = nh_.advertise<visualization_msgs::Marker>( "max_marker", 0 );
+    //setup cluster object
+    clusters_tree_ = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
+    clusters_tree_->setEpsilon (1);
   }
 
   ////////////////////////////////////////////////////////////////////////////////
   // cloud_cb (!)
   void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pc)
   {
-    pcl::fromROSMsg(*pc, cloud_in_);
-    getMinMax3D (cloud_in_, point_min_, point_max_);
+    pcl::PointCloud<pcl::PointXYZ> cloud;
+    pcl::fromROSMsg(*pc, cloud);
+    cloud_in_ = boost::make_shared<const pcl::PointCloud<pcl::PointXYZ> > (cloud);
+
+    std::vector<pcl::PointIndices> clusters;
+    cluster_.setInputCloud (cloud_in_);
+    cluster_.setClusterTolerance (object_cluster_tolerance_);
+    cluster_.setMinClusterSize (object_cluster_min_size_);
+    cluster_.setSearchMethod (clusters_tree_);
+    cluster_.extract (clusters);
+
+    ROS_INFO ("[PointcloudMinMax3DNode] Number of clusters found matching the given constraints: %d.", (int)clusters.size ());
+
+    pcl::PointCloud<pcl::PointXYZ> cloud_object_cluster;
+    if ((int)clusters.size() > 1)
+    {
+      ROS_INFO ("[PointcloudMinMax3DNode] Getting MinMax3D of biggest cluster");
+      pcl::copyPointCloud (*cloud_in_, clusters[0], cloud_object_cluster);
+    }
+    else 
+      return
+
+    getMinMax3D (cloud_object_cluster, point_min_, point_max_);
     //Calculate the centroid of the hull
     output_cluster_.header.stamp = ros::Time::now();
     output_cluster_.header.frame_id = pc->header.frame_id;
