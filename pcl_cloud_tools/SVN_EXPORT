@@ -1,35 +1,65 @@
-commit 59cc65e339f267b84a1cd3203dba0f4566c27558
-Author: Zoltan-Csaba Marton <marton@cs.tum.edu>
-Date:   Mon Sep 20 16:28:51 2010 +0200
-
-    reverted script for humanoids
-
-commit edf16a1b468a0d1b1634e1a04f190526dc55e3bc
+commit 15ee6aed03802ba156a02ea6558efae8702c22d9
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Sat Sep 11 21:03:04 2010 +0200
+Date:   Thu Sep 30 02:59:20 2010 +0200
 
-    further debugging
+    added example file for normalization of normals
 
-commit 5eba709318e3c5efb3150d3a9e55d901d59277bc
+commit 0cae64d387ed2149540b3fa2a1593f6426603c14
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Sat Sep 11 16:19:56 2010 +0200
+Date:   Thu Sep 30 02:58:46 2010 +0200
 
-    launch file as box filter
+    fixed orientation of normals
 
-commit ff2feda94e526f4d3a8164d34a381f39364a7fba
-Author: Zoltan-Csaba Marton <marton@cs.tum.edu>
-Date:   Fri Sep 10 20:22:06 2010 +0200
-
-    debugging virtual scanner's camera-relative coordinate system
-
-commit 8e821c5a658bc24c4223103dac2d9b3e412287ff
-Author: Zoltan-Csaba Marton <marton@cs.tum.edu>
-Date:   Tue Sep 7 19:16:48 2010 +0200
-
-    fixes + added
-
-commit 4aafde79d9e9bf2749b48a638161e7c1ed448bbf
+commit 4efdbaaf25e774386103544315823851ea5a3489
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Mon Sep 6 16:03:56 2010 +0200
+Date:   Wed Sep 29 23:36:45 2010 +0200
+
+    atan2
+
+commit 4cb11e865132bd80e7ca9ad3d8e8eab7c7441d77
+Author: Felix Ruess <felix.ruess@gmail.com>
+Date:   Wed Sep 29 20:13:37 2010 +0200
+
+    added pcl_normal_visualization node
+
+commit bc4c410f3846e036551704274d04844e74abc414
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Sep 28 22:21:32 2010 +0200
+
+    added contracting to the convex hull in order to get rid of the wall points as extracted by PolygonalPrismData
+
+commit dbc98dcd9b118e8dcace28954f7cde5040678489
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Sep 28 19:57:39 2010 +0200
+
+    transforms point cloud from current frame to target frame
+
+commit 248759dd3b8acc8c1646f49d2ab8a0aa4856272e
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Sep 28 19:56:56 2010 +0200
+
+    plate detection works: TODO: get rid of 1.2 limit in x direction
+
+commit 295315662661fbec904f8c8799afab9a28fbff8e
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Sep 28 14:44:53 2010 +0200
+
+    no need for clustering
+
+commit 2f1eb3c97b2df18037d2cc46ea897a20a8f634c5
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Sep 28 02:18:50 2010 +0200
+
+    plate detector, TODO: move it into base_link frame, publish center, radius
+
+commit ed3aef424f2528db2b5a860676728dc9e919cf3a
+Author: Zoltan-Csaba Marton <marton@cs.tum.edu>
+Date:   Mon Sep 27 12:52:44 2010 +0200
+
+    I should automatize this script..
+
+commit 67b8710968d8cd20196173f30c5e33f59ff0fac4
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Sun Sep 26 23:20:15 2010 +0200
 
     public export
