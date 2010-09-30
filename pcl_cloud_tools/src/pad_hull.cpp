@@ -58,7 +58,7 @@
 
 using namespace std;
 
-class TransformPointcloudNode
+class HullContractNode
 {
 protected:
   ros::NodeHandle nh_;
@@ -79,17 +79,17 @@ public:
 
   double padding_;
   ////////////////////////////////////////////////////////////////////////////////
-  TransformPointcloudNode  (ros::NodeHandle &n) : nh_(n)
+  HullContractNode  (ros::NodeHandle &n) : nh_(n)
   {
     // Maximum number of outgoing messages to be queued for delivery to subscribers = 1
-    nh_.param("input_cloud_topic", input_cloud_topic_, std::string("/cloud_pcd"));
+    nh_.param("input_cloud_topic", input_cloud_topic_, std::string("cloud_pcd"));
     output_cloud_topic_ = input_cloud_topic_ + "_padded";
-    sub_ = nh_.subscribe (input_cloud_topic_, 1,  &TransformPointcloudNode::cloud_cb, this);
-    ROS_INFO ("Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
+    sub_ = nh_.subscribe (input_cloud_topic_, 1,  &HullContractNode::cloud_cb, this);
+    ROS_INFO ("[HullContractNode:] Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
     pub_ = nh_.advertise<sensor_msgs::PointCloud2>(output_cloud_topic_, 1);
-    ROS_INFO ("Will be publishing data on topic %s.", nh_.resolveName (output_cloud_topic_).c_str ());
+    ROS_INFO ("[HullContractNode:] Will be publishing data on topic %s.", nh_.resolveName (output_cloud_topic_).c_str ());
     vis_pub_ = nh_.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
-    padding_ = 0.8;
+    padding_ = 0.9;
   }
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -106,10 +106,10 @@ public:
     {
       double dist_to_center = sqrt((point_center_.x - cloud_in_.points[i].x) * (point_center_.x - cloud_in_.points[i].x) + 
 
-                                   (point_center_.y - cloud_in_.points[i].y) * (point_center_.x - cloud_in_.points[i].x));
-      ROS_INFO("Dist to center: %lf", dist_to_center);
+                                   (point_center_.y - cloud_in_.points[i].y) * (point_center_.y - cloud_in_.points[i].y));
+      ROS_INFO("[HullContractNode:] Dist to center: %lf", dist_to_center);
       double angle;
-      angle= atan2((point_center_.x - cloud_in_.points[i].x), (point_center_.y - cloud_in_.points[i].y));
+      angle= atan2((cloud_in_.points[i].y - point_center_.y), (cloud_in_.points[i].x - point_center_.x));
       double new_dist_to_center = padding_ * dist_to_center;
       cloud_in_.points[i].y = point_center_.y + sin(angle) * new_dist_to_center;
       cloud_in_.points[i].x = point_center_.x + cos(angle) * new_dist_to_center;
@@ -174,7 +174,7 @@ int main (int argc, char** argv)
 {
   ros::init (argc, argv, "transform_pointcloud_node");
   ros::NodeHandle n("~");
-  TransformPointcloudNode tp(n);
+  HullContractNode tp(n);
   ros::spin ();
   return (0);
 }
