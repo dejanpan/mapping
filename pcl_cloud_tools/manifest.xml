@@ -23,6 +23,7 @@
   <depend package="pcl_visualization" />
   <depend package="cop_for_external_dependencies" />
   <depend package="visualization_msgs" />
+  <depend package="ias_table_msgs" />
   <export>
     <cpp cflags="-I${prefix}/include/" />
   </export>
