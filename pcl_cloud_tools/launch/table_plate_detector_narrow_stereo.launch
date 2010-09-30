@@ -2,11 +2,11 @@
   <group ns="stereo_table_cluster_detector">
     
     <node pkg="pcl_cloud_tools" type="transform_pointcloud_node" name="transform_pointcloud_node" output="screen">
-      <remap from="/cloud_pcd" to="/narrow_stereo_textured/points2" />
+      <remap from="~cloud_pcd" to="/narrow_stereo_textured/points2" />
     </node>
 
     <node pkg="pcl_cloud_tools" type="pad_hull_node" name="pad_hull_node" output="screen">
-      <remap from="/cloud_pcd" to="table_convex_hull/output" />
+      <remap from="~cloud_pcd" to="table_convex_hull/output" />
     </node>
 
     
@@ -15,12 +15,9 @@
     
     <!-- Run a voxel_grid filter to clean NaNs -->
     <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
-      <remap from="voxel_grid/input" to="/cloud_pcd_transformed" />
+      <remap from="voxel_grid/input" to="transform_pointcloud_node/cloud_pcd_transformed" />
       <rosparam>
         leaf_size: 0.01
-        filter_field_name: x
-        filter_limit_min: 0.0
-        filter_limit_max: 1.2
       </rosparam>
     </node>
 
@@ -69,10 +66,10 @@
     <!-- Extract the object clusters using a polygonal prism -->
     <node pkg="nodelet" type="nodelet" name="table_object_candidates" args="load pcl/ExtractPolygonalPrismData pcl_manager" output="screen">
       <remap from="~input" to="extract_remaining_indices/output" />
-      <remap from="~planar_hull"   to="/cloud_pcd_padded" />
+      <remap from="~planar_hull"   to="pad_hull_node/cloud_pcd_padded" />
       <rosparam>
-        height_min: 0.02
-        height_max: 0.2
+        height_min: -0.2
+        height_max: -0.01
         vpz: 1.3
       </rosparam>
     </node>
