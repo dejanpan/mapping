@@ -58,6 +58,7 @@ and publishes them along with the cloud's centroid.
 #include <visualization_msgs/Marker.h>
 #include <ias_table_msgs/TableCluster.h>
 
+#include "pcl/segmentation/extract_clusters.h"
 using namespace std;
 
 class PointcloudMinMax3DNode
@@ -80,6 +81,8 @@ public:
   visualization_msgs::Marker marker_center_;
   visualization_msgs::Marker marker_min_;
   visualization_msgs::Marker marker_max_;
+
+  pcl::EuclideanClusterExtraction<pcl::PointXYZ> cluster_;
 
   bool visualize_;
   ////////////////////////////////////////////////////////////////////////////////
