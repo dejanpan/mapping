@@ -1,35 +1,47 @@
-commit 7f31c6d6120f4188d671d0ba7cb967f64a10779c
+commit 492e68ae473eb0b05cff5c7c64976415fb1844f3
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Thu Sep 30 18:57:40 2010 +0200
+
+    added minmax computation to launch file
+
+commit fc080613738026209ded5da7688929e99ccfd334
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Thu Sep 30 18:54:07 2010 +0200
+
+    forgotten file
+
+commit 65cfdf86dece74e8fb7cb9b5749d8477ac257897
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Thu Sep 30 18:53:52 2010 +0200
+
+    pointcloud minmax computation
+
+commit 723c577e43c1a9cc7bb2ff8b8d99669f4f21a030
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Thu Sep 30 15:28:50 2010 +0200
+
+    public export
+
+commit 7b3e34c9e3b3cf88c8787262b70ec0fac34f84f6
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
 Date:   Thu Sep 30 15:27:38 2010 +0200
 
     added param
 
-commit 8b70ea34a769e88eb641f6e87f0c74d033606403
+commit 03bde343c8523dbd47b3131a0be066b111cc022a
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
 Date:   Thu Sep 30 15:27:15 2010 +0200
 
     renamed, added padding as parameter
 
-commit 6dc9d4da914417102968fa14873dd0dce9540057
+commit b70ee8718da1a66bfee90ad50a893b64eaf6d366
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
 Date:   Thu Sep 30 15:16:48 2010 +0200
 
     detection of plates works correct and reliably with pcl trunk version: Last Changed Rev: 32961
 
-commit 648eed7d3ac355b04af51247b92089f509d3f251
+commit 7b282b8b72259958ffdea96785a9d5c14162c5d2
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
 Date:   Thu Sep 30 15:15:57 2010 +0200
 
     atan2 now used correct way
-
-commit fabaa8c2716b29ec2be7401208fa500e8ee466cc
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Thu Sep 30 15:15:29 2010 +0200
-
-    node name in ROS_INFO
-
-commit 09cb3edf7ddb80a2a7ef6727526faf21e6cd3723
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Thu Sep 30 03:00:34 2010 +0200
-
-    public export
