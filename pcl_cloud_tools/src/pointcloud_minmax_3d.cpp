@@ -70,13 +70,14 @@ protected:
   ros::NodeHandle nh_;
   typedef pcl::KdTree<pcl::PointXYZ>::Ptr KdTreePtr;
 public:
-  string output_cluster_topic_, input_cloud_topic_;
+  string output_cluster_topic_, input_cloud_topic_, output_cloud_cluster_topic_;
   
   ros::Subscriber sub_;
-  ros::Publisher pub_;
+  ros::Publisher pub_, output_cloud_cluster_pub_;
   ros::Publisher vis_pub_, max_pub_, min_pub_;
 
   ias_table_msgs::TableCluster output_cluster_;
+  sensor_msgs::PointCloud2 output_cloud_cluster_;
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_in_;
   pcl::PointXYZ point_min_;
   pcl::PointXYZ point_max_;
@@ -113,8 +114,11 @@ public:
     vis_pub_ = nh_.advertise<visualization_msgs::Marker>( "center_marker", 0 );
     min_pub_ = nh_.advertise<visualization_msgs::Marker>( "min_marker", 0 );
     max_pub_ = nh_.advertise<visualization_msgs::Marker>( "max_marker", 0 );
+
+    nh_.param("output_cloud_cluster_topic", output_cloud_cluster_topic_, std::string("cloud_cluster"));
     //setup cluster object
     clusters_tree_ = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
+    output_cloud_cluster_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(output_cloud_cluster_topic_, 5);
     clusters_tree_->setEpsilon (1);
   }
 
@@ -133,7 +137,7 @@ public:
     cluster_.setSearchMethod (clusters_tree_);
     cluster_.extract (clusters);
     
-    for (unsigned long i; clusters.size(); i++)
+    for (unsigned long i = 0; clusters.size(); i++)
     {
       ROS_INFO("Cluster %ld sizes: %ld", i, clusters[i].indices.size());
     }
@@ -179,6 +183,8 @@ public:
           min_pub_.publish( marker_min_ );
           compute_marker(marker_max_, output_cluster_.max_bound);
           max_pub_.publish( marker_max_ );
+          toROSMsg(cloud_object_cluster, output_cloud_cluster_);
+          output_cloud_cluster_pub_.publish(output_cloud_cluster_);
         }
       }
       else
