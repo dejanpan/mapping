@@ -134,23 +134,23 @@ public:
     cluster_.setInputCloud (cloud_in_);
     cluster_.setClusterTolerance (object_cluster_tolerance_);
     cluster_.setMinClusterSize (object_cluster_min_size_);
+    cluster_.setMaxClusterSize (500);
     cluster_.setSearchMethod (clusters_tree_);
     cluster_.extract (clusters);
     
-    for (unsigned long i = 0; clusters.size(); i++)
+    for (unsigned long i = 0; i < clusters.size(); i++)
     {
-      ROS_INFO("Cluster %ld sizes: %ld", i, clusters[i].indices.size());
+      ROS_DEBUG("Cluster %ld sizes: %ld", i, clusters[i].indices.size());
     }
     
-    ROS_INFO ("[PointcloudMinMax3DNode] Number of clusters found matching the given constraints: %d.", (int)clusters.size ());
+    ROS_INFO("[PointcloudMinMax3DNode] Number of clusters found matching the given constraints: %d.", (int)clusters.size ());
     
     int actual_number_clusters = (int)clusters.size();
     pcl::PointCloud<pcl::PointXYZ> cloud_object_cluster;
-    for (int i = 0; i < number_clusters_; i++)
+    ROS_INFO("actual number of clusters %ld", actual_number_clusters);
+    for (int i = 0; i < actual_number_clusters; i++)
     {
-      if ((int)clusters.size() >= actual_number_clusters)
-      {
-        pcl::copyPointCloud (*cloud_in_, clusters[i], cloud_object_cluster);
+      pcl::copyPointCloud (*cloud_in_, clusters[i], cloud_object_cluster);
         ROS_INFO ("[PointcloudMinMax3DNode] Got MinMax3D of biggest cluster with points %ld", cloud_object_cluster.points.size());
         
         pcl::getMinMax3D (cloud_object_cluster, point_min_, point_max_);
@@ -186,11 +186,6 @@ public:
           toROSMsg(cloud_object_cluster, output_cloud_cluster_);
           output_cloud_cluster_pub_.publish(output_cloud_cluster_);
         }
-      }
-      else
-      {
-        return;
-      }
     }
   }
 
