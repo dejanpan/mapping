@@ -105,7 +105,7 @@ public:
     //5 cm between cluster
     nh_.param("object_cluster_tolerance", object_cluster_tolerance_, 0.05);
     //min 100 points
-    nh_.param("object_cluster_min_size", object_cluster_min_size_, 100.00);
+    nh_.param("object_cluster_min_size", object_cluster_min_size_, 50.00);
     nh_.param("output_cluster_topic", output_cluster_topic_, std::string("cluster"));
     sub_ = nh_.subscribe (input_cloud_topic_, 1,  &PointcloudMinMax3DNode::cloud_cb, this);
     ROS_INFO ("[PointcloudMinMax3DNode:] Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
