@@ -1,0 +1,24 @@
+<package>
+  <description>
+    A collection of point cloud tools that depend on vtk.
+  </description>
+
+  <author>Nico Blodow, Zoltan-Csaba Marton, Dejan Pangercic</author>
+  <license>BSD</license>
+  <review status="experimental" notes="beta"/>
+
+  <depend package="roscpp" />
+  <depend package="std_msgs" />
+  <depend package="pcl" />
+  <depend package="geometry_msgs" />
+  <depend package="sensor_msgs" />
+  <depend package="mapping_msgs" />
+  <depend package="yaml_cpp" />
+  <!--See http://octomap.sourceforge.net/ -->
+  <depend package="vtk" />
+  <depend package="pcl_visualization" />
+  <depend package="cop_for_external_dependencies" />
+  <export>
+    <cpp cflags="-I${prefix}/include/" />
+  </export>
+</package>
