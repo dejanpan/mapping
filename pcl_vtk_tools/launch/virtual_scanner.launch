@@ -1,0 +1,4 @@
+<launch>
+<node pkg="pcl_vtk_tools" type="virtual_scanner" name="virtual_scanner" output="screen" respawn="true"
+      args="single_view 1 $(find pcl_vtk_tools)/data/bunny.ply" />
+</launch>
