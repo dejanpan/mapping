@@ -128,7 +128,7 @@ void NormalViz::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pc2_msg) {
       normals_marker_array_msg_.markers[i].pose.position = pos;
       //axis-angle rotation
       btVector3 axis(pcl_cloud.points[i].normal[0],pcl_cloud.points[i].normal[1],pcl_cloud.points[i].normal[2]);
-      btVector3 marker_axis(0, 0, 1);
+      btVector3 marker_axis(1, 0, 0);
       btQuaternion qt(marker_axis.cross(axis.normalize()), marker_axis.angle(axis.normalize()));
       geometry_msgs::Quaternion quat_msg;
       tf::quaternionTFToMsg(qt, quat_msg);
