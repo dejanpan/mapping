@@ -74,14 +74,15 @@ public:
   //handle center pose
   geometry_msgs::PoseStamped handle_pose_;
 
-  int number_clusters_;
+  //sleep one second between publishing of handle poses to
+  bool sleep_;
   ////////////////////////////////////////////////////////////////////////////////
   PointcloudLinePose  (ros::NodeHandle &n) : nh_(n)
   {
     // Maximum number of outgoing messages to be queued for delivery to subscribers = 1
     nh_.param("input_model_topic", input_model_topic_, std::string("/handle_detector/handle_segmentation/model"));
     nh_.param("output_pose_topic", output_pose_topic_, std::string("handle_pose"));
-    nh_.param("number_clusters", number_clusters_, 1);
+    nh_.param("sleep", sleep_, false);
     //5 cm between cluster
     sub_ = nh_.subscribe (input_model_topic_, 10,  &PointcloudLinePose::model_cb, this);
     ROS_INFO ("[PointcloudLinePose:] Listening for incoming data on topic %s.", nh_.resolveName (input_model_topic_).c_str ());
@@ -97,12 +98,17 @@ public:
     handle_pose_.pose.position.x = model->values[0];
     handle_pose_.pose.position.y = model->values[1];
     handle_pose_.pose.position.z = model->values[2];
-    btQuaternion qt(0, 0, 0, 1);
+
+    //axis-angle rotation
+    btVector3 axis(model->values[3], model->values[4], model->values[5]);
+    btVector3 marker_axis(1, 0, 0);
+    btQuaternion qt(marker_axis.cross(axis.normalize()), marker_axis.angle(axis.normalize()));
     geometry_msgs::Quaternion quat_msg;
     tf::quaternionTFToMsg(qt, quat_msg);
     handle_pose_.pose.orientation = quat_msg;
     ROS_INFO("[PointcloudLinePose:] Published cluster to topic %s", output_pose_topic_.c_str());
-    sleep(1.0);
+    if (sleep_)
+      sleep(1.0);
     pub_.publish (handle_pose_);
   }
 
