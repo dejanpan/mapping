@@ -1,101 +1,17 @@
-commit 24d7bccc752ddef1c0e41f83df503062af948044
+commit 69200c6e7fadf33a320f24a9087c411ede6fc260
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Mon Oct 4 23:44:20 2010 +0200
+Date:   Tue Oct 5 22:01:36 2010 +0200
 
-    works
+    added sleep param between publishing of handle poses
 
-commit dc04d9be226c002f638c524f97b2863ab7a2dd41
+commit 7bbdfc259303e43910c859000d6cc54af3641031
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Sun Oct 3 17:46:33 2010 +0200
+Date:   Tue Oct 5 20:56:03 2010 +0200
 
-    took out all vtk dependant programs and moved into a new package pcl_vtk_tools -> reason -> incompatible vtk on PR2
+    node that returns the centroid pose of the handles
 
-commit 927a04be323a0a42aab5f1cffe96b8e0ffdda4bb
+commit 032ce9089896e3d19f9f64b47d752dfe3bdf56e6
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Sun Oct 3 00:56:18 2010 +0200
-
-    still does not generalize over all pcds. TODO: Felix check
-
-commit c45183fd2d27de7bef51d454c8f95b5c8d686495
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Sun Oct 3 00:20:29 2010 +0200
-
-    how could that ever work
-
-commit 53758e7d32db7baed916bd6f3fbd7fc723a03911
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Fri Oct 1 21:20:44 2010 +0200
-
-    bug fix
-
-commit 39db792bef18cf299f61820db3b00f5b84242c5c
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Fri Oct 1 20:46:17 2010 +0200
-
-    cluster size
-
-commit fb2ed57b599aa0b0eec7e2cc367f04814dfe417d
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Fri Oct 1 15:30:30 2010 +0200
-
-    added number_clusters to launch file
-
-commit 4686713465dd452f168c6a2f76aa5ae7fd223730
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Fri Oct 1 15:00:24 2010 +0200
-
-    added parameter for the number of clusters
-
-commit 9f9ef99b4d6fb7c30a873b11e9680f7dd95de0d7
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Fri Oct 1 00:29:58 2010 +0200
-
-    bug fix
-
-commit 9938555e19dc0d5b4eb959bbaf1b52a4adc466d5
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Thu Sep 30 22:31:10 2010 +0200
-
-    less verbose ros info
-
-commit 011ef14248e22417c21a03b2a0aa3317335f61a8
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Thu Sep 30 22:06:41 2010 +0200
-
-    segmenting out biggest cluster
-
-commit 79a39bfcd4289478eff9e599c7e7bfee9ff75d57
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Thu Sep 30 20:47:01 2010 +0200
-
-    segmenting out biggest cluster
-
-commit 40e8c946158800a8361e139d78e4d4ea7763fca7
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Thu Sep 30 20:23:36 2010 +0200
-
-    vtk that pcl_visualization needs does not compile on pr2
-
-commit 22556441fe1f023e423f595c675f1e77ebb2c930
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Thu Sep 30 20:21:52 2010 +0200
-
-    mapping to right topic
-
-commit b935ef1344c39d610b5e3f6a1f80bbb99e2344b8
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Thu Sep 30 18:59:35 2010 +0200
+Date:   Mon Oct 4 23:45:44 2010 +0200
 
     public export
-
-commit 492e68ae473eb0b05cff5c7c64976415fb1844f3
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Thu Sep 30 18:57:40 2010 +0200
-
-    added minmax computation to launch file
-
-commit fc080613738026209ded5da7688929e99ccfd334
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Thu Sep 30 18:54:07 2010 +0200
-
-    forgotten file
