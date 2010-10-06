@@ -83,7 +83,7 @@ public:
   {
     // Maximum number of outgoing messages to be queued for delivery to subscribers = 1
     nh_.param("input_cloud_topic", input_cloud_topic_, std::string("cloud_pcd"));
-    nh_.param("padding", padding_, 0.9);
+    nh_.param("padding", padding_, 0.8);
     output_cloud_topic_ = input_cloud_topic_ + "_padded";
     sub_ = nh_.subscribe (input_cloud_topic_, 1,  &HullContractNode::cloud_cb, this);
     ROS_INFO ("[HullContractNode:] Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
