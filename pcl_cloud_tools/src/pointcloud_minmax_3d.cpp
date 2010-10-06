@@ -148,7 +148,11 @@ public:
     int actual_number_clusters = (int)clusters.size();
     pcl::PointCloud<pcl::PointXYZ> cloud_object_cluster;
     ROS_INFO("actual number of clusters %ld", actual_number_clusters);
-    for (int i = 0; i < actual_number_clusters; i++)
+    if (actual_number_clusters == 0)
+      {
+	return;
+      }
+    for (int i = 0; i < number_clusters_; i++)
     {
       pcl::copyPointCloud (*cloud_in_, clusters[i], cloud_object_cluster);
         ROS_INFO ("[PointcloudMinMax3DNode] Got MinMax3D of biggest cluster with points %ld", cloud_object_cluster.points.size());
