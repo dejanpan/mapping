@@ -1,16 +1,17 @@
 <launch>
+  <node pkg="topic_tools" type="throttle" name="swissranger_throttle" respawn="false" args="messages /narrow_stereo_textured/points2 1" />
+
   <group ns="stereo_table_cluster_detector">
     
     <node pkg="pcl_cloud_tools" type="transform_pointcloud_node" name="transform_pointcloud_node" output="screen">
-      <remap from="~cloud_pcd" to="/narrow_stereo_textured/points2" />
+      <remap from="~cloud_pcd" to="/narrow_stereo_textured/points2_throttle" />
     </node>
 
     <node pkg="pcl_cloud_tools" type="hull_contract_node" name="hull_contract_node" output="screen">
-      <param name="padding" value="0.8"/>
+      <param name="padding" value="0.85"/>
       <remap from="~cloud_pcd" to="table_convex_hull/output" />
     </node>
 
-    
     <!-- PCL Manager -->
     <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
     
@@ -37,6 +38,21 @@
       </rosparam>
     </node>
 
+    <!-- Cluster the remaining points (all-plane) -->
+    <node pkg="nodelet" type="nodelet" name="biggest_plane" args="load pcl/EuclideanClusterExtraction pcl_manager" output="screen">
+      <remap from="~input" to="voxel_grid/output" />
+      <remap from="~indices" to="planar_segmentation_stereo/inliers" />
+      <rosparam>
+        use_indices: true
+        max_queue_size: 10
+        cluster_tolerance: 0.05
+        spatial_locator: 0
+        cluster_min_size: 50
+        max_clusters: 1
+        publish_indices: false
+      </rosparam>
+    </node>
+    
     <!-- Project the planar inliers -->
     <node pkg="nodelet" type="nodelet" name="project_planar_inliers" args="load pcl/ProjectInliers pcl_manager" output="screen">
       <remap from="~input" to="voxel_grid/output" />
@@ -51,7 +67,8 @@
 
     <!-- Compute the convex hull -->
     <node pkg="nodelet" type="nodelet" name="table_convex_hull" args="load pcl/ConvexHull2D pcl_manager" output="screen">
-      <remap from="~input" to="project_planar_inliers/output" />
+      <!-- <remap from="~input" to="project_planar_inliers/output" /> -->
+      <remap from="~input" to="biggest_plane/output" />
     </node>
 
     <!-- Extract the remaining of all-plane (XYZ) -->
@@ -62,7 +79,6 @@
         negative: true
       </rosparam>
     </node>
-
 
     <!-- Extract the object clusters using a polygonal prism -->
     <node pkg="nodelet" type="nodelet" name="table_object_candidates" args="load pcl/ExtractPolygonalPrismData pcl_manager" output="screen">
@@ -76,16 +92,17 @@
     </node>
 
     <node pkg="nodelet" type="nodelet" name="extract_table_object_candidates" args="load pcl/ExtractIndices pcl_manager" output="screen">
-      <!-- Extract_plane_indices needs to be negated for this work -->
       <remap from="~input"   to="extract_remaining_indices/output" />
       <remap from="~indices" to="table_object_candidates/output" />
       <rosparam>
         negative: false
       </rosparam>
     </node>
+
     <node pkg="pcl_cloud_tools" type="pointcloud_minmax_3d_node" name="pointcloud_minmax_3d_node" output="screen" respawn="true">
       <param name="visualize" value="true"/>
       <param name="number_clusters" value="1"/>
+      <param name="object_clusters_min_size" value="80"/>	
       <remap from="~cloud_pcd" to="extract_table_object_candidates/output" />
     </node>
 
