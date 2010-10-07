@@ -98,7 +98,7 @@ public:
       tf::StampedTransform transform;
       tf_.lookupTransform(to_frame_,pc->header.frame_id, pc->header.stamp, transform);
       pcl::transformPointCloud(to_frame_, transform, *pc, output_cloud_);
-      ROS_INFO("[TransformPointcloudNode:] Point cloud published in frame %s", output_cloud_.header.frame_id.c_str());
+      ROS_DEBUG("[TransformPointcloudNode:] Point cloud published in frame %s", output_cloud_.header.frame_id.c_str());
       pub_.publish (output_cloud_);
     }
   }
