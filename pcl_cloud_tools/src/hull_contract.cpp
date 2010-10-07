@@ -77,13 +77,16 @@ public:
   pcl::PointXYZ point_center_;
   visualization_msgs::Marker marker_;
 
-  double padding_;
+  double padding_, offset_x_; 
   ////////////////////////////////////////////////////////////////////////////////
   HullContractNode  (ros::NodeHandle &n) : nh_(n)
   {
     // Maximum number of outgoing messages to be queued for delivery to subscribers = 1
     nh_.param("input_cloud_topic", input_cloud_topic_, std::string("cloud_pcd"));
     nh_.param("padding", padding_, 0.8);
+    //how much to offset the contracted hull into x direction
+    //this hack is needed to get the objects on the front edge of the shelf
+    nh_.param("offset_x", offset_x_, 0.02);
     output_cloud_topic_ = input_cloud_topic_ + "_padded";
     sub_ = nh_.subscribe (input_cloud_topic_, 1,  &HullContractNode::cloud_cb, this);
     ROS_INFO ("[HullContractNode:] Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
@@ -97,15 +100,32 @@ public:
   void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pc)
   {
     pcl::fromROSMsg(*pc, cloud_in_);
+    //    cloud_in_.width = cloud_in_.width + 2;
     getMinMax3D (cloud_in_, point_min_, point_max_);
     //Calculate the centroid of the hull
     point_center_.x = (point_max_.x + point_min_.x)/2;
     point_center_.y = (point_max_.y + point_min_.y)/2;
     point_center_.z = (point_max_.z + point_min_.z)/2;
+    // float min_x, max_y, min_y, z;
+    // min_x = min_y = FLT_MAX;
+    // max_y = FLT_MIN;
+    
     for (unsigned long i = 0; i < cloud_in_.points.size(); i++)
     {
+      //hack to preserve the closest edge of the plane
+      // if (cloud_in_.points[i].y < min_y && cloud_in_.points[i].x < min_x)
+      // 	{
+      // 	  min_y = cloud_in_.points[i].y;
+      // 	  min_x = cloud_in_.points[i].x;
+      // 	  z = cloud_in_.points[i].z;
+      // 	}
+      // if (cloud_in_.points[i].y > max_y &&  cloud_in_.points[i].x < min_x)
+      // 	{
+      // 	  max_y = cloud_in_.points[i].y;
+      // 	  min_x = cloud_in_.points[i].x;
+      // 	  z = cloud_in_.points[i].z;
+      // 	}
       double dist_to_center = sqrt((point_center_.x - cloud_in_.points[i].x) * (point_center_.x - cloud_in_.points[i].x) + 
-
                                    (point_center_.y - cloud_in_.points[i].y) * (point_center_.y - cloud_in_.points[i].y));
       ROS_DEBUG("[HullContractNode:] Dist to center: %lf", dist_to_center);
       double angle;
@@ -113,7 +133,19 @@ public:
       double new_dist_to_center = padding_ * dist_to_center;
       cloud_in_.points[i].y = point_center_.y + sin(angle) * new_dist_to_center;
       cloud_in_.points[i].x = point_center_.x + cos(angle) * new_dist_to_center;
+      cloud_in_.points[i].x = cloud_in_.points[i].x - offset_x_;
     }
+    //  //hack to preserve the closest edge of the plane
+    // pcl::PointXYZ minx_miny, minx_maxy;
+    // minx_miny.x = min_x;
+    // minx_miny.y = min_y;
+    // minx_miny.z = z;
+    // minx_maxy.x = min_x;
+    // minx_maxy.y = max_y;
+    // minx_maxy.z = z;
+    // cloud_in_.points.push_back(minx_maxy);
+    // cloud_in_.points.push_back(minx_miny);
+    //end of hack
     pcl::toROSMsg (cloud_in_, output_cloud_);
     ROS_INFO("[HullContractNode:] Published contracted hull to topic %s", output_cloud_topic_.c_str());
     pub_.publish (output_cloud_);
