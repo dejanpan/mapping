@@ -90,7 +90,8 @@ public:
 
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> cluster_;
   KdTreePtr clusters_tree_;
-  double object_cluster_tolerance_, object_cluster_min_size_;
+  double object_cluster_tolerance_;
+  int object_cluster_min_size_, object_cluster_max_size_;
 
   bool visualize_; 
   int number_clusters_;
@@ -105,7 +106,8 @@ public:
     //5 cm between cluster
     nh_.param("object_cluster_tolerance", object_cluster_tolerance_, 0.05);
     //min 100 points
-    nh_.param("object_cluster_min_size", object_cluster_min_size_, 50.00);
+    nh_.param("object_cluster_min_size", object_cluster_min_size_, 50);
+    //nh_.param("object_cluster_max_size", object_cluster_max_size_, 500);
     nh_.param("output_cluster_topic", output_cluster_topic_, std::string("cluster"));
     sub_ = nh_.subscribe (input_cloud_topic_, 1,  &PointcloudMinMax3DNode::cloud_cb, this);
     ROS_INFO ("[PointcloudMinMax3DNode:] Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
@@ -134,7 +136,7 @@ public:
     cluster_.setInputCloud (cloud_in_);
     cluster_.setClusterTolerance (object_cluster_tolerance_);
     cluster_.setMinClusterSize (object_cluster_min_size_);
-    cluster_.setMaxClusterSize (500);
+    //    cluster_.setMaxClusterSize (object_cluster_max_size_);
     cluster_.setSearchMethod (clusters_tree_);
     cluster_.extract (clusters);
     
@@ -215,6 +217,7 @@ public:
     marker.color.r = 0.0;
     marker.color.g = 1.0;
     marker.color.b = 0.0;
+    marker.lifetime = ros::Duration(1.0);
 
   }
 };
