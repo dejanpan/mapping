@@ -80,7 +80,7 @@ public:
   PointcloudLinePose  (ros::NodeHandle &n) : nh_(n)
   {
     // Maximum number of outgoing messages to be queued for delivery to subscribers = 1
-    nh_.param("input_model_topic", input_model_topic_, std::string("/handle_detector/handle_segmentation/model"));
+    nh_.param("input_model_topic", input_model_topic_, std::string("model"));
     nh_.param("output_pose_topic", output_pose_topic_, std::string("handle_pose"));
     nh_.param("sleep", sleep_, false);
     //5 cm between cluster
