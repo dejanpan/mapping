@@ -1,19 +1,19 @@
 <launch>
-  <node pkg="topic_tools" type="throttle" name="swissranger_throttle" respawn="false" args="messages /narrow_stereo_textured/points2 1" />
+  <node pkg="topic_tools" type="throttle" name="swissranger_throttle" respawn="false" args="messages /narrow_stereo_textured/points2 1" machine="c2"/>
 
   <group ns="stereo_table_cluster_detector">
     
-    <node pkg="pcl_cloud_tools" type="transform_pointcloud_node" name="transform_pointcloud_node" output="screen">
+    <node pkg="pcl_cloud_tools" type="transform_pointcloud_node" name="transform_pointcloud_node" output="screen" machine="c2">
       <remap from="~cloud_pcd" to="/narrow_stereo_textured/points2_throttle" />
     </node>
 
-    <node pkg="pcl_cloud_tools" type="hull_contract_node" name="hull_contract_node" output="screen">
+    <node pkg="pcl_cloud_tools" type="hull_contract_node" name="hull_contract_node" output="screen" machine="c2">
       <param name="padding" value="0.85"/>
       <remap from="~cloud_pcd" to="table_convex_hull/output" />
     </node>
 
     <!-- PCL Manager -->
-    <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+    <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" machine="c2"/>
     
     <!-- Run a voxel_grid filter to clean NaNs -->
     <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
@@ -99,7 +99,7 @@
       </rosparam>
     </node>
 
-    <node pkg="pcl_cloud_tools" type="pointcloud_minmax_3d_node" name="pointcloud_minmax_3d_node" output="screen" respawn="true">
+    <node pkg="pcl_cloud_tools" type="pointcloud_minmax_3d_node" name="pointcloud_minmax_3d_node" output="screen" respawn="true" machine="c2">
       <param name="visualize" value="true"/>
       <param name="number_clusters" value="1"/>
       <param name="object_clusters_min_size" value="80"/>	
