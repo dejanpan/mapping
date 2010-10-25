@@ -1,1 +1,124 @@
-ias_table_msgs contains some messages used for table mapping tasks in IAS@TUM
+commit 58c855e87c80b8bc205cf188106775fa04185f2a
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Thu Sep 30 17:45:34 2010 +0200
+
+    new message type
+
+commit 90d3474dc2e00967425fd71582fd36681c899bfc
+Author: Nikolaus Demmel <demmeln@in.tum.de>
+Date:   Mon Jul 12 09:13:18 2010 +0200
+
+    gitignore (feel free to revert if its not the right thing)
+
+commit 1a0b9e9e4e1f777b6cbd0d14df933d1c46803af1
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Fri May 21 21:11:00 2010 +0200
+
+    cleaned up the mess with 1000 different object ids
+
+commit 6559bc64f4c56fe6e90266acc9db638d3401a6f1
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Thu May 20 15:16:15 2010 +0200
+
+    table_id for integration cloud_algos <->image_algos
+
+commit b4333f902ce30c76534449c2e49e892826471d1a
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Wed May 19 21:10:42 2010 +0200
+
+    lo_id and tracking id
+
+commit 5bb00739ce809f66d610aa1e79300a0e5ed2496c
+Author: Nico Blodow <blodow@cs.tum.edu>
+Date:   Wed May 19 14:35:01 2010 +0200
+
+    added lo_id, object_unique_id to TableObject msg for Uli
+
+commit b5d81da1745c37f5c9d4592ecfa195e1ab719791
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Wed May 19 08:35:57 2010 +0200
+
+    returning table coefficients to prolog
+
+commit c8b878d8f0b003da4ad045a0f232adf787642659
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Sun May 16 20:58:56 2010 +0200
+
+    change due to previously defined first_stamp variable
+
+commit 3c0ad79d024be375ce9a44c33572aac2470f5c90
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Sun May 16 19:50:07 2010 +0200
+
+    updated PrologReturn msg
+
+commit a110dc197a9f1e96c5669b5d3727d086ff1f15a5
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Sun May 16 00:18:02 2010 +0200
+
+    added fields for color and geometric type
+    to TableObject
+
+commit 34b7e9dc8f744e44183756189c44413a4278c88c
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Fri May 7 18:19:20 2010 +0200
+
+    added object (semsntic) type
+
+commit d0a577a84f9f8b15068d775ca03b109e5c7cabd9
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Fri May 7 18:07:40 2010 +0200
+
+    added missing identifiers for TableObject
+
+commit e105ffb9946c46373976e4b0ee9d8ae36ce162dc
+Author: Nico Blodow <blodow@cs.tum.edu>
+Date:   Fri Apr 23 13:15:29 2010 +0200
+
+    deleted bunch of stuff. hah!
+
+commit 7d97659efd859661b8746eb38c48e1b4782b9a4c
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Apr 20 00:48:23 2010 +0200
+
+    re-enabled triangular_mesh_to_vtk
+    added sending_node identifier to TriangularMesh msg
+    tested this_node::getName - all good
+
+commit 608ff6081a3cf6e94d87da9d81b1e5a89a32cb3f
+Author: Nico Blodow <blodow@lapradig68.(none)>
+Date:   Thu Mar 18 18:13:29 2010 +0100
+
+    cloud_algos: added getChannelIndex for less confusion
+    positionstring_rviz_plugin/TriangleMesh.msg: added preliminary normals support
+
+commit 99ea5496ec26507996a52df92f74c219b37d47a4
+Author: Nico Blodow <blodow@cs.tum.edu>
+Date:   Fri Mar 5 18:30:35 2010 +0100
+
+    more fixes in TriangularMeshDisplay
+
+commit 60cb01bbbad1f51ea105110a8e7a1735cf8b9997
+Author: Nico Blodow <blodow@cs.tum.edu>
+Date:   Wed Mar 3 19:33:20 2010 +0100
+
+    rviz plugin for visualizing meshes.
+    don't use it yet, it's a ginormous memory leak.
+
+commit 37f71746dd39c5458f194f52afa62fe88a197599
+Author: Nico Blodow <blodow@cs.tum.edu>
+Date:   Wed Mar 3 17:32:55 2010 +0100
+
+    TriangularMesh and Triangle Message
+
+commit b40ba8dac3fc4f0e0dc0dc9f08a88209c9946170
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Jan 26 19:22:50 2010 +0100
+
+    adding missing cluster_id to PrologReturn msg
+
+commit 8a47b8eacd61eeb4f71ff297559746df59b43f7a
+Author: Nico Blodow <blodow@lapradig68.(none)>
+Date:   Mon Nov 9 16:21:41 2009 +0100
+
+    svn exporting table messages and services..
