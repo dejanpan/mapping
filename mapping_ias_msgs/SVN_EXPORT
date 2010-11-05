@@ -1,35 +1,19 @@
-commit af2092d016187c5436343cb174eb068b35429b91
+commit 90d3474dc2e00967425fd71582fd36681c899bfc
+Author: Nikolaus Demmel <demmeln@in.tum.de>
+Date:   Mon Jul 12 09:13:18 2010 +0200
+
+    gitignore (feel free to revert if its not the right thing)
+
+commit a7b2580036858e3c6ef12f74c825f6ae8b972b73
 Author: Lorenz Mösenlechner <moesenle@in.tum.de>
-Date:   Fri Nov 6 11:56:40 2009 +0100
+Date:   Fri Jan 22 14:01:27 2010 +0100
 
-    Updated ignores.
+    Fixed all CMakeLists.txt.
+    
+    hopefully finished the change from rospack to rosbuild cmake macros.
 
-commit bad513030d51f4c92633c0b7572ecec1289dfda4
-Author: Nico Blodow <blodow@lapradig68.(none)>
-Date:   Mon Sep 14 15:36:49 2009 +0200
-
-    Msgs and Server for Laser based object detection [UPDATE] :)
-
-commit ca2b8c1c1e7c7b50e0719426404a91e265c8fff3
-Author: Andreas Leha <andreas.leha@gmx.de>
-Date:   Mon Sep 14 14:54:14 2009 +0200
-
-    added missing dependencies
-
-commit 4105969b76651f10180f368c90b051a6e0494652
-Author: Nico Blodow <blodow@lapradig68.(none)>
-Date:   Mon Sep 14 11:43:07 2009 +0200
-
-    Msgs and Server for Laser based object detection
-
-commit a383abef0e694481c09cfb84cd0c51515187316c
-Author: Uli Klank <klank@calculon.(none)>
-Date:   Mon Aug 24 20:09:19 2009 +0200
-
-    Update plane clusters + deps tp a newer messsage sheme, deactivated box_detector until
-
-commit 22e2eb766ab1c238290d2d304f39ca3942897814
+commit d1bb1462b88dc487868e065daa247057a9123ad5
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Thu Jul 16 18:27:43 2009 +0200
+Date:   Thu Nov 19 20:50:27 2009 +0100
 
-    added new msg type
+    for public release
