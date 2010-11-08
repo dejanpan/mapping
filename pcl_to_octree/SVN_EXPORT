@@ -1,74 +1,11 @@
-commit 244c693955f797656f7e595dcba657a132f248a2
-Author: Felix Ruess <felix.ruess@gmail.com>
-Date:   Thu Sep 2 18:59:58 2010 +0200
-
-    fix memory leak and add parameter to choose to visualize only occupied cells
-
-commit cac52d2acc610a3e61d0698414bc52a10e898827
-Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
-Date:   Fri Aug 27 14:29:57 2010 +0200
-
-    resolved merging conflict.
-
-commit e0611041bc8805f48df6b1093771c30a6a8606bd
-Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
-Date:   Fri Aug 27 11:30:24 2010 +0200
-
-    Removed frame_id parameter from launch file. Now, the frame_id of the input and output are the same.
-
-commit 0943a0e483365960a29b3a023b699f18d32f5d59
+commit e62fe78acb4374335ce2851e4c2356da35af5bda
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Wed Aug 18 22:28:35 2010 +0200
+Date:   Mon Nov 8 15:53:46 2010 +0100
 
-    Revert "images dir"
-    
-    This reverts commit 7c8d219de043d9096c2c0221d604975bb1b59e23.
+    PC -> PC2
 
-commit 7c8d219de043d9096c2c0221d604975bb1b59e23
+commit 573faf9104959138f95d467d829bb03e4435f588
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Wed Aug 18 22:25:42 2010 +0200
-
-    images dir
-
-commit 09b0ef5988556fa54825c520a62914f20d74af91
-Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
-Date:   Tue Aug 17 19:00:36 2010 +0200
-
-    Converted msg format to PointCloud2 from PointCloud. Added option of selecting all cells or only occupied during visualization.
-
-commit 344d377e3cc1b0b68b2f6ef390fb08db96767f67
-Author: Lorenz Mösenlechner <moesenle@in.tum.de>
-Date:   Wed Aug 4 14:50:35 2010 +0200
-
-    Made pcl_to_octree compile against current cturtle again
-
-commit 3c0d9a5b13380cc8ee7b266972a258977302b6f7
-Author: Hozefa Indorewala <indorewala@ias.in.tum.de>
-Date:   Mon Jul 12 18:06:46 2010 +0200
-
-    fixed de-serialization of OcTreePCL
-
-commit c29d2c7c3ded05c0ebd3766811f6afeb23a1918b
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Sun Jul 11 13:53:30 2010 +0200
-
-    creating static lib not needed anymore
-
-commit d439a0e376ce2d356ef5d17775c736bbf55efff5
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Fri Jul 9 18:12:10 2010 +0200
+Date:   Mon Sep 6 16:07:31 2010 +0200
 
     public export
-
-commit abb4a8b19cd8f5195365649902b8c64c1b909b5e
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Fri Jul 9 18:09:40 2010 +0200
-
-    printing resolution
-
-commit 3e2d2507e5d353dd6c7ed7cf35f6a2a00a6d68fb
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Fri Jul 9 17:58:20 2010 +0200
-
-    added pcl_to_octree and octree_client for vanilla version of octomap
-    added rviz config file
