@@ -1,0 +1,11 @@
+commit a97e1f8443706d99d53d78d0d2f22378fb615ed8
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Nov 23 19:36:07 2010 +0100
+
+    added license
+
+commit 3a4ec5d5de2c93f8cc7671bbf1c910d6358a2844
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Tue Nov 23 19:33:21 2010 +0100
+
+    code for projected pattern generation, blur estimation, roi finding, etc (work by Florian Zacherl)
