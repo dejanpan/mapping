@@ -1,0 +1,8 @@
+<launch>
+
+ <arg name="service" default="0" />
+ 
+ <node pkg="ias_projected_light" name="create_pattern" type="create_pattern" args = "20 $(find ias_projected_light)/txt_patterns $(arg service)" output="screen">
+ 	<env name="DISPLAY" value=":0.1" />
+ </node>
+</launch>

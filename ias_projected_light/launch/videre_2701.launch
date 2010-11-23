@@ -1,0 +1,41 @@
+<!--
+Note: To get following node to run you have to checkout following two repositories:
+http://ua-ros-pkg.googlecode.com/svn/trunk
+https://cmu-ros-pkg.svn.sourceforge.net/svnroot
+Then compile folowing pkg:
+videre_stereo_cam
+-->
+<launch>
+  <group ns="stereo">
+    <node  name="stereodcam2701" pkg="videre_stereo_cam" type="videre_stereo_node" respawn="true" output="screen">
+      <param name="fps" type="double" value="10"/>
+      <param name="videre_mode" type="str" value="none"/>
+      <param name="convert_to_color" type="bool" value="True"/>
+      <!--param name="exposure" type="int" value="450"/-->
+      <param name="exposure_auto" type="bool" value="True"/>
+      <!--param name="brightness" type="int" value="50"/-->
+      <param name="brightness_auto" type="bool" value="True"/>
+      <!--param name="gain" type="int" value="10"/-->
+      <param name="gain_auto" type="bool" value="True"/>
+    </node>
+   <!--</group>-->
+    
+  <!--<group ns="image_proc">-->
+    <node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc">
+      <remap from="image" to="image_raw"/>
+      <!--<remap from="left" to="/stereo/left"/>
+      <remap from="right" to="/stereo/right"/>-->
+      <param name="min_disparity" type="int" value="30" />
+      <param name="speckle_size" type="int" value="900" />
+    </node>
+  </group>
+  
+  <arg name="disparity" default="0" />	
+
+  <node pkg="image_view" type="stereo_view" name="stereo_view" if="$(arg disparity)">
+    <remap from="image" to="image_rect"/>
+    <!--<remap from="stereo" to="image_proc"/>-->
+  </node>
+</launch>
+
+
