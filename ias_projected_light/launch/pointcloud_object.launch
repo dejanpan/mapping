@@ -1,0 +1,18 @@
+<launch>
+
+ <arg name="disparity" default="0" />
+ <arg name="table" default = "1" />
+
+ <include file = "$(find ias_projected_light)/launch/create_pattern.launch">
+ 
+ <include file = "$(find ias_projected_light)/launch/videre_2701.launch">
+ 	<arg name="disparity" value="$(arg disparity)" />
+ </include>
+ 
+ <node pkg="topic_tools" name="throttle" type="throttle" args = "messages /stereo/points2/ 0.2 /stereo/points2t" />
+ 
+ <include file = "$(find pcl_cloud_tools)/launch/table_cluster_detector_narrow_stereo.launch" />
+ 
+ <node pkg="rviz" name="rviz" type="rviz" />
+
+</launch>

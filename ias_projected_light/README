@@ -1,0 +1,131 @@
+Required external libraries:
+
+http://ua-ros-pkg.googlecode.com/svn/
+https://cmu-ros-pkg.svn.sourceforge.net/svnroot/cmu-ros-pkg/
+
+ROS Nodes:
+
+- create_pattern:
+	Parameters:
+		- Initial block size (int > 0)
+		- Folder for patterns saved as text files
+		- Bool that describes if the node should be started as a service (true) or not (false = default)
+		
+	If this node is started as a service the current pattern can be changed by other nodes via service calls,
+	what is required for running the adjust_exposure or the blur_estimation node. The patterns can also be changed within
+	the terminal with "rosservice call change_pattern <pattern_index> <block_size>" (0 = black, 1 = white, 2 = block, 3 = stripe,
+	4 = random, >4 = patterns from textfiles)
+
+	If the node is not started as a service, the pattern can be changed with the keyboard:
+		p = swith to next pattern
+		+ = increase block size by 1
+		- = decrease block size by 1
+		q = quit
+		
+	In most cases, it is more useful to use the launch file, which enables to project the
+	pattern on another screen device (see below)
+ 
+- adjust_exposure: 
+    Parameters: None
+    
+    Adjust the exposure time so that the average brightness of the area illuminated 
+    by the projector is set to a fixed value (default 120) to avoid overexposing that
+    region
+    
+    Default image input topic is "/stereo/left/image_mono", default Region of Interest input 
+    topic is "/stereo/left/roi" if other topics should be used they should be overwritten with 
+    "adjust_exposure input:=<topic_new>" or "adjust_exposure roi_input:=<topic_new>"
+    
+    Default namespace for the camera parameters is "/stereo/stereodcam2701/" for the videre
+    camera. That can also be overwritten by calling "adjust_exposure prefix=<prefix_new>"
+    The new namespace must contain the three parameters for camera exposure (exposure,
+    exposure_min, exposure_max)
+    
+    If auto-exposure is activated for the camera, that must be deactivated manually before 
+    running the node, for example with the reconfigure_gui 
+    (rosrun dynamic_reconfigure reconfigure_gui) 
+    
+- blur_estimation:
+	Parameters: 
+		- Float value for the maximal blur value that should be treated as sharp (e.g. 1.0)
+		- Bool value that declares if a block or a stripe pattern is used (Zero is stripe pattern)
+		- Image input topic
+		- (Optional) Region of Interest input topic (default "/stereo/left/roi")
+	
+	Subscribes to two topics (image and Region of Interest) and publishes the image extended with the illuminated
+	area (green) and all the sharp edges (blue and red for vertical and horizontal direction)
+
+	
+- roi_diff_image:
+	Captures one image with no pattern and one image with a white pattern and computes the
+	illuminated area as the difference between both and publishes it
+	Input topic (default: "stereo/left/image_rect") and output topic (default "stereo/left/roi")
+	can be overwritten by calling "roi_diff_image (input || output)_topic:=<new topic>"
+	
+	Parameters:
+		- (Optional) Percentage of the maximal difference (Differences below that value will be filtered out) (Default = 0.3)
+		- (Optional) Bool that determines if partitioning should be done to filter out strong reflections (Default false)
+		- (Optional) Bool that determines if the ROI should be recomputed all the time or just be computed (Default false)
+
+	Create_pattern has to be started as a service to enable switching patterns.
+	
+- roi_bgfg_codebooks:
+	Uses background subtraction to compute the illuminated area
+	Input topic (default: "stereo/left/image_rect") and output topic (default "stereo/left/roi")
+	can be overwritten by calling "roi_bgfg_codebooks (input_image || output)_topic:=<new topic>"
+	
+	Parameters:
+		- None
+
+	Create_pattern has to be started as a service to enable switching patterns.
+	
+	
+- compare_point_clouds:
+	Takes one model_point cloud and a folder with measured point clouds and compares each with
+	the model. For each subfolder the average and the standard deviation is computed for the
+	given compare mode.
+	
+	Parameters:
+		- Path to model
+		- Point cloud folder
+		- Compare mode (0 = Just number of points in the cloud
+		                1 = Number of points that are equal in model and measured point cloud
+		                2 = ICP fitness score between model and measured cloud
+		                3 = All three values are returned
+		                
+		                
+LAUNCH FILES:
+
+videre_2701.launch: 
+	camera driver for the videre stereo camera, just modified not to show
+	the disparity view by default (Disparity view can be shown by calling "roslaunch videre_2701 disparity:=1"
+	
+create_pattern.launch:
+	runs the create_pattern node and shows the pattern on the display, that was specified
+	Per default the node is started not as a service, this can be done by calling 
+	"roslaunch create_pattern service:=1"
+	
+blur_estimation:
+    for blur_estimation node
+	
+	
+	
+"TEXT-PATTERNS:"
+
+The folder txt_patterns contains several patterns that are created as proposed in "Projected texture stereo" by Kurt Konolige
+
+pat-opt-p6_12_2.0.txt: Optimized simulated annealing with array size 6 * 65
+pat-opt-p8_12_2.0.txt: Optimized simulated annealing with array size 8 * 86
+pat-p16.txt: Simulated annealing with array size 16 * 128
+pat-p7.txt: Simulated annealing with array size 7 * 128
+pat-p8.txt: Simulated annealing with array size 8 * 128
+
+	
+
+
+
+
+
+
+
+	
