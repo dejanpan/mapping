@@ -1,0 +1,85 @@
+<launch>
+  <group ns="stereo_cylinder_detector">
+    
+    <!-- PCL Manager -->
+    <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+    
+    <!-- Run a voxel_grid filter to clean NaNs -->
+    <node pkg="nodelet" type="nodelet" name="passthrough0" args="load pcl/PassThrough pcl_manager" output="screen">
+      <remap from="/stereo_cylinder_detector/passthrough0/input" to="/cloud_pcd" />
+      <rosparam>
+        <!--leaf_size: 0.01-->
+        filter_field_name: x
+        filter_limit_min: -0.081
+        filter_limit_max: 0.1
+      </rosparam>
+    </node>
+
+   <node pkg="nodelet" type="nodelet" name="passthrough" args="load pcl/PassThrough pcl_manager" output="screen">
+      <remap from="/stereo_cylinder_detector/passthrough/input" to="/stereo_cylinder_detector/passthrough0/output" />
+      <rosparam>
+        <!--leaf_size: 0.01-->
+        filter_field_name: y
+        filter_limit_min: -0.18
+        filter_limit_max: -0.075
+      </rosparam>
+    </node>
+
+
+
+
+    <!-- Estimate point normals -->
+    <node pkg="nodelet" type="nodelet" name="normal_estimation" args="load pcl/NormalEstimation pcl_manager" output="screen">
+      <remap from="/stereo_cylinder_detector/normal_estimation/input"   to="/stereo_cylinder_detector/passthrough/output" />
+      <rosparam>
+        k_search: 0
+        radius_search: 0.03
+        spatial_locator: 0
+      </rosparam>
+    </node>
+
+    <!-- Segment the table plane -->
+    <node pkg="nodelet" type="nodelet" name="planar_segmentation_stereo" args="load pcl/SACSegmentation pcl_manager" output="screen">
+      <remap from="/stereo_cylinder_detector/planar_segmentation_stereo/input" to="/stereo_cylinder_detector/passthrough/output" />
+      <remap from="/stereo_cylinder_detector/planar_segmentation_stereo/normals" to="/stereo_cylinder_detector/normal_estimation/output" />
+      <rosparam>
+        model_type: 9
+        max_iterations: 1000
+        method_type: 0
+        model_threshold: 0.05
+        distance_threshold: 0.01
+        normal_distance_weight: 0.7
+        optimize_coefficients : true
+      </rosparam>
+    </node>
+
+    <!-- Extract the remaining of all-plane (XYZ) -->
+    <node pkg="nodelet" type="nodelet" name="extract_object_indices_plane" args="load pcl/ExtractIndices pcl_manager" output="screen">
+      <remap from="/stereo_cylinder_detector/extract_object_indices_plane/input"   to="/stereo_cylinder_detector/passthrough/output" />
+      <remap from="/stereo_cylinder_detector/extract_object_indices_plane/indices" to="/stereo_cylinder_detector/planar_segmentation_stereo/inliers" />
+      <rosparam>
+        negative: false
+      </rosparam>
+    </node>
+
+    <!-- Extract the remaining of all-plane (XYZ) -->
+    <node pkg="nodelet" type="nodelet" name="extract_object_indices_above_plane" args="load pcl/ExtractIndices pcl_manager" output="screen">
+      <remap from="/stereo_cylinder_detector/extract_object_indices_above_plane/input"   to="/stereo_cylinder_detector/passthrough/output" />
+      <remap from="/stereo_cylinder_detector/extract_object_indices_above_plane/indices" to="/stereo_cylinder_detector/planar_segmentation_stereo/inliers" />
+      <rosparam>
+        negative: true
+      </rosparam>
+    </node>
+
+    <!-- Cluster the remaining points (all-plane) -->
+    <node pkg="nodelet" type="nodelet" name="extract_object_clusters" args="load pcl/EuclideanClusterExtraction pcl_manager" output="screen">
+      <remap from="/stereo_cylinder_detector/extract_object_clusters/input" to="/stereo_cylinder_detector/extract_object_indices_above_plane/output" />
+      <rosparam>
+        max_queue_size: 10
+        cluster_tolerance: 0.06
+        spatial_locator: 0
+        cluster_min_size: 30
+      </rosparam>
+    </node>
+  </group>
+</launch>

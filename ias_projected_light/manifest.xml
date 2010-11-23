@@ -1,0 +1,18 @@
+<package>
+  <description brief="projected_light">
+    Out-of-the-box solution for projected stereo using
+    a Videre STOC camera and a regular wall projector.
+  </description>
+  <author>Dejan Pangercic, Andreas Leha</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://tum-ros-pkg.svn.sourceforge.net/viewvc/tum-ros-pkg/demos/projected_light</url>
+  <!--Get from https://cmu-ros-pkg.svn.sourceforge.net/svnroot -->
+  <depend package="opencv2"/>
+  <depend package="cv_bridge"/>
+  <depend package="roscpp"/>
+  <depend package="pcl"/>
+  <depend package="image_transport"/>
+</package>
+
+

@@ -1,0 +1,12 @@
+<launch>
+	<arg name="service" value="1" />
+	
+	<include file = "$(find ias_projected_light)/launch/create_pattern.launch">
+		<arg name="service" value="$(arg service)" />
+	</include>
+	
+	 <include file = "$(find ias_projected_light)/launch/videre_2701.launch" />
+	
+	<node pkg="ias_projected_light" name="blur_estimation" type="blur_estimation" args = "1.0 1 /stereo/left/image_rect" output="screen" />
+	
+</launch>
