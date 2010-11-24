@@ -45,5 +45,15 @@ namespace pcl
     return os;
   }
 
-
+  struct ColorCHLACSignature981
+  {
+    float histogram[981];
+  };
+  inline std::ostream& operator << (std::ostream& os, const ColorCHLACSignature981& p)
+  {
+    for (int i = 0; i < 981; ++i) 
+      os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 981 ? ", " : ")");
+    return (os);
+  }
+  
 }  // End namespace
