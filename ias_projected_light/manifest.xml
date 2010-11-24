@@ -3,7 +3,7 @@
     Out-of-the-box solution for projected stereo using
     a Videre STOC camera and a regular wall projector.
   </description>
-  <author>Dejan Pangercic, Andreas Leha</author>
+  <author>Florian Zacherl, Dejan Pangercic</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://tum-ros-pkg.svn.sourceforge.net/viewvc/tum-ros-pkg/demos/projected_light</url>
