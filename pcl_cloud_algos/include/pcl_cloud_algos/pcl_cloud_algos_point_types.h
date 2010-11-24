@@ -39,7 +39,7 @@
 namespace pcl
 {
   struct PointXYZINormalScanLine;
-
+  struct ColorCHLACSignature981;
 }
 
 #include <pcl_cloud_algos/pcl_cloud_algos_point_types.hpp>  // Include struct definitions
@@ -60,4 +60,9 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PointXYZINormalScanLine,
                                    (float, scan, scan)
                                    (float, line, line)
 );
+
+POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::ColorCHLACSignature981,
+                                   (float[981], histogram, colorCHLAC)
+);
+
 #endif  //#ifndef PCL_CLOUD_ALGOS_POINT_TYPES_H_

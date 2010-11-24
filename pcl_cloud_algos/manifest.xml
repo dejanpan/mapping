@@ -31,7 +31,7 @@
   <!--depend package="position_string_msgs"/-->
 
   <export>
-    <cpp cflags="-I${prefix}/include/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lcloud_algos"/>
+    <cpp cflags="-I${prefix}/include/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lpcl_cloud_algos"/>
     <cloud_algos plugin="${prefix}/plugins.xml"/>
   </export>
 
