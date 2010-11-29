@@ -217,7 +217,7 @@ namespace pcl
         Eigen3::Matrix3f H = (cloud_src_demean * cloud_tgt_demean.transpose ()).topLeftCorner<3, 3>();
 
         // Compute the Singular Value Decomposition
-        Eigen3::SVD<Eigen3::Matrix3f> svd (H);
+        Eigen3::JacobiSVD<Eigen3::Matrix3f> svd (H);
         Eigen3::Matrix3f u = svd.matrixU ();
         Eigen3::Matrix3f v = svd.matrixV ();
 
