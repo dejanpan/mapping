@@ -1,23 +1,11 @@
-commit 871dc08161e44d3b63bc9bb044b5e76db81b14a1
+commit b2726c88cca2e017c10e2ba149eb2e9cc8d1b0c9
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Mon Sep 27 00:54:27 2010 +0200
+Date:   Mon Nov 29 22:48:03 2010 +0100
 
-    ahhh Eigen
+    SVD -> JacobiSVD
 
-commit 952fea0a74359df89cf771ed45e9763ed0ff8796
+commit 9f6e5465ad6a996c271724a3cdf1e9f0d5179d2b
 Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Mon Sep 27 00:54:12 2010 +0200
-
-    change according to 2.6 here: http://www.ros.org/wiki/eigen3
-
-commit f4b9cf158e8ce38f1d8fd2b347782dfa16ef1957
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Mon Sep 27 00:53:23 2010 +0200
-
-    no need for linking
-
-commit d84e2c98ee380fa18087770da068d7aa10bbfb2b
-Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
-Date:   Sun Sep 26 01:50:09 2010 +0200
+Date:   Mon Sep 27 01:02:38 2010 +0200
 
     public export
