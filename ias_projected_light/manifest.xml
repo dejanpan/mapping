@@ -6,7 +6,7 @@
   <author>Florian Zacherl, Dejan Pangercic</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://tum-ros-pkg.svn.sourceforge.net/viewvc/tum-ros-pkg/demos/projected_light</url>
+  <url>http://www.ros.org/wiki/ias_projected_light</url>
   <!--Get from https://cmu-ros-pkg.svn.sourceforge.net/svnroot -->
   <depend package="opencv2"/>
   <depend package="cv_bridge"/>
