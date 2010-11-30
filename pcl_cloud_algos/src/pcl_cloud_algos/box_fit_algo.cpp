@@ -38,8 +38,6 @@
 #include <vector>
 #include <iostream>
 
-// include all descriptors for you
-#include <ias_descriptors_3d/all_descriptors.h>
 
 // kd-tree, getPointCloud and computeCentroid
 //#include <point_cloud_mapping/kdtree/kdtree_ann.h>

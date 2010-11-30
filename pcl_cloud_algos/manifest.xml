@@ -8,27 +8,14 @@
   <review status="experimental" notes="beta"/>
 
   <depend package="pcl_ias_sample_consensus" />
-  <!--depend package="pluginlib" /-->
-  <!--depend package="joy" /-->
   <depend package="roscpp" />
-  <!--depend package="std_msgs" /-->
-  <!--depend package="angles" /-->
   <depend package="geometry_msgs" />
   <depend package="sensor_msgs" />
-  <!--depend package="mapping_msgs" /-->
-  <!--depend package="vision_msgs" /-->
-  <!--depend package="vision_srvs" /-->
   <depend package="triangle_mesh_msgs" />
-  <!--depend package="ias_table_srvs" /-->
-  <!--depend package="perception_msgs" /-->
-  <!--depend package="perception_srvs" /-->
-  <!--depend package="tabletop_msgs" /-->
-  <depend package="ias_descriptors_3d"/>
-  <!--depend package="libsvm"/-->
-  depend package="eigen3"/
+  <depend package="eigen3"/>
   <depend package="pcl"/>
   <depend package="pcl_ros"/>
-  <!--depend package="position_string_msgs"/-->
+  <depend package="visualization_msgs"/>
 
   <export>
     <cpp cflags="-I${prefix}/include/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lpcl_cloud_algos"/>
