@@ -9,7 +9,6 @@
   <depend package="sensor_msgs" />
   <depend package="mapping_msgs" />
   <depend package="geometry_msgs" />
-  <depend package="perception_msgs" />
   <depend package="ias_table_msgs" />
   <export>
     <cpp cflags="-I${prefix}/srv/cpp"/>
