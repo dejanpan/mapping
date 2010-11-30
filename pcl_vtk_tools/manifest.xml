@@ -17,7 +17,7 @@
   <!--See http://octomap.sourceforge.net/ -->
   <depend package="vtk" />
   <depend package="pcl_visualization" />
-  <depend package="cop_for_external_dependencies" />
+<!--   <depend package="cop_for_external_dependencies" /> -->
   <export>
     <cpp cflags="-I${prefix}/include/" />
   </export>
