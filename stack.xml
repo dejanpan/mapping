@@ -1,0 +1,25 @@
+<stack name="mapping" version="0.1">
+  <description brief="mapping">
+
+    Collection of routines and functions for 3D mapping@IAS.
+
+  </description>
+  <author>Nico Blodow, Zoltan-Csaba Marton, Dejan Pangercic</author>
+  <license>BSD</license>  
+  <review status="" notes=""/>
+  <url>http://ros.org/wiki/mappping</url>
+  <depend stack="vision_opencv"/> <!-- opencv2, cv_bridge --> 
+  <depend stack="point_cloud_perception"/> <!-- pcl, pcl_ros, eigen3, vtk, pcl_visualization --> 
+  <depend stack="ros"/> <!-- roscpp, std_msgs --> 
+  <depend stack="image_common"/> <!-- image_transport -->
+  <depend stack="common_msgs"/> <!-- geometry_msgs, sensor_msgs --> 
+  <depend stack="octomap_mapping"/> <!-- octomap, octomap_server --> 
+  <depend stack="geometry"/> <!-- tf, bullet --> 
+  <depend stack="ias_visualization"/> <!-- triangle_mesh_msgs --> 
+  <depend stack="visualization_common"/> <!-- visualization_msgs --> 
+  <depend stack="motion_planning_common"/> <!-- mapping_msgs --> 
+  <depend stack="common"/> <!-- yaml_cpp, actionlib --> 
+  <depend stack="pr2_common"/> <!-- pr2_msgs --> 
+  <depend stack="navigation"/> <!-- move_base_msgs --> 
+  <depend stack="pr2_controllers"/> <!-- pr2_controllers_msgs --> 
+</stack>
