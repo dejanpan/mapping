@@ -1,0 +1,25 @@
+<package>
+  <description>
+    A collection of cloud algo[rithms] using nodelets.
+  </description>
+
+  <author>Nico Blodow, Dejan Pangercic, Zoltan-Csaba Marton</author>
+  <license>BSD</license>
+  <review status="experimental" notes="beta"/>
+
+  <depend package="pcl_ias_sample_consensus" />
+  <depend package="roscpp" />
+  <depend package="geometry_msgs" />
+  <depend package="sensor_msgs" />
+  <depend package="triangle_mesh_msgs" />
+  <depend package="eigen3"/>
+  <depend package="pcl"/>
+  <depend package="pcl_ros"/>
+  <depend package="visualization_msgs"/>
+
+  <export>
+    <cpp cflags="-I${prefix}/include/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lpcl_cloud_algos"/>
+    <cloud_algos plugin="${prefix}/plugins.xml"/>
+  </export>
+
+</package>

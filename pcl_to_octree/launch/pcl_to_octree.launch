@@ -1,0 +1,20 @@
+<launch>
+<node pkg="pcl_to_octree" type="pointcloud_publisher" name="pointcloud_publishers" output="screen" respawn="false"
+args="0.2"/>
+
+<node pkg="pcl_to_octree" type="pcl_to_octree" name="pcl_to_octree" output="screen" respawn="false">
+    <param name="laser_offset" value="1.5"/>
+    <param name="octree_resolution" value="0.05"/>
+    <param name="octree_maxrange" value="-1"/>
+    <param name="point_cloud_topic" value="/point_cloud"/>
+    <param name="level" value="0" />
+    <param name="visualize_octree" value="true"/>
+    <param name="visualize_only_occupied_cells" value="true"/>
+</node>
+
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(find pcl_to_octree)/p2o.vcg"/>
+
+<!-- <node pkg="pcl_to_octree" type="octree_client" name="octree_client" output="screen" respawn="false"> -->
+<!--     <param name="octree_topic" value="/pcl_to_octree/octree_binary"/> -->
+<!-- </node> -->
+</launch>
