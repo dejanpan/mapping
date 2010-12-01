@@ -1,0 +1,31 @@
+<package>
+  <description brief="pcl_to_octree">
+
+<p>
+     pcl_to_octree - a package to convert the PointCloud format to octree format
+</p>
+  </description>
+  Based on the orginal code by Kai M. Wurm and Armin Hornung
+  http://octomap.sourceforge.net
+  <author>Hozefa Indorewala, Dejan Pangercic</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pcl_to_octree</url>
+
+  <!-- ROS dependencies -->
+  <depend package="roscpp" />
+  <depend package="pcl"/>
+  <depend package="octomap"/>
+  <depend package="octomap_server"/>
+
+  <!-- Message type dependencies -->
+  <depend package="sensor_msgs" />
+  <depend package="visualization_msgs" />
+
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -loctree_pcl"/>
+  </export>
+
+</package>
+
+

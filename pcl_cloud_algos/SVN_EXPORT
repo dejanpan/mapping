@@ -1,0 +1,25 @@
+commit 0b014456c261aeb839774c29cbe6771aa8cf458f
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Sun Sep 26 23:16:00 2010 +0200
+
+    fixed Eigen -> Eigen3 issue in pcl_cloud_algos
+
+commit c72aa2f0e7e85ee62408b1052478f5d7b6884589
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Sun Sep 26 23:13:53 2010 +0200
+
+    EIGEN_ALIGN_128 -> EIGEN_ALIGN16
+
+commit 240f3410e86825ae4dcf5f0840d6914f568e91d1
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Sun Sep 26 21:59:49 2010 +0200
+
+    added program that segments out the difference between 2 point clouds
+    Useful for the segmentation of e.g. opened drawers
+    commented out box fit until I resolve Eigen2/Eigen3 issue
+
+commit e8d8bde97aa5bd948c0a8c11a43bc9dcfcb92710
+Author: Dejan Pangercic <dejan.pangercic@cs.tum.edu>
+Date:   Mon Sep 6 16:02:25 2010 +0200
+
+    public export
