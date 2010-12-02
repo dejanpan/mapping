@@ -50,6 +50,7 @@ and publishes them along with the cloud's centroid.
 #include "pcl/io/pcd_io.h"
 #include "pcl/point_types.h"
 #include "pcl/common/common.h"
+#include "pcl/ModelCoefficients.h"
 
 //for transformPointCloud
 #include <pcl_tf/transforms.h>
