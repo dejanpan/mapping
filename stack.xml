@@ -9,7 +9,7 @@
   <review status="" notes=""/>
   <url>http://ros.org/wiki/mappping</url>
   <depend stack="vision_opencv"/> <!-- opencv2, cv_bridge --> 
-  <depend stack="point_cloud_perception"/> <!-- pcl, pcl_ros, eigen3, vtk, pcl_visualization --> 
+  <depend stack="point_cloud_perception"/> <!-- pcl, pcl_ros, eigen3, vtk, pcl_visualization, point_cloud_converter --> 
   <depend stack="ros"/> <!-- roscpp, std_msgs --> 
   <depend stack="image_common"/> <!-- image_transport -->
   <depend stack="common_msgs"/> <!-- geometry_msgs, sensor_msgs --> 
