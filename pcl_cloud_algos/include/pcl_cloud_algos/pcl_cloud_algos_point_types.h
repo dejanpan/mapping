@@ -38,8 +38,11 @@
 
 namespace pcl
 {
-  struct PointXYZINormalScanLine;
-  struct ColorCHLACSignature981;
+struct PointXYZINormalScanLine;
+struct ColorCHLACSignature981;
+/** \brief A point structure representing the Global Radius-based Surface Descriptor (GRSD). */
+struct GRSDSignature21;
+// Members: float grsd[21]; 
 }
 
 #include <pcl_cloud_algos/pcl_cloud_algos_point_types.hpp>  // Include struct definitions
@@ -63,6 +66,10 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PointXYZINormalScanLine,
 
 POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::ColorCHLACSignature981,
                                    (float[981], histogram, colorCHLAC)
+);
+
+POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::GRSDSignature21,
+                                   (float[21], histogram, grsd)
 );
 
 #endif  //#ifndef PCL_CLOUD_ALGOS_POINT_TYPES_H_
