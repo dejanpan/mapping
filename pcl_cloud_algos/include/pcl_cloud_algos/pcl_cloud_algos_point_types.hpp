@@ -55,5 +55,16 @@ namespace pcl
       os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 981 ? ", " : ")");
     return (os);
   }
+
+  struct GRSDSignature21
+  {
+    float histogram[21];
+  };
+  inline std::ostream& operator << (std::ostream& os, const GRSDSignature21& p)
+  {
+    for (int i = 0; i < 21; ++i) 
+      os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 21 ? ", " : ")");
+    return (os);
+  }
   
 }  // End namespace
