@@ -16,6 +16,8 @@
   <depend package="pcl"/>
   <depend package="pcl_ros"/>
   <depend package="visualization_msgs"/>
+  <depend package="octomap"/>
+  <depend package="pcl_to_octree"/>
 
   <export>
     <cpp cflags="-I${prefix}/include/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lpcl_cloud_algos"/>

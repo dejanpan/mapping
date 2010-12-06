@@ -6,8 +6,8 @@
 //#include <Eigen3/Array>
 
 //#include <ros/ros.h>
-#include <sensor_msgs/PointCloud.h>
-//#include <sensor_msgs/PointCloud2.h>
+//#include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/PointCloud2.h>
 //#include <sensor_msgs/point_cloud_conversion.h>
 #include "octomap/octomap.h"
 #include "pcl_to_octree/octree/OcTreePCL.h"
@@ -15,23 +15,22 @@
 #include "pcl_to_octree/octree/OcTreeServerPCL.h"
 //#include "octomap_server/octomap_server.h"
 #include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
+#include <pcl_cloud_algos/pcl_cloud_algos_point_types.h>
 #include <visualization_msgs/MarkerArray.h>
 
-// Cloud geometry
-#include <point_cloud_mapping/geometry/angles.h>
-#include <point_cloud_mapping/geometry/areas.h>
-#include <point_cloud_mapping/geometry/point.h>
-#include <point_cloud_mapping/geometry/distances.h>
-#include <point_cloud_mapping/geometry/nearest.h>
-#include <point_cloud_mapping/geometry/transforms.h>
-#include <point_cloud_mapping/geometry/statistics.h>
+
+//pcl_publisher
+#include <pcl_ros/publisher.h>
 
 // Kd Tree
-#include <point_cloud_mapping/kdtree/kdtree_ann.h>
+#include "pcl/kdtree/tree_types.h"
+#include "pcl/kdtree/kdtree.h"
+#include "pcl/kdtree/kdtree_ann.h"
+#include "pcl/kdtree/kdtree_flann.h"
+#include "pcl/kdtree/organized_data.h"
 
 // Cloud algos
-#include <cloud_algos/cloud_algos.h>
+#include <pcl_cloud_algos/cloud_algos.h>
 
 #define NR_CLASS 5
 // TODO: use a map to have surface labels and free space map to indices in the transitions matrix
@@ -39,7 +38,7 @@
 #define _sqr(c) ((c)*(c))
 #define _sqr_dist(a,b) ( _sqr(((a).x())-((b).x())) + _sqr(((a).y())-((b).y())) + _sqr(((a).z())-((b).z())) )
 
-namespace cloud_algos
+namespace pcl_cloud_algos
 {
 
 struct IntersectedLeaf
@@ -59,8 +58,8 @@ class GlobalRSD : public CloudAlgo
  public:
 
   // Input/output type
-  typedef sensor_msgs::PointCloud OutputType;
-  typedef sensor_msgs::PointCloud InputType;
+  typedef sensor_msgs::PointCloud2 OutputType;
+  typedef sensor_msgs::PointCloud2 InputType;
 
   // Options
   int point_label_; // label of the object if known, and -1 otherwise
@@ -71,10 +70,15 @@ class GlobalRSD : public CloudAlgo
   bool publish_cloud_centroids_; // should we publish cloud_centroids_?
   bool publish_cloud_vrsd_; // should we publish cloud_vrsd_?
   //bool surface2curvature_; // should we write the results of the local surface classification as the curvature value in the partial results for visualization?
-
+  double min_radius_plane_;
+  double min_radius_edge_;
+  double min_radius_noise_, max_radius_noise_;
+  double max_min_radius_diff_;
+  bool publish_octree_;
   // Intermediary results for convenient access
-  boost::shared_ptr<sensor_msgs::PointCloud> cloud_centroids_;
-  boost::shared_ptr<sensor_msgs::PointCloud> cloud_vrsd_;
+  pcl::PointCloud<pcl::PointXYZRGBNormal>::ConstPtr cloud_centroids_; 
+  pcl::PointCloud<pcl::PointXYZRGBNormal>::ConstPtr cloud_vrsd_; 
+  
 
   // Topic name to subscribe to
   static std::string default_input_topic ()
@@ -105,6 +109,11 @@ class GlobalRSD : public CloudAlgo
     step_ = 0;
     min_voxel_pts_ = 1;
     nr_bins_ = (NR_CLASS+1)*(NR_CLASS+2)/2;
+    min_radius_plane_ = 0.045;
+    min_radius_noise_ = 0.030, max_radius_noise_ = 0.050;
+    max_min_radius_diff_ = 0.01;
+    min_radius_edge_ = 0.030;
+    publish_octree_ = false;
   }
   ~GlobalRSD ()
   {
@@ -128,7 +137,7 @@ class GlobalRSD : public CloudAlgo
   //    3 - circle (corner?)
   //    4 - edge
   inline int
-    setSurfaceType (boost::shared_ptr<sensor_msgs::PointCloud> cloud, std::vector<int> *indices, std::vector<int> *neighbors, int nxIdx, double max_dist, int regIdx, int rIdx)
+    setSurfaceType (pcl::PointCloud<pcl::PointXYZRGBNormal>::ConstPtr cloud, std::vector<int> *indices, std::vector<int> *neighbors, int nxIdx, double max_dist, int regIdx, int rIdx)
   {
     // Fixing binning to 5 and plane radius to 0.2
     int div_d = 5;
@@ -148,16 +157,20 @@ class GlobalRSD : public CloudAlgo
       for (unsigned int j = i; j < neighbors->size (); j++)
       {
         // compute angle between the two lines going through normals (disregard orientation!)
-        double cosine = cloud->channels[nxIdx+0].values[neighbors->at(i)] * cloud->channels[nxIdx+0].values[neighbors->at(j)] +
-                        cloud->channels[nxIdx+1].values[neighbors->at(i)] * cloud->channels[nxIdx+1].values[neighbors->at(j)] +
-                        cloud->channels[nxIdx+2].values[neighbors->at(i)] * cloud->channels[nxIdx+2].values[neighbors->at(j)];
-        if (cosine > 1) cosine = 1;
-        if (cosine < -1) cosine = -1;
+        double cosine = cloud->points[i].normal[0] * cloud->points[j].normal[0] +
+          cloud->points[i].normal[1] * cloud->points[j].normal[1] +
+          cloud->points[i].normal[2] * cloud->points[j].normal[2];
+        if (cosine > 1) 
+          cosine = 1;
+        if (cosine < -1) 
+          cosine = -1;
         double angle  = acos (cosine);
-        if (angle > M_PI/2) angle = M_PI - angle;
+        if (angle > M_PI/2) 
+          angle = M_PI - angle;
         //cerr << round(RAD2DEG(angle)) << " and ";
 
         // Compute point to point distance
+        //@TODO: check neighbors->at(i)
         double dist = sqrt ((cloud->points[neighbors->at(i)].x - cloud->points[neighbors->at(j)].x) * (cloud->points[neighbors->at(i)].x - cloud->points[neighbors->at(j)].x) +
                             (cloud->points[neighbors->at(i)].y - cloud->points[neighbors->at(j)].y) * (cloud->points[neighbors->at(i)].y - cloud->points[neighbors->at(j)].y) +
                             (cloud->points[neighbors->at(i)].z - cloud->points[neighbors->at(j)].z) * (cloud->points[neighbors->at(i)].z - cloud->points[neighbors->at(j)].z));
@@ -167,8 +180,10 @@ class GlobalRSD : public CloudAlgo
         int bin_d = (int) floor (div_d * dist / max_dist);
 
         // update min-max values for distance bins
-        if (min_max_angle_by_dist[bin_d][0] > angle) min_max_angle_by_dist[bin_d][0] = angle;
-        if (min_max_angle_by_dist[bin_d][1] < angle) min_max_angle_by_dist[bin_d][1] = angle;
+        if (min_max_angle_by_dist[bin_d][0] > angle) 
+          min_max_angle_by_dist[bin_d][0] = angle;
+        if (min_max_angle_by_dist[bin_d][1] < angle) 
+          min_max_angle_by_dist[bin_d][1] = angle;
       }
 
     // Estimate radius from min and max lines
@@ -193,24 +208,29 @@ class GlobalRSD : public CloudAlgo
     }
     //cerr << Amint_Amin << " " << Amint_d << " " << Amaxt_Amax << " " << Amaxt_d << endl;
     double max_radius;
-    if (Amint_Amin == 0) max_radius = plane_radius;
-    else max_radius = std::min (Amint_d/Amint_Amin, plane_radius);
+    if (Amint_Amin == 0) 
+      max_radius = plane_radius;
+    else 
+      max_radius = std::min (Amint_d/Amint_Amin, plane_radius);
     double min_radius;
-    if (Amaxt_Amax == 0) min_radius = plane_radius;
-    else min_radius = std::min (Amaxt_d/Amaxt_Amax, plane_radius);
+    if (Amaxt_Amax == 0) 
+      min_radius = plane_radius;
+    else 
+      min_radius = std::min (Amaxt_d/Amaxt_Amax, plane_radius);
     //print_info (stderr, "Estimated minimum and maximum radius is: "); print_value (stderr, "%g - %g\n", min_radius, max_radius);
 
     // Simple categorization to reduce feature vector size, but should use co-occurance of min-max radius bins
     int type;// = EMPTY_VALUE;
-    if (min_radius > 0.045) // 0.066
+    if (min_radius > min_radius_plane_) // 0.066
       type = 1; // plane
-    else if ((min_radius < 0.030) && (max_radius < 0.050))
+    else if ((min_radius < min_radius_noise_) && (max_radius < max_radius_noise_))
       type = 0; // noise/corner
-    else if (max_radius - min_radius < 0.01) // 0.0075
+    else if (max_radius - min_radius < max_min_radius_diff_) // 0.0075
       type = 3; // circle (corner?)
+    //@TODO: sure this if else is not needed?
     //else if ((min_radius < 0.020) && (max_radius > 0.175)) // 0.150
     //  type = 4; // edge
-    else if (min_radius < 0.030) /// considering small cylinders to be edges
+    else if (min_radius < min_radius_edge_) /// considering small cylinders to be edges
       type = 4; // edge
     else
       type = 2; // cylinder (rim)
@@ -222,10 +242,11 @@ class GlobalRSD : public CloudAlgo
     // Set values for all points
     for (unsigned int i = 0; i < indices->size (); i++)
     {
-      cloud->channels[regIdx].values[indices->at(i)] = type;
-      cloud->channels[rIdx+0].values[indices->at(i)] = min_radius;
-      cloud->channels[rIdx+1].values[indices->at(i)] = max_radius;
-      cloud->channels[rIdx+2].values[indices->at(i)] = max_radius - min_radius;
+      //@TODO: replace next 4 lines with the RSD cloud type
+      //cloud->channels[regIdx].values[indices->at(i)] = type;
+      //cloud->channels[rIdx+0].values[indices->at(i)] = min_radius;
+      //cloud->channels[rIdx+1].values[indices->at(i)] = max_radius;
+      //cloud->channels[rIdx+2].values[indices->at(i)] = max_radius - min_radius;
     }
 
     // Return type
@@ -235,20 +256,13 @@ class GlobalRSD : public CloudAlgo
   //*
   // Sets up the OcTree -- copied from Dejan for now
   void
-    setOctree (boost::shared_ptr<sensor_msgs::PointCloud> pointcloud_msg, double octree_res, int initial_label, double laser_offset = 0, double octree_maxrange = -1)
+    setOctree (pcl::PointCloud<pcl::PointXYZRGBNormal>::ConstPtr pointcloud_msg, double octree_res, int initial_label, double laser_offset = 0, double octree_maxrange = -1)
   {
-    //sensor_msgs::PointCloud2 pointcloud2_msg;
     octomap_server::OctomapBinary octree_msg;
-
-    // Converting from PointCloud msg format to PointCloud2 msg format
-    //sensor_msgs::convertPointCloudToPointCloud2(*pointcloud_msg, pointcloud2_msg);
-    //pcl::PointCloud<pcl::PointXYZ> pointcloud2_pcl;
 
     octomap::point3d octomap_3d_point;
     octomap::Pointcloud octomap_pointcloud;
 
-    //Converting PointCloud2 msg format to pcl pointcloud format in order to read the 3d data
-    //point_cloud::fromMsg(pointcloud2_msg, pointcloud2_pcl);
 
     //Reading from pcl point cloud and saving it into octomap point cloud
     for(unsigned int i =0; i < pointcloud_msg->points.size(); i++)
@@ -276,9 +290,13 @@ class GlobalRSD : public CloudAlgo
     {
       octree_->insertScan(**scan_it, octree_maxrange, false);
     }
-    //octomap_server::octomapMapToMsg(*octree, octree_msg);
-    //octree_binary_publisher_.publish(octree_msg);
-    //ROS_INFO("Octree built and published");
+    //publish octree on a topic?
+    if (publish_octree_)
+    {
+      octomap_server::octomapMapToMsg(*octree_, octree_msg);
+      octree_binary_publisher_.publish(octree_msg);
+      ROS_INFO("Octree built and published");
+    }
 
     std::list<octomap::OcTreeVolume> voxels, leaves;
     //octree->getLeafNodes(leaves, level_);
@@ -296,7 +314,7 @@ class GlobalRSD : public CloudAlgo
       octree_node->setCentroid(centroid);
       octree_node->setLabel(initial_label);
     }
-
+    
     //assign points to Leaf Nodes
     for(unsigned int i = 0; i < pointcloud_msg->points.size(); i++)
     {
@@ -315,12 +333,13 @@ class GlobalRSD : public CloudAlgo
   ros::NodeHandle nh_;
   ros::Publisher pub_cloud_vrsd_;
   ros::Publisher pub_cloud_centroids_;
+  ros::Publisher octree_binary_publisher_;
 
   // hard-coding these for now
   int nr_bins_;
 
   // ROS messages
-  boost::shared_ptr<sensor_msgs::PointCloud> cloud_grsd_;
+  pcl::PointCloud<pcl::GRSDSignature21>::ConstPtr cloud_grsd_; 
 
   // OcTree stuff
   octomap::OcTreePCL* octree_;
