@@ -14,6 +14,7 @@
 #include "pcl_to_octree/octree/OcTreeNodePCL.h"
 #include "pcl_to_octree/octree/OcTreeServerPCL.h"
 //#include "octomap_server/octomap_server.h"
+#include "pcl/io/io.h"
 #include <pcl/io/pcd_io.h>
 #include <pcl_cloud_algos/pcl_cloud_algos_point_types.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -28,6 +29,7 @@
 #include "pcl/kdtree/kdtree_ann.h"
 #include "pcl/kdtree/kdtree_flann.h"
 #include "pcl/kdtree/organized_data.h"
+#include "pcl/features/feature.h"
 
 // Cloud algos
 #include <pcl_cloud_algos/cloud_algos.h>
@@ -60,7 +62,7 @@ class GlobalRSD : public CloudAlgo
   // Input/output type
   typedef sensor_msgs::PointCloud2 OutputType;
   typedef sensor_msgs::PointCloud2 InputType;
-
+  typedef pcl::KdTree<pcl::PointXYZRGBNormal>::Ptr KdTreePtr;
   // Options
   int point_label_; // label of the object if known, and -1 otherwise
   double width_; // the width of the OcTree cells
@@ -76,8 +78,8 @@ class GlobalRSD : public CloudAlgo
   double max_min_radius_diff_;
   bool publish_octree_;
   // Intermediary results for convenient access
-  pcl::PointCloud<pcl::PointXYZRGBNormal>::ConstPtr cloud_centroids_; 
-  pcl::PointCloud<pcl::PointXYZRGBNormal>::ConstPtr cloud_vrsd_; 
+  pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_centroids_; 
+  pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_vrsd_; 
   
 
   // Topic name to subscribe to
@@ -100,6 +102,12 @@ class GlobalRSD : public CloudAlgo
   std::vector<std::string> provides ();
   std::string process (const boost::shared_ptr<const InputType>&);
   boost::shared_ptr<const OutputType> output ();
+
+  struct QueryPoint : public pcl::PointXYZRGBNormal
+  {
+    QueryPoint(float x, float y, float z) {this->x=x; this->y=y; this->z=z;}
+  };
+
 
   // Constructor-Destructor
   GlobalRSD () : CloudAlgo ()
@@ -137,7 +145,7 @@ class GlobalRSD : public CloudAlgo
   //    3 - circle (corner?)
   //    4 - edge
   inline int
-    setSurfaceType (pcl::PointCloud<pcl::PointXYZRGBNormal>::ConstPtr cloud, std::vector<int> *indices, std::vector<int> *neighbors, int nxIdx, double max_dist, int regIdx, int rIdx)
+    setSurfaceType (pcl::PointCloud<pcl::PointXYZRGBNormal>::ConstPtr cloud, std::vector<int> *indices, std::vector<int> *neighbors, double max_dist)
   {
     // Fixing binning to 5 and plane radius to 0.2
     int div_d = 5;
