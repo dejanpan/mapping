@@ -64,35 +64,29 @@ std::vector<std::string> GlobalRSD::provides ()
 
 std::string GlobalRSD::process (const boost::shared_ptr<const GlobalRSD::InputType>& cloud)
  {
-//   // Check if normals exist
-//   int nxIdx = -1;
-//   for (unsigned int d = 0; d < cloud->channels.size (); d++)
-//     if (cloud->channels[d].name == "nx")
-//     {
-//       nxIdx = d;
-//       break;
-//     }
-//   // TODO int nxIdx = getChannelIndex(cloud, "nx");
-//   if (nxIdx == -1)
-//   {
-//     if (verbosity_level_ > -2) ROS_ERROR ("[GlobalRSD] Provided point cloud does not have normals. Use the normal_estimation or mls_fit first!");
-//     output_valid_ = false;
-//     return std::string("missing normals");
-//   }
-//   /// @NOTE: we assume that if nx exists then ny and nz are the channels following it
 
-//   // Timers
-//   ros::Time global_time = ros::Time::now ();
-//   ros::Time ts;
+   int norm = pcl::getFieldIndex (*cloud, "normal");
+   
+   if (norm == -1)
+   {
+     ROS_ERROR ("[GlobalRSD] Provided point cloud does not have normals. Use the normal_estimation or mls_fit first!");
+     output_valid_ = false;
+     return std::string("missing normals");
+   }
 
-//   // Copy the original PCD
-//   cloud_vrsd_ = boost::shared_ptr<sensor_msgs::PointCloud> (new sensor_msgs::PointCloud());
-//   cloud_vrsd_->header   = cloud->header;
-//   cloud_vrsd_->points   = cloud->points;
-//   cloud_vrsd_->channels = cloud->channels;
+   // Timers
+  ros::Time global_time = ros::Time::now ();
+  ros::Time ts;
 
-//   // Allocate and name the extra needed channels (don't forget to allocate space for values too!)
-//   int rIdx = cloud_vrsd_->channels.size ();
+  // Copy the original PCD
+  //cloud_vrsd_ = boost::shared_ptr<sensor_msgs::PointCloud> (new sensor_msgs::PointCloud());
+  //cloud_vrsd_->header   = cloud->header;
+  //cloud_vrsd_->points   = cloud->points;
+  //cloud_vrsd_->channels = cloud->channels;
+  pcl::fromROSMsg(*cloud, *cloud_vrsd_);
+
+  // Allocate and name the extra needed channels (don't forget to allocate space for values too!)
+ //  int rIdx = cloud_vrsd_->channels.size ();
 //   cloud_vrsd_->channels.resize (rIdx + 2 + 1);
 //   cloud_vrsd_->channels[rIdx+0].name = "r_min";
 //   cloud_vrsd_->channels[rIdx+1].name = "r_max";
@@ -101,30 +95,30 @@ std::string GlobalRSD::process (const boost::shared_ptr<const GlobalRSD::InputTy
 //   cloud_vrsd_->channels.resize (regIdx  + 1);
 //   cloud_vrsd_->channels[regIdx].name = "point_label";
 
-//   // Allocate space for the extra needed channel values
+  // Allocate space for the extra needed channel values
 //   for (size_t d = rIdx; d < cloud_vrsd_->channels.size (); d++)
 //   {
 //     cloud_vrsd_->channels[d].values.resize (cloud_vrsd_->points.size ());
 //     if (verbosity_level_ > 0) ROS_INFO ("[GlobalRSD] (cloud_vrsd) Added channel: %s", cloud_vrsd_->channels[d].name.c_str ());
 //   }
 
-//   // Create PCD for centroids
+  // Create PCD for centroids
 //   cloud_centroids_ = boost::shared_ptr<sensor_msgs::PointCloud> (new sensor_msgs::PointCloud());
 //   cloud_centroids_->header   = cloud_vrsd_->header;
 //   cloud_centroids_->points   = cloud_vrsd_->points;   /// @NOTE: will be overwritten and need to be resized afterwards
 //   cloud_centroids_->channels = cloud_vrsd_->channels; /// @NOTE: will be overwritten and need to be resized afterwards
 
-//   // Create the final cloud with 1 point (cluster center) to hold the Global Radius-based Surface Descriptor
+  // Create the final cloud with 1 point (cluster center) to hold the Global Radius-based Surface Descriptor
 //   cloud_grsd_ = boost::shared_ptr<sensor_msgs::PointCloud> (new sensor_msgs::PointCloud());
 //   cloud_grsd_->header = cloud->header;
 //   cloud_grsd_->points.resize (1);
 //   cloud_geometry::nearest::computeCentroid (*cloud_vrsd_, cloud_grsd_->points.at (0));
 
-//   // Allocate the extra needed channels
-//   cloud_grsd_->channels.resize (nr_bins_ + (point_label_!=-1 ? 1 : 0));
+  // Allocate the extra needed channels
+  //  cloud_grsd_->channels.resize (nr_bins_ + (point_label_!=-1 ? 1 : 0));
 
-//   // Name the extra channels
-//   for (int i = 0; i < nr_bins_; i++)
+  // Name the extra channels
+ //  for (int i = 0; i < nr_bins_; i++)
 //   {
 //     char dim_name[16];
 //     sprintf (dim_name, "f%d", i+1);
@@ -146,110 +140,108 @@ std::string GlobalRSD::process (const boost::shared_ptr<const GlobalRSD::InputTy
 //     if (verbosity_level_ > 0) ROS_INFO ("[GlobalRSD] (cloud_grsd) Added channel: %s", cloud_grsd_->channels[nr_bins_].name.c_str ());
 //   }
 
-//   //*
-//   // Create a fixed-size octree decomposition
-//   ts = ros::Time::now ();
-//   setOctree (cloud_vrsd_, width_, -1);
-//   if (verbosity_level_ > 0) ROS_INFO ("[GlobalRSD] kdTree created in %g seconds.", (ros::Time::now () - ts).toSec ());
+  //*
+  // Create a fixed-size octree decomposition
+  ts = ros::Time::now ();
+  setOctree (cloud_vrsd_, width_, -1); //width_ = width of the octree cell
+  if (verbosity_level_ > 0) 
+    ROS_INFO ("[GlobalRSD] kdTree created in %g seconds.", (ros::Time::now () - ts).toSec ());
 
-//   // Maximum distance in the user-specified neighborhood
-//   double max_dist = (2*step_+1)*width_*sqrt(3);
-//   double radius = max_dist/2;
+  // Maximum distance in the user-specified neighborhood
+  double max_dist = (2*step_+1)*width_*sqrt(3);
+  double radius = max_dist/2;
 
-//   // Make sure that we provide enough points for radius computation:
-//   cloud_kdtree::KdTree *kdtree;
-//   if (step_ == 0)
-//   {
-//     ts = ros::Time::now ();
-//     /// @NOTE: passing the pointer here is OK as kdTree and cloud_vrsd_ have the same scope (+ for KdTreeANN it doesn't matter)
-//     kdtree = new cloud_kdtree::KdTreeANN (*cloud_vrsd_);
-//     if (verbosity_level_ > 0) ROS_INFO ("[GlobalRSD] kdTree created in %g seconds.", (ros::Time::now () - ts).toSec ());
-//   }
+  // Make sure that we provide enough points for radius computation:
+  KdTreePtr tree = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZRGBNormal> > ();
 
-//   // Select only the occupied leaves
-//   std::list<octomap::OcTreeVolume> cells;
-//   octree_->getOccupied(cells, 0);
+  if (step_ == 0)
+  {
+    ts = ros::Time::now ();
+    /// @NOTE: passing the pointer here is OK as kdTree and cloud_vrsd_ have the same scope (+ for KdTreeANN it doesn't matter)
+    tree->setInputCloud(cloud_vrsd_);
+    if (verbosity_level_ > 0) 
+      ROS_INFO ("[GlobalRSD] kdTree created in %g seconds.", (ros::Time::now () - ts).toSec ());
+  }
 
-//   // Set surface type for each cell in advance
-//   ts = ros::Time::now ();
-//   int cnt_centroids = 0;
-//   double x_min, y_min, z_min, x_max, y_max, z_max;
-//   octree_->getMetricMin(x_min, y_min, z_min);
-//   octree_->getMetricMax(x_max, y_max, z_max);
-//   for (std::list<octomap::OcTreeVolume>::iterator it_i = cells.begin (); it_i != cells.end (); ++it_i)
-//   {
-//     // Get a cell
-//     octomap::point3d centroid_i;
-//     centroid_i(0) = it_i->first.x();
-//     centroid_i(1) = it_i->first.y();
-//     centroid_i(2) = it_i->first.z();
-//     octomap::OcTreeNodePCL *node_i = octree_->search(centroid_i);
+  // Select only the occupied leaves
+  std::list<octomap::OcTreeVolume> cells;
+  octree_->getOccupied(cells, 0);
 
-//     // Get its contents
-//     vector<int> indices_i = node_i->get3DPointInliers ();
-//     if (indices_i.size () < min_voxel_pts_)
-//       continue;
+  // Set surface type for each cell in advance
+  ts = ros::Time::now ();
+  int cnt_centroids = 0;
+  double x_min, y_min, z_min, x_max, y_max, z_max;
+  octree_->getMetricMin(x_min, y_min, z_min);
+  octree_->getMetricMax(x_max, y_max, z_max);
+  for (std::list<octomap::OcTreeVolume>::iterator it_i = cells.begin (); it_i != cells.end (); ++it_i)
+  {
+    // Get a cell
+    octomap::point3d centroid_i;
+    centroid_i(0) = it_i->first.x();
+    centroid_i(1) = it_i->first.y();
+    centroid_i(2) = it_i->first.z();
+    octomap::OcTreeNodePCL *node_i = octree_->search(centroid_i);
 
-//     // Iterating through neighbors
-//     vector<int> neighbors;
-//     if (step_ == 0)
-//     {
-//       geometry_msgs::Point32 central_point;
-//       cloud_geometry::nearest::computeCentroid (*cloud_vrsd_, indices_i, central_point);
-//       vector<float> sqr_distances;
-//       kdtree->radiusSearch (central_point, radius, neighbors, sqr_distances); // max_nn_ is INT_MAX by default
-//     }
-//     else
-//     {
-//       neighbors = indices_i;
-//       for (int i = step_; i <= step_; i++)
-//       {
-//         for (int j = -step_; j <= step_; j++)
-//         {
-//           for (int k = -step_; k <= step_; k++)
-//           {
-//             // skip current point
-//             if (i==0 && j==0 && k==0)
-//               continue;
-//             // skip inexistent cells
-//             octomap::point3d centroid_neighbor;
-//             centroid_neighbor(0) = centroid_i(0) + i*width_;
-//             centroid_neighbor(1) = centroid_i(1) + j*width_;
-//             centroid_neighbor(2) = centroid_i(2) + k*width_;
-//             if (centroid_neighbor(0)<x_min || centroid_neighbor(1)<y_min || centroid_neighbor(2)<z_min || centroid_neighbor(0)>x_max || centroid_neighbor(1)>y_max || centroid_neighbor(2)>z_max)
-//               continue;
-//             // accumulate indices
-//             octomap::OcTreeNodePCL *node_neighbor = octree_->search(centroid_neighbor);
-//             if (node_neighbor == NULL) // TODO: why does the previous check fail?
-//               continue;
-//             vector<int> ni = node_neighbor->get3DPointInliers ();
-//             neighbors.insert (neighbors.end (), ni.begin (), ni.end ());
-//           } // i
-//         } // j
-//       } // k
-//     }
+    // Get its contents
+    vector<int> indices_i = node_i->get3DPointInliers ();
+    if (indices_i.size () < min_voxel_pts_)
+      continue;
 
-//     // Mark all points with result
-//     int type = setSurfaceType (cloud_vrsd_, &indices_i, &neighbors, nxIdx, max_dist, regIdx, rIdx);
+    // Iterating through neighbors
+    vector<int> neighbors;
+    if (step_ == 0)
+    {
+      Eigen3::Vector4f central_point;
+      pcl::compute3DCentroid (*cloud_vrsd_, indices_i, central_point);
+      vector<float> sqr_distances;
+      QueryPoint central_point_pcl(central_point[0], central_point[1], central_point[2]);
+      tree->radiusSearch (central_point_pcl, radius, neighbors, sqr_distances); // max_nn_ is INT_MAX by default
+    }
+    else
+    {
+      neighbors = indices_i;
+      for (int i = step_; i <= step_; i++)
+      {
+        for (int j = -step_; j <= step_; j++)
+        {
+          for (int k = -step_; k <= step_; k++)
+          {
+            // skip current point
+            if (i==0 && j==0 && k==0)
+              continue;
+            // skip inexistent cells
+            octomap::point3d centroid_neighbor;
+            centroid_neighbor(0) = centroid_i(0) + i*width_;
+            centroid_neighbor(1) = centroid_i(1) + j*width_;
+            centroid_neighbor(2) = centroid_i(2) + k*width_;
+            if (centroid_neighbor(0)<x_min || centroid_neighbor(1)<y_min || centroid_neighbor(2)<z_min || centroid_neighbor(0)>x_max || centroid_neighbor(1)>y_max || centroid_neighbor(2)>z_max)
+              continue;
+            // accumulate indices
+            octomap::OcTreeNodePCL *node_neighbor = octree_->search(centroid_neighbor);
+            if (node_neighbor == NULL) // TODO: why does the previous check fail?
+              continue;
+            vector<int> ni = node_neighbor->get3DPointInliers ();
+            neighbors.insert (neighbors.end (), ni.begin (), ni.end ());
+          } // i
+        } // j
+      } // k
+    }
 
-//     // Mark the node label as well
-//     node_i->label = type;
+    // Mark all points with result
+    //@TODO: check on nxIdx, regIdx, rIdx (removed for now)
+    int type = setSurfaceType (cloud_vrsd_, &indices_i, &neighbors, max_dist);
 
-//     // Set up PCD with centroids
-//     cloud_centroids_->points[cnt_centroids].x = centroid_i(0);
-//     cloud_centroids_->points[cnt_centroids].y = centroid_i(1);
-//     cloud_centroids_->points[cnt_centroids].z = centroid_i(2);
-//     for (size_t d = 0; d < cloud->channels.size (); d++)
-//       cloud_centroids_->channels[d].values[cnt_centroids] = 0.0;
-//     for (size_t i = 0; i < cloud->channels.size (); i++)
-//     {
-//       for (size_t d = 0; d < cloud->channels.size (); d++)
-//         cloud_centroids_->channels[d].values[cnt_centroids] = 0.0;
-//     }
-//     cloud_centroids_->channels[regIdx].values[cnt_centroids] = type;
-//     cnt_centroids++;
-//   }
-//   cloud_centroids_->points.resize (cnt_centroids);
+    // Mark the node label as well
+    node_i->label = type;
+
+    // Set up PCD with centroids
+    cloud_centroids_->points[cnt_centroids].x = centroid_i(0);
+    cloud_centroids_->points[cnt_centroids].y = centroid_i(1);
+    cloud_centroids_->points[cnt_centroids].z = centroid_i(2);
+    cloud_centroids_->points[cnt_centroids].rgb = (float) type;
+    cnt_centroids++;
+  }
+ //  cloud_centroids_->points.resize (cnt_centroids);
 //   for (size_t d = 0; d < cloud_centroids_->channels.size (); d++)
 //     cloud_centroids_->channels[d].values.resize (cnt_centroids);
 //   if (verbosity_level_ > 0) ROS_INFO ("[GlobalRSD] Cells annotated in %g seconds.", (ros::Time::now () - ts).toSec ());
