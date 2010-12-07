@@ -339,15 +339,18 @@ class GlobalRSD : public CloudAlgo
 
   // ROS stuff
   ros::NodeHandle nh_;
-  ros::Publisher pub_cloud_vrsd_;
-  ros::Publisher pub_cloud_centroids_;
+  //ros::Publisher pub_cloud_vrsd_;
+  pcl_ros::Publisher<pcl::PointXYZRGBNormal> pub_cloud_vrsd_;
+  //ros::Publisher pub_cloud_centroids_;
+  pcl_ros::Publisher<pcl::PointXYZRGBNormal> pub_cloud_centroids_;
   ros::Publisher octree_binary_publisher_;
 
   // hard-coding these for now
   int nr_bins_;
 
   // ROS messages
-  pcl::PointCloud<pcl::GRSDSignature21>::ConstPtr cloud_grsd_; 
+  //@ TODO 21 shall be replaced by NR_CLASS (Where does NR_CLASS=5 come from btw)
+  pcl::PointCloud<pcl::GRSDSignature21>::Ptr cloud_grsd_; 
 
   // OcTree stuff
   octomap::OcTreePCL* octree_;
