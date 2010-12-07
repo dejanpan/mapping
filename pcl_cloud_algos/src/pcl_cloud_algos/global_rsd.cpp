@@ -6,10 +6,8 @@ using namespace pcl_cloud_algos;
 void GlobalRSD::init (ros::NodeHandle& nh)
 {
   nh_ = nh;
-  //  pub_cloud_vrsd_ = nh_.advertise <sensor_msgs::PointCloud2> ("cloud_vrsd", 1);
-  // pub_cloud_centroids_ = nh_.advertise <sensor_msgs::PointCloud2> ("cloud_centroids", 1);
-  pub_cloud_vrsd_ = pcl_ros::Publisher<pcl::PointXYZRGBNormal> (nh_, "cloud_vrsd", 1);
-  pub_cloud_centroids_ = pcl_ros::Publisher<pcl::PointXYZRGBNormal> (nh_, "cloud_centroids", 1);
+  pub_cloud_vrsd_ = pcl_ros::Publisher<pcl::PointNormal> (nh_, "cloud_vrsd", 1);
+  pub_cloud_centroids_ = pcl_ros::Publisher<pcl::PointNormal> (nh_, "cloud_centroids", 1);
 }
 
 void GlobalRSD::pre ()
@@ -26,6 +24,7 @@ void GlobalRSD::pre ()
   nh_.param("max_min_radius_diff", max_min_radius_diff_,  max_min_radius_diff_);
   nh_.param("min_radius_edge", min_radius_edge_,  min_radius_edge_);
   nh_.param("publish_octree", publish_octree_,  publish_octree_);
+  cloud_grsd_.points.resize(1);
 }
 
 void GlobalRSD::post ()
@@ -66,8 +65,7 @@ std::vector<std::string> GlobalRSD::provides ()
 
 std::string GlobalRSD::process (const boost::shared_ptr<const GlobalRSD::InputType>& cloud)
  {
-
-   int norm = pcl::getFieldIndex (*cloud, "normal");
+   int norm = pcl::getFieldIndex (*cloud, "normal_x");
    
    if (norm == -1)
    {
@@ -79,11 +77,8 @@ std::string GlobalRSD::process (const boost::shared_ptr<const GlobalRSD::InputTy
    // Timers
   ros::Time global_time = ros::Time::now ();
   ros::Time ts;
-
-  pcl::fromROSMsg(*cloud, *cloud_vrsd_);
-
-  cloud_centroids_->points.resize(cloud_vrsd_->points.size());    /// @NOTE: will be overwritten and need to be resized afterwards
- 
+  pcl::fromROSMsg(*cloud, cloud_vrsd_);
+  cloud_centroids_.points.resize(cloud_vrsd_.points.size());    /// @NOTE: will be overwritten and need to be resized afterwards
   // Create a fixed-size octree decomposition
   ts = ros::Time::now ();
   setOctree (cloud_vrsd_, width_, -1); //width_ = width of the octree cell
@@ -95,13 +90,13 @@ std::string GlobalRSD::process (const boost::shared_ptr<const GlobalRSD::InputTy
   double radius = max_dist/2;
 
   // Make sure that we provide enough points for radius computation:
-  KdTreePtr tree = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZRGBNormal> > ();
+  KdTreePtr tree = boost::make_shared<pcl::KdTreeANN<pcl::PointNormal> > ();
 
   if (step_ == 0)
   {
     ts = ros::Time::now ();
     /// @NOTE: passing the pointer here is OK as kdTree and cloud_vrsd_ have the same scope (+ for KdTreeANN it doesn't matter)
-    tree->setInputCloud(cloud_vrsd_);
+    tree->setInputCloud(boost::make_shared <const pcl::PointCloud<pcl::PointNormal> > (cloud_vrsd_));
     if (verbosity_level_ > 0) 
       ROS_INFO ("[GlobalRSD] kdTree created in %g seconds.", (ros::Time::now () - ts).toSec ());
   }
@@ -135,7 +130,7 @@ std::string GlobalRSD::process (const boost::shared_ptr<const GlobalRSD::InputTy
     if (step_ == 0)
     {
       Eigen3::Vector4f central_point;
-      pcl::compute3DCentroid (*cloud_vrsd_, indices_i, central_point);
+      pcl::compute3DCentroid (cloud_vrsd_, indices_i, central_point);
       vector<float> sqr_distances;
       QueryPoint central_point_pcl(central_point[0], central_point[1], central_point[2]);
       tree->radiusSearch (central_point_pcl, radius, neighbors, sqr_distances); // max_nn_ is INT_MAX by default
@@ -171,22 +166,21 @@ std::string GlobalRSD::process (const boost::shared_ptr<const GlobalRSD::InputTy
     }
 
     // Mark all points with result
-    //@TODO: check on nxIdx, regIdx, rIdx (removed for now)
     int type = setSurfaceType (cloud_vrsd_, &indices_i, &neighbors, max_dist);
 
     // Mark the node label as well
     node_i->label = type;
 
     // Set up PCD with centroids
-    cloud_centroids_->points[cnt_centroids].x = centroid_i(0);
-    cloud_centroids_->points[cnt_centroids].y = centroid_i(1);
-    cloud_centroids_->points[cnt_centroids].z = centroid_i(2);
-    cloud_centroids_->points[cnt_centroids].rgb = (float) type;
+    cloud_centroids_.points[cnt_centroids].x = centroid_i(0);
+    cloud_centroids_.points[cnt_centroids].y = centroid_i(1);
+    cloud_centroids_.points[cnt_centroids].z = centroid_i(2);
+    cloud_centroids_.points[cnt_centroids].curvature = (float) type;
     cnt_centroids++;
   }
-  cloud_centroids_->points.resize (cnt_centroids);
-  //   for (size_t d = 0; d < cloud_centroids_->channels.size (); d++)
-  //     cloud_centroids_->channels[d].values.resize (cnt_centroids);
+  cloud_centroids_.points.resize (cnt_centroids);
+  //   for (size_t d = 0; d < cloud_centroids_.channels.size (); d++)
+  //     cloud_centroids_.channels[d].values.resize (cnt_centroids);
   
   if (verbosity_level_ > 0) 
     ROS_INFO ("[GlobalRSD] Cells annotated in %g seconds.", (ros::Time::now () - ts).toSec ());
@@ -264,7 +258,7 @@ std::string GlobalRSD::process (const boost::shared_ptr<const GlobalRSD::InputTy
       histogram_pair1.second.sqr_distance = _sqr_dist (centroid_i, centroid_i); // 0.0
       histogram_pair1.second.centroid = centroid_i;
       histogram_pair1.first = node_i->label;
-      //histogram_pair1.first = (int)(cloud_vrsd_->channels[regIdx].values[indices_i.at (0)]);
+      //histogram_pair1.first = (int)(cloud_vrsd.channels[regIdx].values[indices_i.at (0)]);
       histogram_values.push_back (histogram_pair1);
 
       // Add the last voxel
@@ -272,7 +266,7 @@ std::string GlobalRSD::process (const boost::shared_ptr<const GlobalRSD::InputTy
       histogram_pair2.second.sqr_distance = _sqr_dist (centroid_j, centroid_i); // line length
       histogram_pair2.second.centroid = centroid_j;
       histogram_pair2.first = node_j->label;
-      //histogram_pair2.first = (int)(cloud_vrsd_->channels[regIdx].values[indices_j.at (0)]);
+      //histogram_pair2.first = (int)(cloud_vrsd.channels[regIdx].values[indices_j.at (0)]);
       histogram_values.push_back (histogram_pair2);
 
       // Sort the histogram according to the distance of the leaves to the start leaf
@@ -305,12 +299,15 @@ std::string GlobalRSD::process (const boost::shared_ptr<const GlobalRSD::InputTy
   }
   int nrf = 0;
   for (int i=0; i<NR_CLASS+1; i++)
+  {
     for (int j=i; j<NR_CLASS+1; j++)
-      cloud_grsd_->points[0].histogram[nrf++] = transitions[i][j];
-  
+    {
+      cloud_grsd_.points[0].histogram[nrf++] = transitions[i][j]; //@TODO: resize point cloud
+    }
+  }
   //@TODO: Check with Zoli what are following 2 lines for:
   //if (point_label_ != -1)
-  //cloud_grsd_->channels[nr_bins_].values[0] = point_label_;
+  //cloud_grsd_.channels[nr_bins_].values[0] = point_label_;
   
   // Publish partial results for visualization
   if (publish_cloud_centroids_)
@@ -328,9 +325,9 @@ std::string GlobalRSD::process (const boost::shared_ptr<const GlobalRSD::InputTy
 boost::shared_ptr<const GlobalRSD::OutputType> GlobalRSD::output ()
 {
   //  sensor_msgs::PointCloud2 cloud_grsd_msg;
-  boost::shared_ptr<sensor_msgs::PointCloud2> cloud_grsd_msg;
-  pcl::toROSMsg (*cloud_grsd_, *cloud_grsd_msg);
-  return cloud_grsd_msg;
+  sensor_msgs::PointCloud2 cloud_grsd_msg;
+  pcl::toROSMsg (cloud_grsd_, cloud_grsd_msg);
+  return boost::make_shared<sensor_msgs::PointCloud2> (cloud_grsd_msg);
 }
 
 #ifdef CREATE_NODE
