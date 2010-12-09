@@ -32,8 +32,11 @@
 // Sample Consensus
 //#include <point_cloud_mapping/sample_consensus/ransac.h>
 #include <pcl/sample_consensus/ransac.h>
+#include <pcl/sample_consensus/impl/ransac.hpp>
 // For computeCentroid
 //#include <point_cloud_mapping/geometry/nearest.h>
+
+//template class pcl::RandomSampleConsensus<pcl::Normal>;
 
 using namespace std;
 using namespace pcl_cloud_algos;
