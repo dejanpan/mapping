@@ -122,7 +122,7 @@ namespace pcl
         * \param indices the data indices that need to be tested against the model (each element is an index of indices_)
         * \param threshold a maximum admissible distance threshold for determining the inliers from the outliers
         */
-      bool doSamplesVerifyModel (const std::set<int> &indices, const Eigen3::VectorXf &model_coefficients, double threshold){}
+      bool doSamplesVerifyModel (const std::set<int> &indices, const Eigen3::VectorXf &model_coefficients, double threshold) { return true; }
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Return an unique id for each type of model employed. */
