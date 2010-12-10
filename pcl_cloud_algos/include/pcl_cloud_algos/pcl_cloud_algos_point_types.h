@@ -56,7 +56,7 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PointXYZINormalScanLine,
                                    (float, x, x)
                                    (float, y, y)
                                    (float, z, z)
-                                   (float, intensity, intensity)
+                                   (float, intensities, intensities)
                                    (float, normal[0], normal_x)
                                    (float, normal[1], normal_y)
                                    (float, normal[2], normal_z)

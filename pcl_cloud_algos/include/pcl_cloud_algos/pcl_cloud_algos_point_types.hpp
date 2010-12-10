@@ -33,7 +33,7 @@ namespace pcl
   struct PointXYZINormalScanLine
   {
     PCL_ADD_POINT4D;
-    float intensity;
+    float intensities;
     PCL_ADD_NORMAL4D;
     // represents the index of one XYZ triplet
     float index;
@@ -43,7 +43,7 @@ namespace pcl
   } EIGEN_ALIGN16;
   inline std::ostream& operator<<(std::ostream& os, const PointXYZINormalScanLine& p)
   {
-    os << "("<<p.x<<","<<p.y<<","<<p.z<<" - "<<p.intensity<<" - "<<p.normal[0]<<","<<p.normal[1]<<","<<p.normal[2]<<" - "<<p.index<<" - "<<p.line<<")";
+    os << "("<<p.x<<","<<p.y<<","<<p.z<<" - "<<p.intensities<<" - "<<p.normal[0]<<","<<p.normal[1]<<","<<p.normal[2]<<" - "<<p.index<<" - "<<p.line<<")";
     return os;
   }
 
