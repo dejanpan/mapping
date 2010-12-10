@@ -30,9 +30,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #target_link_libraries(example ${PROJECT_NAME})
 
 rosbuild_add_library(pcl_cloud_algos
-# src/pcl_cloud_algos/box_fit_algo.cpp
-# src/pcl_cloud_algos/box_fit2_algo.cpp
-# src/pcl_cloud_algos/global_rsd.cpp
+  #src/pcl_cloud_algos/box_fit_algo.cpp
+  #src/pcl_cloud_algos/box_fit2_algo.cpp
+  #src/pcl_cloud_algos/global_rsd.cpp
   src/pcl_cloud_algos/depth_image_triangulation.cpp)
 
 target_link_libraries(pcl_cloud_algos pcl_ias_sample_consensus)
