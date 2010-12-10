@@ -45,12 +45,6 @@
 #include <pcl_cloud_algos/depth_image_triangulation.h>
 #include <pcl_cloud_algos/pcl_cloud_algos_point_types.h>
 
-//#include "pcl/range_image/range_image.h"
-//#include "pcl/io/pcd_io.h"
-//#include "pcl/features/range_image_border_extractor.h"
-//#include "pcl/keypoints/narf_keypoint.h"
-//#include "pcl/features/narf_descriptor.h"
-
 using namespace pcl;
 using namespace pcl_cloud_algos;
 
@@ -108,6 +102,7 @@ void DepthImageTriangulation::init (ros::NodeHandle &nh)
 {
   // node handler and publisher
   nh_ = nh;
+
   // ROS_INFO("DepthImageTriangulation Node initialized");
   nh_.param("save_pcd", save_pcd_, save_pcd_);
 }
@@ -129,13 +124,12 @@ std::vector<std::string> DepthImageTriangulation::requires ()
   {
     std::vector<std::string> requires;
 
-    //// requires 3D coordinates
-    //requires.push_back("x");
-    //requires.push_back("y");
-    //requires.push_back("z");
-    //// requires normals
-    //requires.push_back("normal");
-    //return requires;
+    // requires 3D coordinates
+    requires.push_back("x");
+    requires.push_back("y");
+    requires.push_back("z");
+    // requires index
+    requires.push_back("index");
 
     return requires;
   }
@@ -145,17 +139,7 @@ std::vector<std::string> DepthImageTriangulation::provides ()
   {
     std::vector<std::string> provides;
 
-    //// provides features (variable number)
-    //for (int i = 0; i < nr_bins_; i++)
-    //{
-      //char dim_name[16];
-      //sprintf (dim_name, "f%d", i+1);
-      //provides.push_back (dim_name);
-    //}
-
-    //// sets point label if required
-    //if (point_label_ != -1)
-      //provides.push_back ("point_label");
+    provides.push_back ("Triangled Mesh");
 
     return provides;
   }
@@ -172,8 +156,11 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
   // or
   // Hokuyo UTM 30LX which only returns index coeff, line has to be computed
 
+  std::cerr << " before" << std::endl ;
   fromROSMsg (*cloud_in, cloud_with_line_);
+  std::cerr << " after" << std::endl ;
   
+
   // lock down the point cloud 
   boost::mutex::scoped_lock lock (cloud_lock_);
   // cloud_in gets processed and copied into cloud_with_line_
@@ -406,7 +393,7 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
 
   // fill in intensities (needed for e.g. laser-to-camera calibration
   std::vector<sensor_msgs::PointField> fields;
-  int iIdx = getFieldIndex (cloud_with_line_, "intensities", fields);
+  int iIdx = getFieldIndex (cloud_with_line_, "intensity", fields);
   if (iIdx == -1)
   {
     if (verbosity_level_ > -1) ROS_WARN ("[DepthImageTriangulaton] \"intensites\" channel does not exist");
@@ -415,7 +402,7 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
   {
     mesh_->intensities.resize (cloud_with_line_.points.size());
     for (unsigned int i = 0; i < cloud_with_line_.points.size(); i++)
-      mesh_->intensities[i] = cloud_with_line_.points[i].intensity;
+      mesh_->intensities[i] = cloud_with_line_.points[i].intensities;
   }
 
   ////set indices back to initial values
