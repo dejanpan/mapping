@@ -35,13 +35,15 @@ namespace pcl
     PCL_ADD_POINT4D;
     float intensity;
     PCL_ADD_NORMAL4D;
-    float scan;
+    // represents the index of one XYZ triplet
+    float index;
+    // represents one complete 2D scan 
     float line;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   } EIGEN_ALIGN16;
   inline std::ostream& operator<<(std::ostream& os, const PointXYZINormalScanLine& p)
   {
-    os << "("<<p.x<<","<<p.y<<","<<p.z<<" - "<<p.intensity<<" - "<<p.normal[0]<<","<<p.normal[1]<<","<<p.normal[2]<<" - "<<p.scan<<" - "<<p.line<<")";
+    os << "("<<p.x<<","<<p.y<<","<<p.z<<" - "<<p.intensity<<" - "<<p.normal[0]<<","<<p.normal[1]<<","<<p.normal[2]<<" - "<<p.index<<" - "<<p.line<<")";
     return os;
   }
 
