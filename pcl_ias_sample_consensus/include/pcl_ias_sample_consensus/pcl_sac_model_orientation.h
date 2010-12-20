@@ -8,7 +8,7 @@
 #include <pcl/features/normal_3d.h>
 
 // Kd Tree
-#include <pcl/kdtree/kdtree_ann.h>
+//#include <pcl/kdtree/kdtree_ann.h>
 
 // Eigen
 //#include <Eigen3/Array>
@@ -53,7 +53,7 @@ namespace pcl
         */
       SACModelOrientation (const NormalsConstPtr &cloud) : SampleConsensusModel<Normal> (cloud)
       {
-        kdtree_ = boost::make_shared<KdTreeANN <Normal> >();
+        kdtree_ = boost::make_shared<KdTreeFLANN <Normal> >();
         kdtree_->setInputCloud  (cloud);
       }
 
@@ -64,7 +64,7 @@ namespace pcl
         */
       SACModelOrientation (const NormalsConstPtr &cloud, const std::vector<int> &indices) : SampleConsensusModel<Normal> (cloud, indices)
       {
-        kdtree_ = boost::make_shared<KdTreeANN <Normal> >();
+        kdtree_ = boost::make_shared<KdTreeFLANN <Normal> >();
         kdtree_->setInputCloud (cloud);
       }
 
@@ -152,7 +152,7 @@ namespace pcl
     private:
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Kd-Tree for searching in normal space. */
-      KdTreeANN<pcl::Normal>::Ptr kdtree_;
+      KdTreeFLANN<pcl::Normal>::Ptr kdtree_;
       std::vector<int> front_indices_;
       std::vector<int>  back_indices_;
       std::vector<int>  left_indices_;
