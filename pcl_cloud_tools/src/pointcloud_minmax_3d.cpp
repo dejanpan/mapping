@@ -60,7 +60,7 @@ and publishes them along with the cloud's centroid.
 
 #include "pcl/segmentation/extract_clusters.h"
 #include "pcl/kdtree/kdtree.h"
-#include "pcl/kdtree/kdtree_ann.h"
+#include "pcl/kdtree/kdtree_flann.h"
 
 using namespace std;
 
@@ -119,7 +119,7 @@ public:
 
     nh_.param("output_cloud_cluster_topic", output_cloud_cluster_topic_, std::string("cloud_cluster"));
     //setup cluster object
-    clusters_tree_ = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
+    clusters_tree_ = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ> > ();
     output_cloud_cluster_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(output_cloud_cluster_topic_, 5);
     clusters_tree_->setEpsilon (1);
   }
