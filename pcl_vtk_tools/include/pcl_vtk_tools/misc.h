@@ -62,4 +62,12 @@ vtkActor* create_actor_from_data_set (vtkDataSet *data, double c1, double c2, do
   return actor;
 }
 
+vtkActor*
+create_actor_from_data_set (vtkDataSet *data, double c1, double c2, double c3, double psize, bool lod_enable)
+{
+  vtkActor *actor = create_actor_from_data_set (data, c1, c2, c3, lod_enable); 
+  actor->GetProperty ()->SetPointSize (psize);
+  return actor;
+}
+
 #endif
