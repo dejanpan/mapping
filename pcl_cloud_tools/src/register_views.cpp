@@ -100,13 +100,13 @@ ANNpointArray evaluateTransformation (Matrix4f transform, vector<PCD>::iterator 
     Map<Vector3f> tp (&(transformed[cp][0]));
     tp = (transform * sp).start<3> ();
     /*kd_tree->annkSearch (point, 1, nnIdx, sqrDists, 0.0);
-    if (sqrDists[0] < sqr_threshold)
-    {
+      if (sqrDists[0] < sqr_threshold)
+      {
       match_idx.push_back (cp);
       tmp_inliers.push_back (nnIdx[0]);
       pos_match++;
       pos_inliers++;
-    }*/
+      }*/
     int nr_nn = kd_tree->annkFRSearch (transformed[cp], sqr_threshold, 0, NULL, NULL, 0.0);
     if (nr_nn > 0)
     {
@@ -128,7 +128,7 @@ ANNpointArray evaluateTransformation (Matrix4f transform, vector<PCD>::iterator 
 
 /* ---[ */
 int
-  main (int argc, char** argv)
+main (int argc, char** argv)
 {
   srand (time (NULL));
   
@@ -239,39 +239,39 @@ int
   /// Load the models from the files
   vector<PCD> models (pPCDFileIndices.size () - 2);
   /**
-  for (unsigned i = 2; i < pPCDFileIndices.size (); i++)
-  {
-    PCD_Header header2;
-    print_info (stderr, "Loading model ");
-    print_value (stderr, "%s... ", argv[pPCDFileIndices.at (i)]);
-    ANNpointArray points2 = LoadPCDFile (argv[pPCDFileIndices.at (i)], header2);
-    if (points == NULL)
-      return (-1);
-    fprintf (stderr, "[done : "); print_value (stderr, "%d %d", header2.nr_points, header2.dimID.size ()); fprintf (stderr, "D points]\n");
-    print_info (stderr, "Available dimensions: "); print_value (stderr, "%s\n", getAvailableDimensions (header2).c_str ());
-    //if (header2.comments.size () != 0)
-    //{
-    //  print_value (stderr, "Header comments:\n");
-    //  fprintf (stderr, "%s", header2.comments.c_str ());
-    //}
+     for (unsigned i = 2; i < pPCDFileIndices.size (); i++)
+     {
+     PCD_Header header2;
+     print_info (stderr, "Loading model ");
+     print_value (stderr, "%s... ", argv[pPCDFileIndices.at (i)]);
+     ANNpointArray points2 = LoadPCDFile (argv[pPCDFileIndices.at (i)], header2);
+     if (points == NULL)
+     return (-1);
+     fprintf (stderr, "[done : "); print_value (stderr, "%d %d", header2.nr_points, header2.dimID.size ()); fprintf (stderr, "D points]\n");
+     print_info (stderr, "Available dimensions: "); print_value (stderr, "%s\n", getAvailableDimensions (header2).c_str ());
+     //if (header2.comments.size () != 0)
+     //{
+     //  print_value (stderr, "Header comments:\n");
+     //  fprintf (stderr, "%s", header2.comments.c_str ());
+     //}
   
-    /// Checking dimensions
-    int xIdx = getIndex (header2, "x");
-    if (xIdx != 0)
-    {
-      print_error (stderr, "XYZ coordinates not first dimensions!\n");
-      return (-1);
-    }
+     /// Checking dimensions
+     int xIdx = getIndex (header2, "x");
+     if (xIdx != 0)
+     {
+     print_error (stderr, "XYZ coordinates not first dimensions!\n");
+     return (-1);
+     }
   
-    /// Saving reference in list
-    models[i-2].points = points2;
-    models[i-2].header = header2;
-    //cerr << models[i-2].points << endl;
-    //fprintf (stderr, "Saved %s header: ", models[i-2].header.data_type?"ASCII":"BINARY"); print_value (stderr, "%d %d", models[i-2].header.nr_points, models[i-2].header.dimID.size ());
-    //fprintf (stderr, "D "); print_value (stderr, "%s\n", getAvailableDimensions (models[i-2].header).c_str ());
-    //if (models[i-2].header.comments.size () != 0)
-    //  fprintf (stderr, "%s", models[i-2].header.comments.c_str ());
-  }
+     /// Saving reference in list
+     models[i-2].points = points2;
+     models[i-2].header = header2;
+     //cerr << models[i-2].points << endl;
+     //fprintf (stderr, "Saved %s header: ", models[i-2].header.data_type?"ASCII":"BINARY"); print_value (stderr, "%d %d", models[i-2].header.nr_points, models[i-2].header.dimID.size ());
+     //fprintf (stderr, "D "); print_value (stderr, "%s\n", getAvailableDimensions (models[i-2].header).c_str ());
+     //if (models[i-2].header.comments.size () != 0)
+     //  fprintf (stderr, "%s", models[i-2].header.comments.c_str ());
+     }
   //*/
   
   /// Starting global timer  
@@ -503,47 +503,47 @@ int
         /// @TODO: make this nicer
 ///        if (step != 1)
 ///        {
-          //cerr << "before: " << inliers.size () << endl;
+        //cerr << "before: " << inliers.size () << endl;
 ///
-          inliers.clear ();
-          inliers.reserve (model->header.nr_points);
-          //int pos_match = model->header.nr_points;
-          int pos_inliers = model->header.nr_points;
-          for (int cp = 0; cp < model->header.nr_points; cp++)
-          {
-            /// @TODO: why is this not working if after the skip? shouldn't they be transformed in the function call already?
-            Vector4f sp (model->points[cp][0], model->points[cp][1], model->points[cp][2], 1);
-            Map<Vector3f> tp (&(result[cp][0]));
-            tp = (match_transform * sp).start<3> ();
-            // skip points that were already checked
+        inliers.clear ();
+        inliers.reserve (model->header.nr_points);
+        //int pos_match = model->header.nr_points;
+        int pos_inliers = model->header.nr_points;
+        for (int cp = 0; cp < model->header.nr_points; cp++)
+        {
+          /// @TODO: why is this not working if after the skip? shouldn't they be transformed in the function call already?
+          Vector4f sp (model->points[cp][0], model->points[cp][1], model->points[cp][2], 1);
+          Map<Vector3f> tp (&(result[cp][0]));
+          tp = (match_transform * sp).start<3> ();
+          // skip points that were already checked
 ///
 ///            if (cp % step == 0)
 ///              continue;
-            //if (cp == 4)
-            //{
-            //  cerr << sp.transpose () << " - " << tp.transpose () << endl;
-            //  cerr << match_transform << endl;
-            //}
-            int nr_nn = kd_tree->annkFRSearch (result[cp], sqr_threshold, 0, NULL, NULL, 0.0);
-            //cerr << nr_nn << "/";
-            if (nr_nn > 0)
-            {
-              //cerr << nnIdx[0] << " ";
-              //match_idx.push_back (cp);
-              if (nr_nn > max_nr_nn)
-                nr_nn = max_nr_nn;
-              kd_tree->annkFRSearch (result[cp], sqr_threshold, nr_nn, nnIdx, sqrDists, 0.0);
-              for (int nn = 0; nn < nr_nn; nn++)
-                inliers.push_back (nnIdx[nn]);
-              //pos_match++;
-              pos_inliers++;
-            }
-            // skip checking if there is no chance of producing a better match
-            if (//pos_match - cp < best_match_idx.size () ||
-                pos_inliers - cp < (int)best_model_inliers.size ()) // this will not exit early enough as tmp_inliers may contains duplicates as well, but it helps
-              break;
+          //if (cp == 4)
+          //{
+          //  cerr << sp.transpose () << " - " << tp.transpose () << endl;
+          //  cerr << match_transform << endl;
+          //}
+          int nr_nn = kd_tree->annkFRSearch (result[cp], sqr_threshold, 0, NULL, NULL, 0.0);
+          //cerr << nr_nn << "/";
+          if (nr_nn > 0)
+          {
+            //cerr << nnIdx[0] << " ";
+            //match_idx.push_back (cp);
+            if (nr_nn > max_nr_nn)
+              nr_nn = max_nr_nn;
+            kd_tree->annkFRSearch (result[cp], sqr_threshold, nr_nn, nnIdx, sqrDists, 0.0);
+            for (int nn = 0; nn < nr_nn; nn++)
+              inliers.push_back (nnIdx[nn]);
+            //pos_match++;
+            pos_inliers++;
           }
-          //cerr << "after: " << inliers.size () << endl;
+          // skip checking if there is no chance of producing a better match
+          if (//pos_match - cp < best_match_idx.size () ||
+            pos_inliers - cp < (int)best_model_inliers.size ()) // this will not exit early enough as tmp_inliers may contains duplicates as well, but it helps
+            break;
+        }
+        //cerr << "after: " << inliers.size () << endl;
 ///        }
       
         // Remove doubles from inliers list
