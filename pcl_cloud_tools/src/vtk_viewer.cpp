@@ -43,6 +43,7 @@
 #include <vtkVectorText.h> 
 #include <vtkPolyDataMapper.h> 
 #include <vtkFollower.h> 
+#include <vtkLightKit.h> 
 
 #include <pcl_vtk_tools/misc.h>
 
@@ -312,16 +313,16 @@ main (int argc, char** argv)
     }
   }
 
-  //vtkLightKit* lightKit = vtkLightKit::New ();
-  //  lightKit->AddLightsToRenderer (ren);
+  vtkLightKit* lightKit = vtkLightKit::New ();
+  lightKit->AddLightsToRenderer (ren);
 
   // Create the VTK window
-  //  char title[256];
-  //   if (pFileIndices.size () == 1)
-  //     sprintf (title, "3D PointCloud viewer - %s", argv[pFileIndices.at (0)]);
-  //   else
-  //     sprintf (title, "3D PointCloud viewer");
-  //   vtkRenderWindowInteractor* iren;
+  char title[256];
+  if (pFileIndices.size () == 1)
+    sprintf (title, "3D PointCloud viewer - %s", argv[pFileIndices.at (0)]);
+  else
+    sprintf (title, "3D PointCloud viewer");
+  vtkRenderWindowInteractor* iren;
   //   if (movieMode)
   //   {
   //     print_info (stderr, "Movie file is being written to: ");
@@ -330,7 +331,7 @@ main (int argc, char** argv)
   //     iren = CreateRenderWindowAndInteractorMovie (ren, title, movieFile, argc, argv, 2);
   //   }
   //   else
-  //     iren = CreateRenderWindowAndInteractor (ren, title, argc, argv);
+  //iren = CreateRenderWindowAndInteractor (ren, title, argc, argv);
 
   //   vtkSmartPointer<vtkInteractorStyleTUM> style = (vtkSmartPointer<vtkInteractorStyleTUM>)reinterpret_cast<vtkInteractorStyleTUM*>(iren->GetInteractorStyle ());
   //   style->setAdvancedMode (true);
