@@ -26,7 +26,168 @@
 #include <vtkProperty2D.h>
 #include <vtkPointPicker.h>
 #include <vtkObjectFactory.h>
+#include <vtkAssemblyPath.h>
 
+//from CommonVTKRoutines.h
+#include <vtkGraphicsFactory.h>
+#include <vtkGeneralTransform.h>
+#include <vtkGeometryFilter.h>
+#include <vtkImagingFactory.h>
+#include <vtkAbstractTransform.h>
+#include <vtkActor.h>
+#include <vtkAlgorithmOutput.h>
+#include <vtkAppendPolyData.h>
+#include <vtkArrowSource.h>
+#include <vtkAssemblyPath.h>
+#include <vtkAssembly.h>
+#include <vtkCubeSource.h>
+#include <vtkConeSource.h>
+#include <vtkCylindricalTransform.h>
+#include <vtkTransformTextureCoords.h>
+#include <vtkBMPReader.h>
+#include <vtkTexture.h>
+#include <vtkAxes.h>
+#include <vtkAxisActor2D.h>
+#include <vtkButterflySubdivisionFilter.h>
+#include <vtkBoxWidget.h>
+#include <vtkCamera.h>
+#include <vtkCameraInterpolator.h>
+#include <vtkCommand.h>
+#include <vtkCellData.h>
+#include <vtkCellArray.h>
+#include <vtkCleanPolyData.h>
+#include <vtkClipPolyData.h>
+#include <vtkContourFilter.h>
+#include <vtkCylinderSource.h>
+#include <vtkCutter.h>
+#include <vtkDataSetMapper.h>
+#include <vtkDataObjectCollection.h>
+#include <vtkDiskSource.h>
+#include <vtkDataSetTriangleFilter.h>
+#include <vtkDataSetWriter.h>
+#include <vtkDataSetCollection.h>
+#include <vtkDataArrayCollection.h>
+#include <vtkDebugLeaks.h>
+#include <vtkDelaunay2D.h>
+#include <vtkDelaunay3D.h>
+#include <vtkDoubleArray.h>
+#include <vtkExtractEdges.h>
+#include <vtkInteractorEventRecorder.h>
+#include <vtkFeatureEdges.h>
+#include <vtkFloatArray.h>
+#include <vtkFFMPEGWriter.h>
+#include <vtkFollower.h>
+#include <vtkGenericPointIterator.h>
+#include <vtkGlyph3D.h>
+#include <vtkGreedyTerrainDecimation.h>
+#include <vtkHedgeHog.h>
+#include <vtkHull.h>
+#include <vtkHexahedron.h>
+#include <vtkInterpolatingSubdivisionFilter.h>
+#include <vtkImageBlend.h>
+#include <vtkImageMapper.h>
+#include <vtkImplicitModeller.h>
+#include <vtkImplicitPlaneWidget.h>
+#include <vtkIntArray.h>
+#include <vtkInteractorStyleTrackballCamera.h>
+#include <vtkJPEGWriter.h>
+#include <vtkKdTree.h>
+#include <vtkLightKit.h>
+#include <vtkLinearSubdivisionFilter.h>
+#include <vtkLegendScaleActor.h>
+#include <vtkLeaderActor2D.h>
+#include <vtkLineSource.h>
+#include <vtkLODActor.h>
+#include <vtkLandmarkTransform.h>
+#include <vtkLookupTable.h>
+#include <vtkLogLookupTable.h>
+#include <vtkLoopSubdivisionFilter.h>
+#include <vtkMarchingCubes.h>
+#include <vtkMaskPoints.h>
+#include <vtkMath.h>
+#include <vtkMatrix4x4.h>
+#include <vtkMatrixToLinearTransform.h>
+#include <vtkMassProperties.h>
+#include <vtkOBBTree.h>
+#include <vtkObjectFactory.h>
+#include <vtkOBJReader.h>
+#include <vtkOBJExporter.h>
+#include <vtkOrderedTriangulator.h>
+#include <vtkPerspectiveTransform.h>
+#include <vtkPlane.h>
+#include <vtkPlanes.h>
+#include <vtkPolygon.h>
+#include <vtkPlatonicSolidSource.h>
+#include <vtkPLYReader.h>
+#include <vtkPNGReader.h>
+#include <vtkPNGWriter.h>
+#include <vtkPlaneSource.h>
+#include <vtkSuperquadricSource.h>
+#include <vtkSphericalTransform.h>
+#include <vtkSubdivideTetra.h>
+#include <vtkPointData.h>
+#include <vtkPointPicker.h>
+#include <vtkPointDataToCellData.h>
+#include <vtkPointLocator.h>
+#include <vtkPoints.h>
+#include <vtkPointSet.h>
+#include <vtkPolyData.h>
+#include <vtkPolyLine.h>
+#include <vtkPolyDataAlgorithm.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkOpenGLPolyDataMapper.h>
+#include <vtkPainterPolyDataMapper.h>
+#include <vtkPolyDataNormals.h>
+#include <vtkPolyDataReader.h>
+#include <vtkPolyDataWriter.h>
+#include <vtkPolyVertex.h>
+#include <vtkProperty.h>
+#include <vtkProperty2D.h>
+#include <vtkQuad.h>
+#include <vtkRecursiveDividingCubes.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRenderer.h>
+#include <vtkRendererCollection.h>
+#include <vtkScalarBarActor.h>
+#include <vtkSmartPointer.h>
+#include <vtkSpatialRepresentationFilter.h>
+#include <vtkSphere.h>
+#include <vtkSphereSource.h>
+#include <vtkStripper.h>
+#include <vtkStructuredPointsReader.h>
+#include <vtkSurfaceReconstructionFilter.h>
+#include <vtkSystemIncludes.h>
+#include <vtkTextActor.h>
+#include <vtkTextProperty.h>
+#include <vtkTimerLog.h>
+#include <vtkTransform.h>
+#include <vtkTransformFilter.h>
+#include <vtkTransformPolyDataFilter.h>
+#include <vtkTriangleFilter.h>
+#include <vtkTubeFilter.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkUnstructuredGridReader.h>
+#include <vtkUnsignedIntArray.h>
+#include <vtkVectorText.h>
+#include <vtkVoxel.h>
+#include <vtkVoxelContoursToSurfaceFilter.h>
+#include <vtkVRMLImporter.h>
+#include <vtkWindowedSincPolyDataFilter.h>
+#include <vtkWindowToImageFilter.h>
+#include <vtkXRenderWindowInteractor.h>
+#include <vtkXMLPolyDataReader.h>
+#include <vtkXMLPPolyDataReader.h>
+#include <vtkXYPlotActor.h>
+#include <vtkXYPlotWidget.h>
+#include <vtkGraphToPolyData.h>
+#include <vtkGraphLayout.h>
+#include <vtkGraphReader.h>
+#include <vtkGraph.h>
+#include <vtkDirectedGraph.h>
+#include <vtkUndirectedGraph.h>
+#include <vtkMutableUndirectedGraph.h>
+#include <vtkPolyDataCollection.h>
 
 #define NR_COLOR 65536
 #define S_COLOR 100
@@ -369,6 +530,52 @@ void
   this->textActor     = NULL;
 }
 
+void
+  vtkInteractorStyleTUM::setAdvancedMode (bool mode)
+{
+  this->advanced = mode;
+  this->gridActor = vtkLegendScaleActor::New ();
+  this->grid_enabled = false;
+  this->lut_enabled = false;
+  this->lutActor = vtkScalarBarActor::New ();
+  this->lutActor->SetTitle ("");
+  this->lutActor->SetOrientationToHorizontal ();
+  this->lutActor->SetPosition (0.05, 0.01);
+  this->lutActor->SetWidth (0.9); 
+  this->lutActor->SetHeight (0.1);
+  this->lutActor->SetNumberOfLabels (this->lutActor->GetNumberOfLabels () * 2);
+  vtkSmartPointer<vtkTextProperty> prop = this->lutActor->GetLabelTextProperty ();
+  prop->SetFontSize (10);
+  this->lutActor->SetLabelTextProperty (prop);
+  this->lutActor->SetTitleTextProperty (prop);
+
+//  vtkSmartPointer<vtkTextActor> camTxt = vtkSmartPointer<vtkTextActor>::New ();
+  vtkTextActor* camTxt = vtkTextActor::New ();
+  vtkSmartPointer<vtkCameraCallback> camUpdateInfo = vtkSmartPointer<vtkCameraCallback>::New ();
+  camUpdateInfo->SetTextActor (camTxt);
+  double *camTxtPos = camTxt->GetPosition ();
+  camTxt->SetPosition (camTxtPos[0], camTxtPos[0]+20);
+  camTxt->GetProperty ()->SetColor (0.0, 1.0, 0.0);
+  
+  if (one_renderer)
+  {
+    this->renderer->AddObserver (vtkCommand::EndEvent, camUpdateInfo);
+    this->renderer->AddActor (camTxt);
+  }
+
+  vtkMouseCallback *mc = vtkMouseCallback::New ();
+//  mc->NR_BINS = this->histNrBins;     // Set the number of feature histogram bins to use
+  mc->idx_1 = mc->idx_2 = -1;         // Set both indices to -1
+  mc->pick_first = true;              // Fill first index first
+  
+  this->AddObserver (vtkCommand::LeftButtonPressEvent, mc);
+//  this->AddObserver (vtkCommand::LeftButtonReleaseEvent, mc);
+//  this->AddObserver (vtkCommand::KeyPressEvent, mc);
+//  this->AddObserver (vtkCommand::MouseMoveEvent, mc);
+  mc->Delete ();
+  cerr << "Advanced mode enabled." << endl;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
@@ -376,6 +583,30 @@ void
 vtkFPSCallback::SetTextActor (vtkTextActor *txt)
 {
   this->TextActor = txt;
+}
+
+void
+vtkFPSCallback::Execute (vtkObject *caller, unsigned long, void*)
+{
+  vtkRenderer *ren = reinterpret_cast<vtkRenderer *> (caller);
+  
+  long int nr_points = 0;
+  vtkActorCollection *ac = ren->GetActors ();
+  vtkActor *anActor, *aPart;
+  vtkCollectionSimpleIterator ait;
+  vtkAssemblyPath *path;
+  for (ac->InitTraversal (ait); (anActor = ac->GetNextActor (ait)); )
+  {
+    for (anActor->InitPathTraversal(); (path=anActor->GetNextPath ()); )
+    {
+      aPart=(vtkActor *)path->GetLastNode ()->GetViewProp ();
+      nr_points += aPart->GetMapper ()->GetInputAsDataSet ()->GetNumberOfPoints ();
+    }
+  }
+  
+  float fps = 1.0/ren->GetLastRenderTimeInSeconds ();
+  snprintf (this->TextBuff, 127, "%.1f FPS, %ld points", fps, nr_points);
+  this->TextActor->SetInput (this->TextBuff);
 }
 
 
