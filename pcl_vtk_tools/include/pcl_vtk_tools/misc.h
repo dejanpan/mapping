@@ -1863,7 +1863,7 @@ vtkFPSCallback::Execute (vtkObject *caller, unsigned long, void*)
 ////////////////////////////////////////////////////////////////////////////////
 // ---[ Construct the perspective RenderWindow and the RenderWindowInteractor
 vtkRenderWindowInteractor*
-  create_render_window_and_interactor (vtkRenderer *ren, const char* title)
+  CreateRenderWindowAndInteractor (vtkRenderer *ren, const char* title)
 {
 //  vtkSmartPointer<vtkLightKit> lightKit = vtkLightKit::New ();
 //  lightKit->AddLightsToRenderer (ren);
@@ -1902,6 +1902,141 @@ vtkRenderWindowInteractor*
   iren->Initialize ();
   //iren->CreateRepeatingTimer (1000L);
   iren->CreateRepeatingTimer (5000L);
+  return iren;
+}
+
+void tokenize(const std::string& str,
+              std::vector<std::string>& tokens,
+              const std::string& delimiters = " ")
+{
+  // Skip delimiters at beginning.
+  std::string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+  // Find first "non-delimiter".
+  std::string::size_type pos     = str.find_first_of(delimiters, lastPos);
+  
+  while (std::string::npos != pos || std::string::npos != lastPos)
+  {
+    // Found a token, add it to the vector.
+    tokens.push_back(str.substr(lastPos, pos - lastPos));
+    // Skip delimiters.  Note the "not_of"
+    lastPos = str.find_first_not_of(delimiters, pos);
+    // Find next "non-delimiter"
+    pos = str.find_first_of(delimiters, lastPos);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Parse command line arguments for texts to display on screen
+// Returns: a vector of strings (if provided)
+std::vector<std::string>
+parse_texts_argument (int argc, char** argv, const std::string &token)
+{
+  std::vector<std::string> texts;
+  for (int i = 1; i < argc; i++)
+  {
+    // Active renderer camera settings
+    if ((strcmp (argv[i], "-texts") == 0) && (++i < argc))
+    {
+      //std::cerr << "Found the following text tokens:" << std::endl;
+      std::string val = std::string (argv[i]);
+      // StringTokenizer t = StringTokenizer (val, token);
+      // while (t.hasMoreTokens ())
+      // {
+      //   texts.push_back (t.nextToken ());
+      //   //std::cerr << texts[texts.size()-1] << std::endl;
+      // }
+      // //std::cerr << "[done]" << std::endl;
+      tokenize(val, texts, token);
+    }
+  }
+  return texts;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+/// @---[ CreateRenderWindowAndInteractor
+/// @note: by default, parse camera, quality, background color and axes settings
+vtkRenderWindowInteractor*
+  CreateRenderWindowAndInteractor (vtkRenderer *ren, const char* title, int argc, char** argv)
+{
+  vtkRenderWindowInteractor* iren = CreateRenderWindowAndInteractor (ren, title);
+
+  vtkInteractorStyleTUM* s = reinterpret_cast<vtkInteractorStyleTUM*> (iren->GetInteractorStyle ());
+  s->argc = argc;
+  s->argv = argv;
+
+  // Check for vtkTexts related parameters
+  std::string token;
+  terminal_tools::parse_argument (argc, argv, "-texts_sep", token); 
+  //s->setTextsList (ParseTextsArgument (argc, argv, token.c_str ()));
+  s->setTextsList (parse_texts_argument (argc, argv, token));
+  double tx = RENWIN_WIDTH - 10, ty = RENWIN_HEIGHT - 10, ts = 40.0;
+  terminal_tools::parse_3x_arguments (argc, argv, "-texts_prop", tx, ty, ts);
+  s->setTextsProp (tx, ty, ts);
+  double tr = 1.0, tg = 1.0 , tb = 1.0;
+  terminal_tools::parse_3x_arguments (argc, argv, "-texts_color", tr, tg, tb);
+  s->setTextsColor (tr, tg, tb);
+  
+  // Set camera parameters
+  SetCameraParameters (argc, argv, ren);
+  
+  // Read quality settings
+  int quality = 1;
+  terminal_tools::parse_arguments (argc, argv, "-q", quality);
+  if (quality != 0)
+  {
+    iren->GetRenderWindow ()->AlphaBitPlanesOn ();
+    iren->GetRenderWindow ()->PointSmoothingOn ();
+    iren->GetRenderWindow ()->LineSmoothingOn ();
+    iren->GetRenderWindow ()->PolygonSmoothingOn ();
+//    iren->GetRenderWindow ()->SetAAFrames (2);
+//    iren->GetRenderWindow ()->FullScreenOn ();
+//    iren->GetRenderWindow ()->BordersOn ();
+    cerr << "Using the following quality settings: AlphaBitPlanes/{Point/Line/Polygon}Smoothing/AAFrames: ";
+    cerr << iren->GetRenderWindow ()->GetAlphaBitPlanes () << "/";
+    cerr << iren->GetRenderWindow ()->GetPointSmoothing () << "/";
+    cerr << iren->GetRenderWindow ()->GetLineSmoothing  () << "/";
+    cerr << iren->GetRenderWindow ()->GetPolygonSmoothing () << "/";
+    cerr << iren->GetRenderWindow ()->GetAAFrames () << endl;
+  }
+
+  vtkActor *anActor, *aPart;
+  vtkActorCollection *ac = iren->GetRenderWindow ()->GetRenderers ()->GetFirstRenderer ()->GetActors ();
+  vtkAssemblyPath *path;
+  vtkCollectionSimpleIterator ait;
+  for (ac->InitTraversal (ait); (anActor = ac->GetNextActor (ait)); )
+  {
+    for (anActor->InitPathTraversal (); (path = anActor->GetNextPath ()); )
+    {
+      aPart=(vtkActor *)path->GetLastNode ()->GetViewProp ();
+      if (quality == 0)
+        aPart->GetProperty ()->SetInterpolationToFlat ();
+      else
+//        aPart->GetProperty ()->SetInterpolationToFlat ();
+        aPart->GetProperty ()->SetInterpolationToPhong ();
+    }
+  }
+
+  // Read axes settings
+  double axes  = 0.0;
+  ParseArgument (argc, argv, "-ax", axes);
+  if (axes != 0.0)
+  {
+    double ax_x = 0.0, ax_y = 0.0, ax_z = 0.0;
+    terminal_tools::parse_3x_arguments (argc, argv, "-ax_pos", ax_x, ax_y, ax_z, false);
+    // Draw XYZ axes if command-line enabled
+    vtkActor* axActor = createAxes (axes);
+    axActor->SetPosition (ax_x, ax_y, ax_z);
+    iren->GetRenderWindow ()->GetRenderers ()->GetFirstRenderer ()->AddActor (axActor);
+  }
+  
+  // Read background color settings
+  double bcolor[3] = {0.0, 0.0, 0.0};
+  iren->GetRenderWindow ()->GetRenderers ()->GetFirstRenderer ()->GetBackground (bcolor);
+  terminal_tools::parse_3x_arguments (argc, argv, "-bc", bcolor[0], bcolor[1], bcolor[2]);
+  iren->GetRenderWindow ()->GetRenderers ()->GetFirstRenderer ()->SetBackground (bcolor[0], bcolor[1], bcolor[2]);
+  iren->Render ();
+
   return iren;
 }
 #endif
