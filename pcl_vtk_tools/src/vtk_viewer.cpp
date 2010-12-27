@@ -330,22 +330,22 @@ main (int argc, char** argv)
   // //    iren = CreatePerspectiveRenderWindowAndInteractorMovie (ren, title, movieFile, 44.382, argc, argv, 2);
   //     iren = CreateRenderWindowAndInteractorMovie (ren, title, movieFile, argc, argv, 2);
   //   }
-  //   else
-  //iren = CreateRenderWindowAndInteractor (ren, title, argc, argv);
+  //   elses
+  iren = CreateRenderWindowAndInteractor (ren, title, argc, argv);
 
-  //   vtkSmartPointer<vtkInteractorStyleTUM> style = (vtkSmartPointer<vtkInteractorStyleTUM>)reinterpret_cast<vtkInteractorStyleTUM*>(iren->GetInteractorStyle ());
-  //   style->setAdvancedMode (true);
-    
-  //   if (play)
-  //   {
-  //     vtkSmartPointer<vtkInteractorEventRecorder> recorder = vtkSmartPointer<vtkInteractorEventRecorder>::New ();
-  //     recorder->SetInteractor (iren);
-  //     recorder->SetFileName (argv[pLogFileIndices.at (0)]);
-  //     recorder->SetEnabled (1);
-  //     recorder->Play ();
-  //   }
-
-  //   iren->Start ();
+  vtkSmartPointer<vtkInteractorStyleTUM> style = (vtkSmartPointer<vtkInteractorStyleTUM>)reinterpret_cast<vtkInteractorStyleTUM*>(iren->GetInteractorStyle ());
+  style->setAdvancedMode (true);
+  
+  if (play)
+  {
+    vtkSmartPointer<vtkInteractorEventRecorder> recorder = vtkSmartPointer<vtkInteractorEventRecorder>::New ();
+    recorder->SetInteractor (iren);
+    recorder->SetFileName (argv[pLogFileIndices.at (0)]);
+    recorder->SetEnabled (1);
+    recorder->Play ();
+  }
+  
+  iren->Start ();
   //   if (save_camera_position)
   //     SaveCameraPosition (ren->GetActiveCamera (), false);
 }
