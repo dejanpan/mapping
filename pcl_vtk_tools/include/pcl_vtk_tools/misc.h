@@ -806,6 +806,7 @@ class vtkMouseCallback : public vtkCommand
     double pt[3], point_1[3], point_2[3];
 };
 
+vtkStandardNewMacro (vtkInteractorStyleTUM);
 void
   vtkInteractorStyleTUM::setAdvancedMode (bool mode)
 {
