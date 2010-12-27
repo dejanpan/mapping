@@ -12,6 +12,14 @@
 #include <vtkLookupTable.h>
 #include <vtkScalarBarActor.h>
 #include <vtkTextProperty.h>
+#include <vtkInteractorStyleTrackballCamera.h>
+#include <vtkRendererCollection.h>
+#include <vtkPNGWriter.h>
+#include <vtkWindowToImageFilter.h>
+#include <vtkDataArrayCollection.h>
+#include <vtkLegendScaleActor.h>
+#include <vtkTextActor.h>
+
 
 #define NR_COLOR 65536
 #define S_COLOR 100
@@ -248,6 +256,85 @@ create_scalar_bar_actor (vtkLookupTable *lut, int argc, char** argv)
 //    barActor->GetLabelTextProperty ()->PrintSelf (std::cerr, 0);
   return barActor;
 }
+
+struct ScalarsContainer
+{
+  vtkDataArrayCollection* scalars;
+  std::vector<double> minScalar;
+  std::vector<double> maxScalar;
+  std::vector<std::string> dimensions;
+  
+  vtkActor* actor;
+  
+  // Hold the N-d (default 16d) features histogram (where available)
+  vtkDoubleArray* histogram;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+class vtkInteractorStyleTUM : public vtkInteractorStyleTrackballCamera //vtkInteractorStyle
+{
+  public:
+    static vtkInteractorStyleTUM *New ();
+    void OnChar ();
+    void OnTimer ();
+    void setRenderer (vtkRenderer* ren);
+    vtkRenderer* getRenderer () { return this->renderer; }
+    void setRendererCollection (vtkRendererCollection* rencol);
+    void setWriter (vtkPNGWriter* w) { this->writer = w; }
+    void setWindowFilter (vtkWindowToImageFilter *f) { this->filter = f; }
+    vtkWindowToImageFilter* getWindowFilter () { return this->filter; }
+
+    void ZoomIn ();
+    void ZoomOut ();
+
+    void setAdvancedMode (bool mode);
+    std::vector<ScalarsContainer> allScalars;       // contains all the scalars associated with all currently loaded datasets
+
+    void setHistogramNrBins (unsigned int nr_bins)
+    { this->histNrBins = nr_bins; terminal_tools::print_info (stderr, "Number of histogram bins used: "); terminal_tools::print_value (stderr, "%d\n", this->histNrBins); };
+
+    void setTextsList (std::vector<std::string> texts) { this->textList = texts; };
+    std::vector<std::string> getTextsList () { return this->textList; };
+
+    void setTextsProp (double x, double y, double s) { this->tAx = x; this->tAy = y; this->tS = s; };
+    void setTextsColor (double r, double g, double b) { this->tR = r; this->tG = g; this->tB = b; };
+
+  protected:
+    vtkRenderer *renderer;
+    vtkRendererCollection *rendererCollection;
+    bool one_renderer;
+    int pointsize;
+  public:
+    vtkPNGWriter* writer;
+    vtkWindowToImageFilter *filter;
+  protected:
+    char fileName[80];
+    char camFN[80];
+
+    bool advanced;
+    vtkLegendScaleActor* gridActor;
+    vtkScalarBarActor*   lutActor;
+    bool grid_enabled, lut_enabled;
+
+  public:
+    unsigned int histNrBins;
+
+  private:
+    // vtkText on screen renderings
+    std::vector<std::string> textList;
+    vtkTextActor*  textActor;
+    float tAx, tAy, tS;
+    float tR, tG, tB;
+    bool texts_enabled;
+    int cur_text;
+
+  public:
+    int argc;
+    char** argv;
+};
 
 
 #endif
