@@ -19,10 +19,19 @@
 #include <vtkDataArrayCollection.h>
 #include <vtkLegendScaleActor.h>
 #include <vtkTextActor.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkCommand.h>
+#include <vtkProperty.h>
+#include <vtkProperty2D.h>
+#include <vtkPointPicker.h>
+#include <vtkObjectFactory.h>
 
 
 #define NR_COLOR 65536
 #define S_COLOR 100
+#define RENWIN_WIDTH 1200
+#define RENWIN_HEIGHT 800
 
 ////////////////////////////////////////////////////////////////////////////////
 // Loads a 3D point cloud from a given fileName.
@@ -336,5 +345,82 @@ class vtkInteractorStyleTUM : public vtkInteractorStyleTrackballCamera //vtkInte
     char** argv;
 };
 
+class vtkFPSCallback : public vtkCommand
+{
+public:
+  static vtkFPSCallback *New () { return new vtkFPSCallback;}
+  void SetTextActor (vtkTextActor *txt);
+  virtual void Execute (vtkObject *caller, unsigned long, void*);
+protected:
+  vtkTextActor *TextActor;
+  char TextBuff[128];
+};
 
+
+void
+  vtkInteractorStyleTUM::setRenderer (vtkRenderer *ren)
+{
+  this->advanced  = false;
+  this->renderer  = ren;
+  pointsize       = 1;
+  one_renderer    = true;
+  
+  this->texts_enabled = false;
+  this->textActor     = NULL;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+void
+vtkFPSCallback::SetTextActor (vtkTextActor *txt)
+{
+  this->TextActor = txt;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// ---[ Construct the perspective RenderWindow and the RenderWindowInteractor
+vtkRenderWindowInteractor*
+  create_render_window_and_interactor (vtkRenderer *ren, const char* title)
+{
+//  vtkSmartPointer<vtkLightKit> lightKit = vtkLightKit::New ();
+//  lightKit->AddLightsToRenderer (ren);
+
+  vtkSmartPointer<vtkTextActor> txt = vtkSmartPointer<vtkTextActor>::New ();
+  vtkSmartPointer<vtkFPSCallback> UpdateFPS = vtkSmartPointer<vtkFPSCallback>::New ();
+  UpdateFPS->SetTextActor (txt);
+  ren->AddObserver (vtkCommand::EndEvent, UpdateFPS);
+  txt->GetProperty ()->SetColor (0.0, 0.0, 1.0);
+  ren->AddActor (txt);
+
+  vtkRenderWindow *renWin = vtkRenderWindow::New ();
+  renWin->SetWindowName (title);
+  renWin->AddRenderer (ren);
+  renWin->SetSize (RENWIN_WIDTH, RENWIN_HEIGHT);
+
+  vtkSmartPointer<vtkWindowToImageFilter> wif = vtkSmartPointer<vtkWindowToImageFilter>::New ();
+  wif->SetInput (renWin);
+
+  // Write screenshot to file
+  vtkPNGWriter* w = vtkPNGWriter::New ();
+//  w->SetQuality (100);
+  w->SetInputConnection (wif->GetOutputPort ());
+
+  vtkRenderWindowInteractor *iren = renWin->MakeRenderWindowInteractor ();
+  vtkSmartPointer<vtkInteractorStyleTUM> style = vtkSmartPointer<vtkInteractorStyleTUM>::New ();
+  style->setRenderer (ren);
+  style->UseTimersOn ();
+  style->setWriter (w);
+  style->setWindowFilter (wif);
+
+  vtkPointPicker *pp = vtkPointPicker::New ();
+  iren->SetPicker (pp);
+
+  iren->SetInteractorStyle (style);
+  iren->Initialize ();
+  //iren->CreateRepeatingTimer (1000L);
+  iren->CreateRepeatingTimer (5000L);
+  return iren;
+}
 #endif
