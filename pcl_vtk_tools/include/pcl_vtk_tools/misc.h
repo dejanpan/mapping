@@ -506,18 +506,6 @@ class vtkInteractorStyleTUM : public vtkInteractorStyleTrackballCamera //vtkInte
     char** argv;
 };
 
-class vtkFPSCallback : public vtkCommand
-{
-public:
-  static vtkFPSCallback *New () { return new vtkFPSCallback;}
-  void SetTextActor (vtkTextActor *txt);
-  virtual void Execute (vtkObject *caller, unsigned long, void*);
-protected:
-  vtkTextActor *TextActor;
-  char TextBuff[128];
-};
-
-
 void
   vtkInteractorStyleTUM::setRenderer (vtkRenderer *ren)
 {
@@ -528,6 +516,40 @@ void
   
   this->texts_enabled = false;
   this->textActor     = NULL;
+}
+
+
+class vtkCameraCallback : public vtkCommand
+{
+  public:
+    static vtkCameraCallback *New () { return new vtkCameraCallback;}
+    void SetTextActor (vtkTextActor *txt);
+    virtual void Execute (vtkObject *caller, unsigned long, void*);
+  protected:
+    vtkTextActor *camTextActor;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+void
+  vtkCameraCallback::SetTextActor (vtkTextActor *txt)
+{
+  this->camTextActor = txt;
+}
+void
+  vtkCameraCallback::Execute (vtkObject *caller, unsigned long, void*)
+{
+  vtkRenderer *ren = reinterpret_cast<vtkRenderer *> (caller);
+  vtkCamera *cam = ren->GetActiveCamera ();
+  double eye[3], up[3], viewray[3];
+  cam->GetPosition (eye);
+  cam->GetViewUp (up);
+  cam->GetDirectionOfProjection (viewray);
+
+  char camTextBuff[256];
+  snprintf (camTextBuff, 255, "Position: %.3g,%.3g,%.3g ; ViewUp: %.3g,%.3g,%.3g ; Direction Of Projection %.3g,%.3g,%.3g", eye[0], eye[1], eye[2], up[0], up[1], up[2], viewray[0], viewray[1], viewray[2]);
+//  this->camTextActor->SetInput (camTextBuff);
 }
 
 void
@@ -575,6 +597,17 @@ void
   mc->Delete ();
   cerr << "Advanced mode enabled." << endl;
 }
+
+class vtkFPSCallback : public vtkCommand
+{
+public:
+  static vtkFPSCallback *New () { return new vtkFPSCallback;}
+  void SetTextActor (vtkTextActor *txt);
+  virtual void Execute (vtkObject *caller, unsigned long, void*);
+protected:
+  vtkTextActor *TextActor;
+  char TextBuff[128];
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
