@@ -199,6 +199,13 @@
 #define KEY_PLUS  43
 #define KEY_MINUS 45
 
+/*TODOs:*/
+//enable other than SaveDataSetAsVTK functions too
+//enable loading of .ply data
+//integrate into pcl_visualization framework
+//implement SetCameraParameters
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Loads a 3D point cloud from a given fileName.
 // Returns: a vtkPolyData object containing the point cloud.
@@ -1954,6 +1961,71 @@ parse_texts_argument (int argc, char** argv, const std::string &token)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// Apply command line camera parameters to the current renderer
+// void
+//   SetCameraParameters (int argc, char** argv, vtkRenderer *ren)
+// {
+//   // Read camera parameters
+//   double cam_pos[3], cam_focal[3], cam_view[3], cam_clip[2];
+  
+//   if (ParseCameraSettingsArgument (argc, argv, cam_clip, cam_focal, cam_pos, cam_view))
+//   {
+//     cerr << "Using the following camera settings: [Clipping Range / Focal Point / Position / ViewUp]" << endl;
+//     cerr << cam_clip[0]  << "," << cam_clip[1]  << "/" <<
+//             cam_focal[0] << "," << cam_focal[1] << "," << cam_focal[2] << "/" <<
+//             cam_pos[0]   << "," << cam_pos[1]   << "," << cam_pos[2]   << "/" <<
+//             cam_view[0]  << "," << cam_view[1]  << "," << cam_view[2] << endl;
+
+//     ren->GetActiveCamera ()->SetPosition (cam_pos);
+//     ren->GetActiveCamera ()->SetFocalPoint (cam_focal);
+//     ren->GetActiveCamera ()->SetViewUp (cam_view);
+//     ren->GetActiveCamera ()->SetClippingRange (cam_clip);
+//   }
+//   else
+//     ren->ResetCamera ();
+// }
+
+
+////////////////////////////////////////////////////////////////////////////////
+// ---[ Construct XYZ axes for on-screen display (X = red, Y = yellow, Z = green)
+vtkActor*
+  createAxes (double scale)
+{
+  vtkSmartPointer<vtkAxes> axes = vtkSmartPointer<vtkAxes>::New ();
+  axes->SetOrigin (0, 0, 0);
+  axes->SetScaleFactor (scale);
+  
+  vtkSmartPointer<vtkFloatArray> colors = vtkSmartPointer<vtkFloatArray>::New ();
+  colors->Allocate (6);
+  colors->InsertNextValue (0.0);
+  colors->InsertNextValue (0.0);
+  colors->InsertNextValue (0.5);
+  colors->InsertNextValue (0.5);
+  colors->InsertNextValue (1.0);
+  colors->InsertNextValue (1.0);
+  
+  vtkSmartPointer<vtkPolyData> data = axes->GetOutput ();
+  data->Update ();
+  data->GetPointData ()->SetScalars (colors);
+    
+  vtkSmartPointer<vtkTubeFilter> axesTubes = vtkSmartPointer<vtkTubeFilter>::New ();
+  axesTubes->SetInput (data);
+  // 50
+  axesTubes->SetRadius (axes->GetScaleFactor () / 50.0);
+  axesTubes->SetNumberOfSides (6);
+  
+  vtkSmartPointer<vtkPolyDataMapper> axesMapper = vtkSmartPointer<vtkPolyDataMapper>::New ();
+  axesMapper->SetScalarModeToUsePointData ();
+  axesMapper->SetInput (axesTubes->GetOutput ());
+  
+  vtkActor* axesActor = vtkActor::New ();
+  axesActor->SetMapper (axesMapper);
+  
+  return axesActor;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 /// @---[ CreateRenderWindowAndInteractor
 /// @note: by default, parse camera, quality, background color and axes settings
 vtkRenderWindowInteractor*
@@ -1978,11 +2050,11 @@ vtkRenderWindowInteractor*
   s->setTextsColor (tr, tg, tb);
   
   // Set camera parameters
-  SetCameraParameters (argc, argv, ren);
+  //SetCameraParameters (argc, argv, ren);
   
   // Read quality settings
   int quality = 1;
-  terminal_tools::parse_arguments (argc, argv, "-q", quality);
+  terminal_tools::parse_argument (argc, argv, "-q", quality);
   if (quality != 0)
   {
     iren->GetRenderWindow ()->AlphaBitPlanesOn ();
@@ -2019,7 +2091,7 @@ vtkRenderWindowInteractor*
 
   // Read axes settings
   double axes  = 0.0;
-  ParseArgument (argc, argv, "-ax", axes);
+  terminal_tools::parse_argument (argc, argv, "-ax", axes);
   if (axes != 0.0)
   {
     double ax_x = 0.0, ax_y = 0.0, ax_z = 0.0;
