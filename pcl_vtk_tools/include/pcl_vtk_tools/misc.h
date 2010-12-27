@@ -193,6 +193,8 @@
 #define S_COLOR 100
 #define RENWIN_WIDTH 1200
 #define RENWIN_HEIGHT 800
+#define _sqr(x) ((x)*(x))
+#define _sqr_dist(x,y) ( _sqr((x[0])-(y[0])) + _sqr((x[1])-(y[1])) + _sqr((x[2])-(y[2])) )
 
 ////////////////////////////////////////////////////////////////////////////////
 // Loads a 3D point cloud from a given fileName.
@@ -552,51 +554,312 @@ void
 //  this->camTextActor->SetInput (camTextBuff);
 }
 
-void
-  vtkInteractorStyleTUM::setAdvancedMode (bool mode)
+////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+class vtkMouseCallback : public vtkCommand
 {
-  this->advanced = mode;
-  this->gridActor = vtkLegendScaleActor::New ();
-  this->grid_enabled = false;
-  this->lut_enabled = false;
-  this->lutActor = vtkScalarBarActor::New ();
-  this->lutActor->SetTitle ("");
-  this->lutActor->SetOrientationToHorizontal ();
-  this->lutActor->SetPosition (0.05, 0.01);
-  this->lutActor->SetWidth (0.9); 
-  this->lutActor->SetHeight (0.1);
-  this->lutActor->SetNumberOfLabels (this->lutActor->GetNumberOfLabels () * 2);
-  vtkSmartPointer<vtkTextProperty> prop = this->lutActor->GetLabelTextProperty ();
-  prop->SetFontSize (10);
-  this->lutActor->SetLabelTextProperty (prop);
-  this->lutActor->SetTitleTextProperty (prop);
+  public:
+    static vtkMouseCallback *New () { return new vtkMouseCallback; }
+    
+    virtual void
+      Execute (vtkObject *caller, unsigned long eventid, void*)
+    {
+      vtkInteractorStyleTUM *style = reinterpret_cast<vtkInteractorStyleTUM*>(caller);
+      vtkRenderWindowInteractor* iren = style->GetInteractor ();
+      vtkRenderer* ren_main = iren->GetRenderWindow ()->GetRenderers ()->GetFirstRenderer ();
+      
+      if ((eventid == vtkCommand::LeftButtonPressEvent) && (iren->GetShiftKey () == 1))
+      {
+        int idx = PerformPick (iren);
+        if (idx < 0)
+          return;
+        // CTRL+SHIFT+Pick => Draw Histogram (if available)
+        if ((iren->GetControlKey () == 1) && (style->allScalars.size () > 0)) // If scalars are available
+        {
+          // Add a text actor to the main renderer
+          char text[10];
+          sprintf (text, "%d", idx);
+          vtkVectorText *atext = vtkVectorText::New ();
+          atext->SetText (text);
 
-//  vtkSmartPointer<vtkTextActor> camTxt = vtkSmartPointer<vtkTextActor>::New ();
-  vtkTextActor* camTxt = vtkTextActor::New ();
-  vtkSmartPointer<vtkCameraCallback> camUpdateInfo = vtkSmartPointer<vtkCameraCallback>::New ();
-  camUpdateInfo->SetTextActor (camTxt);
-  double *camTxtPos = camTxt->GetPosition ();
-  camTxt->SetPosition (camTxtPos[0], camTxtPos[0]+20);
-  camTxt->GetProperty ()->SetColor (0.0, 1.0, 0.0);
-  
-  if (one_renderer)
-  {
-    this->renderer->AddObserver (vtkCommand::EndEvent, camUpdateInfo);
-    this->renderer->AddActor (camTxt);
-  }
+          // Use the same color as for the title
+          double tr = 1.0, tg = 1.0 , tb = 1.0;
+          terminal_tools::parse_3x_arguments (style->argc, style->argv, "-texts_color", tr, tg, tb);
+          double index_scale = 0.001;
+          terminal_tools::parse_argument (style->argc, style->argv, "-index_scale", index_scale);
+          vtkPolyDataMapper *textMapper = vtkPolyDataMapper::New ();
+          textMapper->SetInputConnection (atext->GetOutputPort ());
+          vtkFollower *textActor = vtkFollower::New ();
+          textActor->SetMapper (textMapper);
+          textActor->SetScale (index_scale);
+          textActor->SetPosition (pt[0], pt[1], pt[2]);
+          textActor->GetProperty ()->SetColor (tr, tg, tb);
+          textActor->SetCamera (ren_main->GetActiveCamera ());
+          ren_main->AddActor (textActor);
+          ren_main->Render ();
+          
+          // Get the first scalar
+          ScalarsContainer s = style->allScalars[0];
+          
+          cerr << "  -> Dimensions: ";
+          vtkDataArrayCollection* scalars = s.scalars;
+          for (unsigned int d = 0; d < s.dimensions.size (); d++)
+          {
+            vtkDataArray *scalar = scalars->GetItem (d);
+            double value[1];
+            scalar->GetTuple (idx, value);
+            cerr << s.dimensions.at (d).c_str () << " = " << value[0] << "   ";
+          }
+          cerr << endl;
 
-  vtkMouseCallback *mc = vtkMouseCallback::New ();
-//  mc->NR_BINS = this->histNrBins;     // Set the number of feature histogram bins to use
-  mc->idx_1 = mc->idx_2 = -1;         // Set both indices to -1
-  mc->pick_first = true;              // Fill first index first
+          // If feature histograms are available
+          if ((s.histogram != NULL) && (style->histNrBins > 0))
+          {
+            // Get the histogram corresponding to point IDX
+            double hist[style->histNrBins ];
+            s.histogram->GetTuple (idx, hist);
+
+            cerr << "  -> Feature Histogram: ";
+            for (unsigned int d = 0; d < style->histNrBins; d++)
+            {
+              cerr << hist[d] << "   ";
+            }
+            cerr << endl;
+            vtkSmartPointer<vtkXYPlotActor> xyplot = vtkSmartPointer<vtkXYPlotActor>::New ();
+            xyplot->SetDataObjectPlotModeToColumns ();
+            xyplot->SetXValuesToValue ();
+
+            vtkSmartPointer<vtkDoubleArray> XYarray = vtkSmartPointer<vtkDoubleArray>::New ();
+            XYarray->SetNumberOfComponents (2);
+            XYarray->SetNumberOfTuples (style->histNrBins);
+
+            // Copy its content into a vtkFieldValue
+            for (unsigned int d = 0; d < style->histNrBins; d++)
+            {
+              double xy[2];
+              xy[0] = d;
+              xy[1] = hist[d];
+              if (xy[1] > 99.99)
+                xy[1] = 99.99;
+              XYarray->SetTuple (d, xy);
+            }
+            // Create the data object
+            vtkSmartPointer<vtkFieldData> fieldValues = vtkSmartPointer<vtkFieldData>::New ();
+            fieldValues->AddArray (XYarray);
+            vtkSmartPointer<vtkDataObject> data = vtkSmartPointer<vtkDataObject>::New ();
+            data->SetFieldData (fieldValues);
+
+            xyplot->AddDataObjectInput (data);
+
+            xyplot->SetPlotColor (0, 1.0, 0.0, 0.0);
+
+            xyplot->SetDataObjectXComponent (0, 0); xyplot->SetDataObjectYComponent (0, 1);
+            xyplot->PlotPointsOn ();
+            //xyplot->PlotCurvePointsOn ();
+            //xyplot->PlotLinesOn ();
+            xyplot->PlotCurveLinesOn ();
+
+            char title[128];
+            sprintf (title, "Feature Histogram for point %d", idx);
+            xyplot->SetYTitle (""); xyplot->SetXTitle ("");
+            xyplot->SetYRange (0, 100); xyplot->SetXRange (0, style->histNrBins - 1);
+//            xyplot->SetTitle (title);
+            xyplot->GetProperty ()->SetColor (0, 0, 0);
+            vtkSmartPointer<vtkTextProperty> tprop = xyplot->GetTitleTextProperty ();
+            xyplot->AdjustTitlePositionOn ();
+            tprop->SetFontSize (8);
+            tprop->ShadowOff (); tprop->ItalicOff ();
+            tprop->SetColor (xyplot->GetProperty ()->GetColor ());
+
+            xyplot->SetAxisLabelTextProperty (tprop);
+            xyplot->SetAxisTitleTextProperty (tprop);
+            xyplot->SetNumberOfXLabels (8);
+            xyplot->GetProperty ()->SetPointSize (10);
+            xyplot->GetProperty ()->SetLineWidth (4);
+
+            xyplot->SetPosition (0, 0);
+            xyplot->SetWidth (1); xyplot->SetHeight (1);
+
+            vtkSmartPointer<vtkRenderer> ren = vtkSmartPointer<vtkRenderer>::New ();
+            ren->AddActor2D (xyplot);
+            ren->SetBackground (1, 1, 1);
+
+            vtkSmartPointer<vtkRenderWindow> renWin = vtkSmartPointer<vtkRenderWindow>::New ();
+            renWin->SetWindowName (title);
+            renWin->AddRenderer (ren);
+            renWin->SetSize (640, 240);
+            renWin->SetBorders (1);
+
+            //vtkSmartPointer<vtkRenderWindowInteractor> iren = renWin->MakeRenderWindowInteractor ();
+            vtkRenderWindowInteractor *iren = renWin->MakeRenderWindowInteractor ();
+            iren->Start ();
+          }
+        }
+      }
+      else if ((eventid == vtkCommand::LeftButtonPressEvent) && (iren->GetAltKey () == 1))
+      {
+        pick_first = !pick_first;
+        if (pick_first)
+          idx_1 = PerformPick (iren, point_1);
+        else
+          idx_2 = PerformPick (iren, point_2);
+        
+        if ((idx_1 > 0)  && (idx_2 > 0))
+        {
+          double dist = sqrt (_sqr_dist (point_1, point_2));
+          cerr << "Distance between " << idx_1 << ": [" << point_1[0] << ", " << point_1[1] << ", " << point_1[2] << "] and " <<
+                                         idx_2 << ": [" << point_2[0] << ", " << point_2[1] << ", " << point_2[2] << "] is: " << dist << endl;
+
+          vtkLeaderActor2D *leader = vtkLeaderActor2D::New ();
+          leader->GetPositionCoordinate ()->SetCoordinateSystemToWorld ();
+          leader->GetPositionCoordinate ()->SetValue (point_1[0], point_1[1], point_1[2]);
+          leader->GetPosition2Coordinate ()->SetCoordinateSystemToWorld ();
+          leader->GetPosition2Coordinate ()->SetValue (point_2[0], point_2[1], point_2[2]);
+          leader->SetArrowStyleToFilled ();
+          leader->AutoLabelOn ();
+          
+          vtkRenderWindow* renWin = iren->GetRenderWindow ();
+          vtkRendererCollection *coll = renWin->GetRenderers ();
+          coll->GetFirstRenderer ()->AddActor (leader);
+          renWin->Render ();
+        }
+      }
+      else
+      {
+        reinterpret_cast<vtkInteractorStyle*>(caller)->OnLeftButtonDown ();
+      }
+    }
+    
+  public:
+    // idx_1 and idx_2 are used with a vtkLeaderActor2D for computing and displaying Euclidean distances between points
+    int idx_1, idx_2;
+    // Decide which index should be filled next
+    bool pick_first;
+
+  private:
+    
+    int
+      PerformPick (vtkRenderWindowInteractor *iren)
+      {
+        int mouse_x, mouse_y;
+        
+        cerr.precision (10);
+        
+        // Get picker
+        vtkPointPicker *picker = (vtkPointPicker*) iren->GetPicker ();
+        iren->GetMousePosition (&mouse_x, &mouse_y);
+        
+        vtkRenderWindow* renWin = iren->GetRenderWindow ();
+        vtkRendererCollection *coll = renWin->GetRenderers ();
+        
+        iren->StartPickCallback ();
+        
+        picker->Pick (mouse_x, mouse_y, 0.0, coll->GetFirstRenderer ());
+        idx = picker->GetPointId ();
+        cerr << "Picked Point with Index: " << idx;
+        
+        if (idx < 0)
+        {
+          cerr << endl;
+          return idx;
+        }
+        
+        if (picker->GetDataSet () != NULL)
+        {
+          picker->GetDataSet ()->GetPoint (idx, pt);
+          cerr << " [" << pt[0] << ", " << pt[1] << ", " << pt[2] << "]" << endl;
+        }
+        else
+          cerr << endl;
+        iren->EndPickCallback ();
+        return idx;
+      }
+
+    int
+      PerformPick (vtkRenderWindowInteractor *iren, double point[3])
+      {
+        int mouse_x, mouse_y;
+        
+        // Get picker
+        vtkPointPicker *picker = (vtkPointPicker*) iren->GetPicker ();
+        iren->GetMousePosition (&mouse_x, &mouse_y);
+        
+        vtkRenderWindow* renWin = iren->GetRenderWindow ();
+        vtkRendererCollection *coll = renWin->GetRenderers ();
+        
+        iren->StartPickCallback ();
+        
+        picker->Pick (mouse_x, mouse_y, 0.0, coll->GetFirstRenderer ());
+        idx = picker->GetPointId ();
+        cerr << "Picked Point with Index: " << idx;
+        
+        if (idx < 0)
+        {
+          cerr << endl;
+          return idx;
+        }
+        
+        if (picker->GetDataSet () != NULL)
+        {
+          picker->GetDataSet ()->GetPoint (idx, point);
+          cerr << " [" << point[0] << ", " << point[1] << ", " << point[2] << "]" << endl;
+        }
+        else
+          cerr << endl;
+        iren->EndPickCallback ();
+        return idx;
+      }
+
+    int idx;
+    double pt[3], point_1[3], point_2[3];
+};
+
+// void
+//   vtkInteractorStyleTUM::setAdvancedMode (bool mode)
+// {
+//   this->advanced = mode;
+//   this->gridActor = vtkLegendScaleActor::New ();
+//   this->grid_enabled = false;
+//   this->lut_enabled = false;
+//   this->lutActor = vtkScalarBarActor::New ();
+//   this->lutActor->SetTitle ("");
+//   this->lutActor->SetOrientationToHorizontal ();
+//   this->lutActor->SetPosition (0.05, 0.01);
+//   this->lutActor->SetWidth (0.9); 
+//   this->lutActor->SetHeight (0.1);
+//   this->lutActor->SetNumberOfLabels (this->lutActor->GetNumberOfLabels () * 2);
+//   vtkSmartPointer<vtkTextProperty> prop = this->lutActor->GetLabelTextProperty ();
+//   prop->SetFontSize (10);
+//   this->lutActor->SetLabelTextProperty (prop);
+//   this->lutActor->SetTitleTextProperty (prop);
+
+// //  vtkSmartPointer<vtkTextActor> camTxt = vtkSmartPointer<vtkTextActor>::New ();
+//   vtkTextActor* camTxt = vtkTextActor::New ();
+//   vtkSmartPointer<vtkCameraCallback> camUpdateInfo = vtkSmartPointer<vtkCameraCallback>::New ();
+//   camUpdateInfo->SetTextActor (camTxt);
+//   double *camTxtPos = camTxt->GetPosition ();
+//   camTxt->SetPosition (camTxtPos[0], camTxtPos[0]+20);
+//   camTxt->GetProperty ()->SetColor (0.0, 1.0, 0.0);
   
-  this->AddObserver (vtkCommand::LeftButtonPressEvent, mc);
-//  this->AddObserver (vtkCommand::LeftButtonReleaseEvent, mc);
-//  this->AddObserver (vtkCommand::KeyPressEvent, mc);
-//  this->AddObserver (vtkCommand::MouseMoveEvent, mc);
-  mc->Delete ();
-  cerr << "Advanced mode enabled." << endl;
-}
+//   if (one_renderer)
+//   {
+//     this->renderer->AddObserver (vtkCommand::EndEvent, camUpdateInfo);
+//     this->renderer->AddActor (camTxt);
+//   }
+
+//   vtkMouseCallback *mc = vtkMouseCallback::New ();
+// //  mc->NR_BINS = this->histNrBins;     // Set the number of feature histogram bins to use
+//   mc->idx_1 = mc->idx_2 = -1;         // Set both indices to -1
+//   mc->pick_first = true;              // Fill first index first
+  
+//   this->AddObserver (vtkCommand::LeftButtonPressEvent, mc);
+// //  this->AddObserver (vtkCommand::LeftButtonReleaseEvent, mc);
+// //  this->AddObserver (vtkCommand::KeyPressEvent, mc);
+// //  this->AddObserver (vtkCommand::MouseMoveEvent, mc);
+//   mc->Delete ();
+//   cerr << "Advanced mode enabled." << endl;
+// }
 
 class vtkFPSCallback : public vtkCommand
 {
