@@ -73,6 +73,74 @@ create_actor_from_data_set (vtkDataSet *data, double c1, double c2, double c3, d
   return actor;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// ---[ Create a vtkActor from vtkDataSet with a vtkLookupTable
+vtkActor*
+create_actor_from_data_set (vtkDataSet *data, double psize, vtkLookupTable* lut, double minmax[2], bool lod_enable)
+{
+  vtkSmartPointer<vtkDataSetMapper> mapper = vtkSmartPointer<vtkDataSetMapper>::New ();
+  mapper->SetInput (data);
+  mapper->SetLookupTable (lut);
+  mapper->SetScalarRange (minmax);
+  mapper->SetScalarModeToUsePointData ();
+  mapper->ScalarVisibilityOn ();
+  
+  vtkActor *actor;
+  if (lod_enable)
+  {
+    actor = vtkLODActor::New ();
+    reinterpret_cast<vtkLODActor*>(actor)->SetNumberOfCloudPoints (data->GetNumberOfPoints () / 10);
+    actor->GetProperty ()->SetInterpolationToFlat ();
+  }
+  else
+  {
+    actor = vtkActor::New ();
+//    actor->GetProperty ()->SetInterpolationToFlat ();
+    actor->GetProperty ()->SetInterpolationToPhong ();
+  }
+  actor->GetProperty()->SetPointSize(psize);
+  actor->SetMapper (mapper);
+//  actor->GetProperty ()->SetAmbient (0.8);
+  return actor;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// ---[ Create a vtkActor from vtkDataSet
+vtkActor*
+create_actor_from_data_set (vtkDataSet *data, bool lod_enable)
+{
+  vtkSmartPointer<vtkDataSetMapper> mapper = vtkSmartPointer<vtkDataSetMapper>::New ();
+  mapper->SetInput (data);
+  mapper->SetScalarModeToUsePointData ();
+//  mapper->SetScalarModeToUseCellData ();
+  mapper->ScalarVisibilityOn ();
+  
+  vtkActor *actor;
+  if (lod_enable)
+  {
+    actor = vtkLODActor::New ();
+    reinterpret_cast<vtkLODActor*>(actor)->SetNumberOfCloudPoints (data->GetNumberOfPoints () / 10);
+    actor->GetProperty ()->SetInterpolationToFlat ();
+  }
+  else
+  {
+    actor = vtkActor::New ();
+//    actor->GetProperty ()->SetInterpolationToFlat ();
+    actor->GetProperty ()->SetInterpolationToPhong ();
+  }
+  actor->SetMapper (mapper);
+//  actor->GetProperty ()->SetAmbient (0.8);
+  return actor;
+}
+
+
+vtkActor*
+create_actor_from_data_set (vtkDataSet *data, double psize, bool lod_enable)
+{
+  vtkActor *actor = create_actor_from_data_set (data, lod_enable);
+  actor->GetProperty ()->SetPointSize (psize);
+  return actor;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 // ---[ Implementation of srand/rand for RGB [+ A] values between [0,1]     //
