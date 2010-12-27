@@ -195,6 +195,9 @@
 #define RENWIN_HEIGHT 800
 #define _sqr(x) ((x)*(x))
 #define _sqr_dist(x,y) ( _sqr((x[0])-(y[0])) + _sqr((x[1])-(y[1])) + _sqr((x[2])-(y[2])) )
+#define SPACE_KEY 32
+#define KEY_PLUS  43
+#define KEY_MINUS 45
 
 ////////////////////////////////////////////////////////////////////////////////
 // Loads a 3D point cloud from a given fileName.
@@ -508,18 +511,6 @@ class vtkInteractorStyleTUM : public vtkInteractorStyleTrackballCamera //vtkInte
     char** argv;
 };
 
-void
-  vtkInteractorStyleTUM::setRenderer (vtkRenderer *ren)
-{
-  this->advanced  = false;
-  this->renderer  = ren;
-  pointsize       = 1;
-  one_renderer    = true;
-  
-  this->texts_enabled = false;
-  this->textActor     = NULL;
-}
-
 
 class vtkCameraCallback : public vtkCommand
 {
@@ -815,51 +806,1013 @@ class vtkMouseCallback : public vtkCommand
     double pt[3], point_1[3], point_2[3];
 };
 
-// void
-//   vtkInteractorStyleTUM::setAdvancedMode (bool mode)
-// {
-//   this->advanced = mode;
-//   this->gridActor = vtkLegendScaleActor::New ();
-//   this->grid_enabled = false;
-//   this->lut_enabled = false;
-//   this->lutActor = vtkScalarBarActor::New ();
-//   this->lutActor->SetTitle ("");
-//   this->lutActor->SetOrientationToHorizontal ();
-//   this->lutActor->SetPosition (0.05, 0.01);
-//   this->lutActor->SetWidth (0.9); 
-//   this->lutActor->SetHeight (0.1);
-//   this->lutActor->SetNumberOfLabels (this->lutActor->GetNumberOfLabels () * 2);
-//   vtkSmartPointer<vtkTextProperty> prop = this->lutActor->GetLabelTextProperty ();
-//   prop->SetFontSize (10);
-//   this->lutActor->SetLabelTextProperty (prop);
-//   this->lutActor->SetTitleTextProperty (prop);
+void
+  vtkInteractorStyleTUM::setAdvancedMode (bool mode)
+{
+  this->advanced = mode;
+  this->gridActor = vtkLegendScaleActor::New ();
+  this->grid_enabled = false;
+  this->lut_enabled = false;
+  this->lutActor = vtkScalarBarActor::New ();
+  this->lutActor->SetTitle ("");
+  this->lutActor->SetOrientationToHorizontal ();
+  this->lutActor->SetPosition (0.05, 0.01);
+  this->lutActor->SetWidth (0.9); 
+  this->lutActor->SetHeight (0.1);
+  this->lutActor->SetNumberOfLabels (this->lutActor->GetNumberOfLabels () * 2);
+  vtkSmartPointer<vtkTextProperty> prop = this->lutActor->GetLabelTextProperty ();
+  prop->SetFontSize (10);
+  this->lutActor->SetLabelTextProperty (prop);
+  this->lutActor->SetTitleTextProperty (prop);
 
-// //  vtkSmartPointer<vtkTextActor> camTxt = vtkSmartPointer<vtkTextActor>::New ();
-//   vtkTextActor* camTxt = vtkTextActor::New ();
-//   vtkSmartPointer<vtkCameraCallback> camUpdateInfo = vtkSmartPointer<vtkCameraCallback>::New ();
-//   camUpdateInfo->SetTextActor (camTxt);
-//   double *camTxtPos = camTxt->GetPosition ();
-//   camTxt->SetPosition (camTxtPos[0], camTxtPos[0]+20);
-//   camTxt->GetProperty ()->SetColor (0.0, 1.0, 0.0);
+//  vtkSmartPointer<vtkTextActor> camTxt = vtkSmartPointer<vtkTextActor>::New ();
+  vtkTextActor* camTxt = vtkTextActor::New ();
+  vtkSmartPointer<vtkCameraCallback> camUpdateInfo = vtkSmartPointer<vtkCameraCallback>::New ();
+  camUpdateInfo->SetTextActor (camTxt);
+  double *camTxtPos = camTxt->GetPosition ();
+  camTxt->SetPosition (camTxtPos[0], camTxtPos[0]+20);
+  camTxt->GetProperty ()->SetColor (0.0, 1.0, 0.0);
   
-//   if (one_renderer)
-//   {
-//     this->renderer->AddObserver (vtkCommand::EndEvent, camUpdateInfo);
-//     this->renderer->AddActor (camTxt);
-//   }
+  if (one_renderer)
+  {
+    this->renderer->AddObserver (vtkCommand::EndEvent, camUpdateInfo);
+    this->renderer->AddActor (camTxt);
+  }
 
-//   vtkMouseCallback *mc = vtkMouseCallback::New ();
-// //  mc->NR_BINS = this->histNrBins;     // Set the number of feature histogram bins to use
-//   mc->idx_1 = mc->idx_2 = -1;         // Set both indices to -1
-//   mc->pick_first = true;              // Fill first index first
+  vtkMouseCallback *mc = vtkMouseCallback::New ();
+//  mc->NR_BINS = this->histNrBins;     // Set the number of feature histogram bins to use
+  mc->idx_1 = mc->idx_2 = -1;         // Set both indices to -1
+  mc->pick_first = true;              // Fill first index first
   
-//   this->AddObserver (vtkCommand::LeftButtonPressEvent, mc);
-// //  this->AddObserver (vtkCommand::LeftButtonReleaseEvent, mc);
-// //  this->AddObserver (vtkCommand::KeyPressEvent, mc);
-// //  this->AddObserver (vtkCommand::MouseMoveEvent, mc);
-//   mc->Delete ();
-//   cerr << "Advanced mode enabled." << endl;
-// }
+  this->AddObserver (vtkCommand::LeftButtonPressEvent, mc);
+//  this->AddObserver (vtkCommand::LeftButtonReleaseEvent, mc);
+//  this->AddObserver (vtkCommand::KeyPressEvent, mc);
+//  this->AddObserver (vtkCommand::MouseMoveEvent, mc);
+  mc->Delete ();
+  cerr << "Advanced mode enabled." << endl;
+}
+
+void
+  vtkInteractorStyleTUM::setRenderer (vtkRenderer *ren)
+{
+  this->advanced  = false;
+  this->renderer  = ren;
+  pointsize       = 1;
+  one_renderer    = true;
+  
+  this->texts_enabled = false;
+  this->textActor     = NULL;
+}
+
+void
+  vtkInteractorStyleTUM::setRendererCollection (vtkRendererCollection *rencol)
+{
+  this->advanced  = false;
+  this->rendererCollection  = rencol;
+  pointsize                 = 1;
+  one_renderer              = false;
+
+  this->texts_enabled = false;
+  this->textActor     = NULL;
+}
+
+
+void
+  vtkInteractorStyleTUM::OnTimer ()
+{
+//  cerr << "now " << endl;
+  this->filter->Modified ();
+  if (one_renderer)
+    this->renderer->Render ();
+  else
+  {
+    this->rendererCollection->Render ();
+  }
+}
+
+void
+  vtkInteractorStyleTUM::ZoomIn ()
+{
+  vtkRenderWindowInteractor *rwi = this->Interactor;
+  this->FindPokedRenderer(rwi->GetEventPosition()[0],
+                          rwi->GetEventPosition()[1]);
+  // Zoom in
+  this->StartDolly ();
+  double factor = 10.0 * 0.2 * .5;
+  this->Dolly (pow (1.1, factor));
+  this->EndDolly ();
+}
+
+void
+  vtkInteractorStyleTUM::ZoomOut ()
+{
+  vtkRenderWindowInteractor *rwi = this->Interactor;
+  this->FindPokedRenderer(rwi->GetEventPosition()[0],
+                          rwi->GetEventPosition()[1]);
+  // Zoom out
+  this->StartDolly ();
+  double factor = 10.0 * -0.2 * .5;
+  this->Dolly (pow (1.1, factor));
+  this->EndDolly ();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Save a vtkDataSet object data to a VTK given fileName.
+void
+  SaveDataSetAsVTK (vtkDataSet *data, const char *fileName)
+{
+  vtkDataSetWriter *writer = vtkDataSetWriter::New ();
+//  vtkPolyDataWriter *writer = vtkPolyDataWriter::New ();
+  writer->SetInput (data);
+  writer->SetFileName (fileName);
+  writer->SetFileTypeToASCII ();
+//  writer->SetFileTypeToBinary ();
+  writer->Write ();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Save a vtkDataSet object data to a given fileName. The file type is given 
+// based on the extension.
+void
+  SaveDataSet (vtkDataSet *data, const char *fileName)
+{
+  std::string fname = std::string (fileName);
+  // if VTK, save with PolyDataWriter
+  if (fname.compare (fname.size () - 3, 3, "vtk") == 0)
+    SaveDataSetAsVTK (data, fileName);
+  // else if (fname.compare (fname.size () - 4, 4, "cxyz") == 0)
+  //   SaveDataSetAsCXYZPoints (data, fileName);
+  // else if (fname.compare (fname.size () - 3, 3, "obj") == 0)
+  //   SaveDataSetAsOBJ ((vtkPolyData*)data, fileName);
+  // else if (fname.compare (fname.size () - 4, 4, "xyzr") == 0)
+  //   SaveDataSetAsXYZ000RPoints (data, fileName);
+  // else if (fname.compare (fname.size () - 3, 3, "xyz") == 0)
+  //   SaveDataSetAsXYZPoints (data, fileName);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void
+  changeActorScalarAppearance (ScalarsContainer s, int dim, int argc, char** argv)
+{
+  double minmax[2];
+  vtkSmartPointer<vtkLookupTable> lut;
+  vtkPolyData *data = static_cast<vtkPolyData*>(s.actor->GetMapper ()->GetInput ());
+
+  if (dim != -1)
+  {
+    minmax[0] = s.minScalar[dim]; minmax[1] = s.maxScalar[dim];
+    lut = create_LUT (minmax, argc, argv);
+
+    s.scalars->InitTraversal ();
+    for (int i = 0; i < dim; i++) s.scalars->GetNextItem ();
+    data->GetPointData ()->SetScalars (s.scalars->GetNextItem ());
+  }
+
+  data->Update ();
+
+  vtkPolyDataMapper* mapper = static_cast<vtkPolyDataMapper*>(s.actor->GetMapper ());
+    ///vtkPolyDataMapper::New ();//static_cast<vtkPolyDataMapper*>(s.actor->GetMapper ());
+  mapper->SetInput (data);
+  if (dim != -1)
+  {
+    mapper->SetLookupTable (lut);
+    mapper->SetScalarRange (minmax);
+    mapper->SetScalarModeToUsePointData ();
+    mapper->ScalarVisibilityOn ();
+  }
+  else
+  {
+    mapper->ScalarVisibilityOff ();
+  }
+
+  s.actor->SetMapper (mapper);
+  s.actor->Modified ();
+}
+
+void
+  vtkInteractorStyleTUM::OnChar ()
+{
+  if (pointsize < 1)
+    pointsize = 1;
+
+  bool shift = this->Interactor->GetShiftKey   ();
+  bool ctrl  = this->Interactor->GetControlKey ();
+  bool alt   = this->Interactor->GetAltKey     ();
+  
+  if (shift);
+  
+  bool potentialPCDSave = false;
+  
+  vtkRenderWindowInteractor *rwi = this->Interactor;
+  if (ctrl && alt)
+    potentialPCDSave = true;
+  
+  // ---[ Check key symbols together with Control+Meta(ALT)
+//  fprintf (stderr, "Key sym: %s\n", this->Interactor->GetKeySym ());
+  std::string key (this->Interactor->GetKeySym ());
+  //printf("Key hit: %s\n", key.c_str ());
+  if (key.find ("XF86ZoomIn") != std::string::npos)
+    this->ZoomIn ();
+  else if (key.find ("XF86ZoomOut") != std::string::npos)
+    this->ZoomOut ();
+  else if (key.find ("space") != std::string::npos)
+  {
+    vtkAppendPolyData *allData = vtkAppendPolyData::New ();
+    vtkActorCollection *ac;
+    vtkActor *anActor, *aPart;
+    vtkAssemblyPath *path;
+    this->FindPokedRenderer(rwi->GetEventPosition()[0],
+                            rwi->GetEventPosition()[1]);
+    ac = this->CurrentRenderer->GetActors();
+    vtkCollectionSimpleIterator ait;
+    for (ac->InitTraversal(ait); (anActor = ac->GetNextActor(ait)); )
+    {
+      for (anActor->InitPathTraversal(); (path=anActor->GetNextPath()); )
+      {
+        aPart=(vtkActor *)path->GetLastNode()->GetViewProp();
+        vtkProperty *prop = aPart->GetProperty ();
+        double prop_rgb[3];
+        prop->GetDiffuseColor (prop_rgb);
+        prop_rgb[0] *= 255; prop_rgb[1] *= 255; prop_rgb[2] *= 255;
+        
+        vtkPolyData *aData = (vtkPolyData*)(aPart->GetMapper ()->GetInput ());
+        aData->Update ();
+
+        // Get the point and cell scalars associated with this dataset
+        /// @note: enable at will
+/*        vtkDataArray *pscalars = aData->GetPointData ()->GetScalars ();
+        vtkDataArray *cscalars = aData->GetPointData ()->GetScalars ();
+        if ( (!pscalars) && (!cscalars) )
+        {
+          vtkUnsignedCharArray* colors = vtkUnsignedCharArray::New ();
+          colors->SetNumberOfComponents (3);
+          for (int cp = 0; cp < aData->GetNumberOfCells (); cp++)
+          {
+            unsigned char char_rgb[3];
+            char_rgb[0] = (unsigned char)(prop_rgb[0]);
+            char_rgb[1] = (unsigned char)(prop_rgb[1]);
+            char_rgb[2] = (unsigned char)(prop_rgb[2]);
+            colors->InsertNextTupleValue (char_rgb);
+          }
+          aData->GetCellData ()->SetScalars (colors);
+          aData->Update ();
+        }*/
+        allData->AddInput (aData);
+      }
+    }
+    
+    allData->Update ();
+    cerr << "Total number of points on screen: " << allData->GetOutput ()->GetNumberOfPoints () << "... Dumping...";
+    if (potentialPCDSave)
+    {
+      // Assemble everything here so we don't have to include CommonIORoutines too
+      std::ofstream fs;
+      fs.precision (5);
+      fs.open ("dump-screen.pcd");
+      fs << "COLUMNS x y z" << std::endl;
+      vtkSmartPointer<vtkCleanPolyData> cleaner = vtkSmartPointer<vtkCleanPolyData>::New ();
+      cleaner->SetTolerance (0.0);
+      cleaner->SetInput (allData->GetOutput ());
+      cleaner->ConvertLinesToPointsOff ();
+      cleaner->ConvertPolysToLinesOff ();
+      cleaner->ConvertStripsToPolysOff ();
+      cleaner->PointMergingOn ();
+      cleaner->Update ();
+      fs << "POINTS " << cleaner->GetOutput ()->GetNumberOfPoints () << std::endl;
+
+      double p[3];
+      for (int i = 0; i < cleaner->GetOutput ()->GetNumberOfPoints (); i++)
+      {
+        cleaner->GetOutput ()->GetPoint (i, p);
+        for (unsigned int j = 0; j < 3; j++)
+          fs << p[j] << " ";
+        fs << std::endl;
+      }
+      fs.close ();
+      
+      cerr << "...pruned " << 
+        allData->GetOutput ()->GetNumberOfPoints () - cleaner->GetOutput ()->GetNumberOfPoints () << 
+        ", left " << cleaner->GetOutput ()->GetNumberOfPoints () << " (PCD)";
+    }
+    else
+    {
+      cerr << "(VTK)";
+      SaveDataSet (allData->GetOutput (), "dump-screen.vtk");
+    }
+    cerr << "[done]" << endl;
+  }
+  
+  this->FindPokedRenderer (rwi->GetEventPosition ()[0], rwi->GetEventPosition ()[1]);
+
+  // ---[ Check the rest of the key codes
+  switch (this->Interactor->GetKeyCode ())
+  {
+    case 'h':
+    case 'H':
+    {
+      cerr << "History/Legend:" << endl;
+      cerr << "          p, P   : switch to a point-based representation" << endl;
+      cerr << "          w, W   : switch to a wireframe-based representation" << endl;
+      cerr << "          s, S   : switch to a surface-based representation" << endl;
+      cerr << endl;
+      cerr << "          i, I   : display information about each dataset (using printself)" << endl;
+      cerr << endl;
+      cerr << "          j, J   : take a .PNG snapshot of the current window view" << endl;
+      cerr << "         <space> : save all data to file in VTK format" << endl;
+      cerr << "CTRL+ALT+<space> : perform a vtkCleanPolyData and save all data to file in PCD format" << endl;
+      cerr << endl;
+      cerr << "          c, C   : display current camera settings/parameters" << endl;
+      cerr << "           +     : increment overall point size" << endl;
+      cerr << "           -     : decrement overall point size" << endl;
+      cerr << endl;
+      cerr << "          t, T   : enable/disable the display of texts (given as command line parameters) on screen" << endl;
+      cerr << "          <, >   : display 'previous', 'next' text in the list" << endl;
+      cerr << endl;
+      cerr << "          g, G   : display scale grid (on/off)" << endl;
+      cerr << "         0 - 9   : change the scalars (see L)" << endl;
+      cerr << "          l, L   : display scalar legend at the console" << endl;
+      cerr << "          u, U   : display the LUT (LookUp Table) actor (on/off)" << endl;
+      cerr << "          o, O   : switch the LUT (LookUp Table) between logarithmic and linear" << endl;
+      break;
+    }
+
+    case 't':
+    case 'T':
+    {
+      // If no texts given on the command line, just exit
+      if (textList.size () == 0)
+        break;
+      
+      // First time we press 't' this should pop up
+      if (this->textActor == NULL)
+      {
+        this->cur_text = 0;
+        
+        this->textActor = vtkTextActor::New ();
+        this->textActor->SetInput (this->textList.at (this->cur_text).c_str ());
+        this->textActor->GetTextProperty ()->SetFontSize (this->tS);
+        this->textActor->GetTextProperty ()->SetFontFamilyToArial ();
+        this->textActor->GetTextProperty ()->BoldOn ();
+        this->textActor->GetTextProperty ()->SetJustificationToRight ();
+        this->textActor->GetTextProperty ()->SetVerticalJustificationToTop ();
+        this->textActor->GetTextProperty ()->SetColor (this->tR, this->tG, this->tB);
+        this->textActor->GetProperty ()->SetOpacity (0.75);
+        
+        this->textActor->SetDisplayPosition (this->tAx, this->tAy);
+        this->textActor->VisibilityOn ();
+        
+        if (one_renderer)
+          this->renderer->AddActor (textActor);
+        else
+        {
+          this->rendererCollection->InitTraversal ();
+          vtkRenderer *ren = this->rendererCollection->GetFirstRenderer ();
+          do
+          {
+            ren->AddActor (textActor);
+          }
+          while ((ren = this->rendererCollection->GetNextItem ()) != NULL);
+        }
+        
+        this->texts_enabled = true;
+        
+        break;
+      }
+
+      if (!texts_enabled)
+      {
+        this->textActor->VisibilityOn ();
+        this->texts_enabled = true;
+      }
+      else
+      {
+        this->textActor->VisibilityOff ();
+        this->texts_enabled = false;
+      }
+      
+      break;
+    }
+      
+    case '<':
+    {
+      if (this->textActor == NULL)
+        break;
+
+      this->cur_text--;
+
+      // Circular loop
+      if (this->cur_text < 0) 
+        this->cur_text = this->textList.size () - 1;
+      
+      // Update objects
+      this->textActor->SetInput (this->textList.at (this->cur_text).c_str ());
+      this->textActor->Modified ();
+      break;
+    }
+        
+    case '>':
+    {
+      if (this->textActor == NULL)
+        break;
+      
+      this->cur_text++;
+       
+      // Circular loop
+      if (this->cur_text > (int)this->textList.size () - 1)
+        this->cur_text = 0;
+
+      // Update objects
+      this->textActor->SetInput (this->textList.at (this->cur_text).c_str ());
+      this->textActor->Modified ();
+      break;
+    }
+
+    case 'i':
+    case 'I':
+    {
+      vtkActorCollection *ac;
+      vtkActor *anActor, *aPart;
+      vtkAssemblyPath *path;
+      ac = this->CurrentRenderer->GetActors ();
+      vtkCollectionSimpleIterator ait;
+      for (ac->InitTraversal (ait); (anActor = ac->GetNextActor (ait)); )
+      {
+        for (anActor->InitPathTraversal (); (path = anActor->GetNextPath ()); )
+        {
+          aPart=(vtkActor *)path->GetLastNode ()->GetViewProp ();
+//          aPart->GetMapper ()->GetInputAsDataSet ()->PrintSelf (std::cerr, 0);
+        }
+      }
+      break;
+    }
+    case 'p':
+    case 'P':
+    {
+      vtkActorCollection *ac;
+      vtkActor *anActor, *aPart;
+      vtkAssemblyPath *path;
+      ac = this->CurrentRenderer->GetActors ();
+      vtkCollectionSimpleIterator ait;
+      for (ac->InitTraversal (ait); (anActor = ac->GetNextActor (ait)); )
+      {
+        for (anActor->InitPathTraversal (); (path = anActor->GetNextPath ()); )
+        {
+          aPart=(vtkActor *)path->GetLastNode ()->GetViewProp ();
+          aPart->GetProperty ()->SetRepresentationToPoints ();
+        }
+      }
+      break;
+    }
+/*    case 'f':
+    case 'F':
+    {
+      int *scrSize = rwi->GetRenderWindow ()->GetScreenSize ();
+      int *winSize = rwi->GetRenderWindow ()->GetSize ();
+      if ((scrSize[0] == winSize[0]) && (scrSize[1] == winSize[1]))
+      {
+        rwi->GetRenderWindow ()->SetSize (600, 600);
+        rwi->GetRenderWindow ()->SetBorders (1);
+      }
+      else
+      {
+        rwi->GetRenderWindow ()->SetSize (scrSize[0], scrSize[1]);
+        rwi->GetRenderWindow ()->SetBorders (0);
+      }
+      break;
+    }*/
+    case 'J':
+    case 'j':
+    {
+      unsigned t = time (0);
+      sprintf (camFN, "screenshot-%d.cam", t);
+      sprintf (fileName, "screenshot-%d.png" , t);
+      this->writer->SetFileName (fileName);
+      this->writer->Write ();
+      cerr << "> Wrote " << fileName << "..." << endl;
+      
+      ofstream ofs_cam;
+      ofs_cam.open (camFN);
+      
+      vtkCamera* cam = rwi->GetRenderWindow ()->GetRenderers ()->GetFirstRenderer ()->GetActiveCamera ();
+      double clip[2], focal[3], pos[3], view[3];
+      cam->GetClippingRange (clip);
+      cam->GetFocalPoint (focal);
+      cam->GetPosition (pos);
+      cam->GetViewUp (view);
+      ofs_cam << clip[0]  << "," << clip[1]  << "/" <<
+                 focal[0] << "," << focal[1] << "," << focal[2] << "/" <<
+                 pos[0]   << "," << pos[1]   << "," << pos[2]   << "/" <<
+                 view[0]  << "," << view[1]  << "," << view[2]  << endl;
+      ofs_cam.close ();
+      cerr << "> Wrote camera information to file (" << camFN << ") : -[ Clipping Range / Focal Point / Position / ViewUp ]-" << endl;
+      cerr << clip[0]  << "," << clip[1]  << "/" <<
+              focal[0] << "," << focal[1] << "," << focal[2] << "/" <<
+              pos[0]   << "," << pos[1]   << "," << pos[2]   << "/" <<
+              view[0]  << "," << view[1]  << "," << view[2]  << endl;
+      break;
+    }
+    case 'C':
+    case 'c':
+    {
+      vtkCamera* cam = rwi->GetRenderWindow ()->GetRenderers ()->GetFirstRenderer ()->GetActiveCamera ();
+//      cam->PrintSelf (cerr, 0);
+      double clip[2], focal[3], pos[3], view[3];
+      cam->GetClippingRange (clip);
+      cam->GetFocalPoint (focal);
+      cam->GetPosition (pos);
+      cam->GetViewUp (view);
+      cerr << "-[ Clipping Range / Focal Point / Position / ViewUp ]-" << endl;
+      cerr << clip[0]  << "," << clip[1]  << "/" <<
+              focal[0] << "," << focal[1] << "," << focal[2] << "/" <<
+              pos[0]   << "," << pos[1]   << "," << pos[2]   << "/" <<
+              view[0]  << "," << view[1]  << "," << view[2]  << endl;
+      break;
+    }
+    case KEY_PLUS:
+    {
+      cerr << "Current point size: " << pointsize << endl;
+      vtkActorCollection *ac;
+      vtkActor *anActor, *aPart;
+      vtkAssemblyPath *path;
+      ac = this->CurrentRenderer->GetActors ();
+      vtkCollectionSimpleIterator ait;
+      for (ac->InitTraversal (ait); (anActor = ac->GetNextActor (ait)); )
+      {
+        for (anActor->InitPathTraversal (); (path=anActor->GetNextPath ()); )
+        {
+          aPart=(vtkActor *)path->GetLastNode ()->GetViewProp ();
+          aPart->GetProperty ()->SetPointSize (aPart->GetProperty ()->GetPointSize () + 1);
+        }
+      }
+      break;
+    }
+    case KEY_MINUS:
+    {
+      vtkActorCollection *ac;
+      vtkActor *anActor, *aPart;
+      vtkAssemblyPath *path;
+      ac = this->CurrentRenderer->GetActors ();
+      vtkCollectionSimpleIterator ait;
+      for (ac->InitTraversal (ait); (anActor = ac->GetNextActor (ait)); )
+      {
+        for (anActor->InitPathTraversal (); (path=anActor->GetNextPath ()); )
+        {
+          aPart=(vtkActor *)path->GetLastNode ()->GetViewProp ();
+          aPart->GetProperty ()->SetPointSize (aPart->GetProperty ()->GetPointSize () - 1);
+        }
+      }
+      break;
+    }
+    
+    // Display a grid/scale over the screen
+    case 'G':
+    case 'g':
+    {
+      if (!grid_enabled)
+      {
+        gridActor->TopAxisVisibilityOn ();
+        this->CurrentRenderer->AddViewProp (gridActor);
+        
+        this->grid_enabled = true;
+      }
+      else
+      {
+        this->CurrentRenderer->RemoveViewProp (gridActor);
+        this->grid_enabled = false;
+      }
+      this->CurrentRenderer->RemoveActor (lutActor);
+      this->lut_enabled = false;
+      
+      break;
+    }
+    
+    ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+    // ---[ Entries regarding the legend and color auto-switching possibilities
+    case '0':                 // Return to grayscale or the user given color
+    {
+      if (!advanced) break;
+
+      for (unsigned int cp = 0; cp < this->allScalars.size (); cp++)
+      {
+        ScalarsContainer s = this->allScalars[cp];
+        changeActorScalarAppearance (s, -1, argc, argv);
+        lutActor->SetVisibility (false);
+      }
+      
+      // Change the text actor (if enabled)
+      if (this->textActor == NULL)
+        break;
+
+      if (this->textList.size () > 0)
+        this->cur_text = 0;
+
+      // Update objects
+      this->textActor->SetInput (this->textList.at (this->cur_text).c_str ());
+      this->textActor->Modified ();
+      break;
+    }
+    ///////////////////////////////////////////////////////////////////////////
+    
+    case '1':
+    {
+      if (!advanced) break;
+
+      if (this->Interactor->GetControlKey ());
+///        cerr << "Ctrl + 1" << endl;
+      else
+      {
+        for (unsigned int cp = 0; cp < this->allScalars.size (); cp++)
+        {
+          ScalarsContainer s = this->allScalars[cp];
+          if (s.dimensions.size () == 0) continue;
+          changeActorScalarAppearance (s, 0, argc, argv);
+
+          vtkLookupTable* lut = static_cast<vtkLookupTable*>(s.actor->GetMapper ()->GetLookupTable ());
+          lutActor->SetLookupTable (lut);
+          lutActor->Modified ();
+        }
+      }
+
+      // Change the text actor (if enabled)
+      if (this->textActor == NULL)
+        break;
+
+      if (this->textList.size () > 1)
+        this->cur_text = 1;
+
+      // Update objects
+      lutActor->SetTitle (this->textList.at (this->cur_text).c_str ());
+      lutActor->Modified ();
+      this->textActor->SetInput (this->textList.at (this->cur_text).c_str ());
+      this->textActor->Modified ();
+      break;
+    }
+    ///////////////////////////////////////////////////////////////////////////
+    case '2':
+    {
+      if (!advanced) break;
+      
+      if (this->Interactor->GetControlKey ());
+///        cerr << "Ctrl + 2" << endl;
+      else
+        for (unsigned int cp = 0; cp < this->allScalars.size (); cp++)
+        {
+          ScalarsContainer s = this->allScalars[cp];
+          if (s.dimensions.size () < 2) continue;
+          changeActorScalarAppearance (s, 1, argc, argv);
+          
+          vtkLookupTable* lut = static_cast<vtkLookupTable*>(s.actor->GetMapper ()->GetLookupTable ());
+          lutActor->SetLookupTable (lut);
+          lutActor->Modified ();
+        }
+
+      // Change the text actor (if enabled)
+      if (this->textActor == NULL)
+        break;
+
+      if (this->textList.size () > 2)
+        this->cur_text = 2;
+
+      // Update objects
+      lutActor->SetTitle (this->textList.at (this->cur_text).c_str ());
+      lutActor->Modified ();
+      this->textActor->SetInput (this->textList.at (this->cur_text).c_str ());
+      this->textActor->Modified ();
+      break;
+    }
+    ///////////////////////////////////////////////////////////////////////////
+    case '3':
+    {
+      if (!advanced) break;
+
+      if (this->Interactor->GetControlKey ());
+///        cerr << "Ctrl + 3" << endl;
+      else
+        for (unsigned int cp = 0; cp < this->allScalars.size (); cp++)
+        {
+          ScalarsContainer s = this->allScalars[cp];
+          if (s.dimensions.size () < 3) continue;
+          changeActorScalarAppearance (s, 2, argc, argv);
+          
+          vtkLookupTable* lut = static_cast<vtkLookupTable*>(s.actor->GetMapper ()->GetLookupTable ());
+          lutActor->SetLookupTable (lut);
+          lutActor->Modified ();
+        }
+
+      // Change the text actor (if enabled)
+      if (this->textActor == NULL)
+        break;
+
+      if (this->textList.size () > 3)
+        this->cur_text = 3;
+
+      // Update objects
+      lutActor->SetTitle (this->textList.at (this->cur_text).c_str ());
+      lutActor->Modified ();
+      this->textActor->SetInput (this->textList.at (this->cur_text).c_str ());
+      this->textActor->Modified ();
+      break;
+    }
+    ///////////////////////////////////////////////////////////////////////////
+    case '4':
+    {
+      if (!advanced) break;
+
+      if (this->Interactor->GetControlKey ());
+///        cerr << "Ctrl + 4" << endl;
+      else
+        for (unsigned int cp = 0; cp < this->allScalars.size (); cp++)
+        {
+          ScalarsContainer s = this->allScalars[cp];
+          if (s.dimensions.size () < 4) break;
+          changeActorScalarAppearance (s, 3, argc, argv);
+          
+          vtkLookupTable* lut = static_cast<vtkLookupTable*>(s.actor->GetMapper ()->GetLookupTable ());
+          lutActor->SetLookupTable (lut);
+          lutActor->Modified ();
+        }
+
+      // Change the text actor (if enabled)
+      if (this->textActor == NULL)
+        break;
+
+      if (this->textList.size () > 4)
+        this->cur_text = 4;
+
+      // Update objects
+      lutActor->SetTitle (this->textList.at (this->cur_text).c_str ());
+      lutActor->Modified ();
+      this->textActor->SetInput (this->textList.at (this->cur_text).c_str ());
+      this->textActor->Modified ();
+      break;
+    }
+    ///////////////////////////////////////////////////////////////////////////
+    case '5':
+    {
+      if (!advanced) break;
+
+      if (this->Interactor->GetControlKey ());
+///        cerr << "Ctrl + 5" << endl;
+      else
+        for (unsigned int cp = 0; cp < this->allScalars.size (); cp++)
+        {
+          ScalarsContainer s = this->allScalars[cp];
+          if (s.dimensions.size () < 5) continue;
+          changeActorScalarAppearance (s, 4, argc, argv);
+          
+          vtkLookupTable* lut = static_cast<vtkLookupTable*>(s.actor->GetMapper ()->GetLookupTable ());
+          lutActor->SetLookupTable (lut);
+          lutActor->Modified ();
+        }
+
+      // Change the text actor (if enabled)
+      if (this->textActor == NULL)
+        break;
+
+      if (this->textList.size () > 5)
+        this->cur_text = 5;
+
+      // Update objects
+      lutActor->SetTitle (this->textList.at (this->cur_text).c_str ());
+      lutActor->Modified ();
+      this->textActor->SetInput (this->textList.at (this->cur_text).c_str ());
+      this->textActor->Modified ();
+      break;
+    }
+    ///////////////////////////////////////////////////////////////////////////
+    case '6':
+    {
+      if (!advanced) break;
+
+      if (this->Interactor->GetControlKey ());
+///        cerr << "Ctrl + 6" << endl;
+      else
+        for (unsigned int cp = 0; cp < this->allScalars.size (); cp++)
+        {
+          ScalarsContainer s = this->allScalars[cp];
+          if (s.dimensions.size () < 6) continue;
+          changeActorScalarAppearance (s, 5, argc, argv);
+          
+          vtkLookupTable* lut = static_cast<vtkLookupTable*>(s.actor->GetMapper ()->GetLookupTable ());
+          lutActor->SetLookupTable (lut);
+          lutActor->Modified ();
+        }
+
+      // Change the text actor (if enabled)
+      if (this->textActor == NULL)
+        break;
+
+      if (this->textList.size () > 6)
+        this->cur_text = 6;
+
+      // Update objects
+      lutActor->SetTitle (this->textList.at (this->cur_text).c_str ());
+      lutActor->Modified ();
+      this->textActor->SetInput (this->textList.at (this->cur_text).c_str ());
+      this->textActor->Modified ();
+      break;
+    }
+    ///////////////////////////////////////////////////////////////////////////
+    case '7':
+    {
+      if (!advanced) break;
+
+      if (this->Interactor->GetControlKey ());
+///        cerr << "Ctrl + 7" << endl;
+      else
+        for (unsigned int cp = 0; cp < this->allScalars.size (); cp++)
+        {
+          ScalarsContainer s = this->allScalars[cp];
+          if (s.dimensions.size () < 7) continue;
+          changeActorScalarAppearance (s, 6, argc, argv);
+          
+          vtkLookupTable* lut = static_cast<vtkLookupTable*>(s.actor->GetMapper ()->GetLookupTable ());
+          lutActor->SetLookupTable (lut);
+          lutActor->Modified ();
+        }
+
+      // Change the text actor (if enabled)
+      if (this->textActor == NULL)
+        break;
+
+      if (this->textList.size () > 7)
+        this->cur_text = 7;
+
+      // Update objects
+      lutActor->SetTitle (this->textList.at (this->cur_text).c_str ());
+      lutActor->Modified ();
+      this->textActor->SetInput (this->textList.at (this->cur_text).c_str ());
+      this->textActor->Modified ();
+      break;
+    }
+    ///////////////////////////////////////////////////////////////////////////
+    case '8':
+    {
+      if (!advanced) break;
+      
+      if (this->Interactor->GetControlKey ());
+///        cerr << "Ctrl + 8" << endl;
+      else
+        for (unsigned int cp = 0; cp < this->allScalars.size (); cp++)
+        {
+          ScalarsContainer s = this->allScalars[cp];
+          if (s.dimensions.size () < 8) continue;
+          changeActorScalarAppearance (s, 7, argc, argv);
+          
+          vtkLookupTable* lut = static_cast<vtkLookupTable*>(s.actor->GetMapper ()->GetLookupTable ());
+          lutActor->SetLookupTable (lut);
+          lutActor->Modified ();
+        }
+
+      // Change the text actor (if enabled)
+      if (this->textActor == NULL)
+        break;
+
+      if (this->textList.size () > 8)
+        this->cur_text = 8;
+
+      // Update objects
+      lutActor->SetTitle (this->textList.at (this->cur_text).c_str ());
+      lutActor->Modified ();
+      this->textActor->SetInput (this->textList.at (this->cur_text).c_str ());
+      this->textActor->Modified ();
+      break;
+    }
+    ///////////////////////////////////////////////////////////////////////////
+    case '9':
+    {
+      if (!advanced) break;
+      
+      if (this->Interactor->GetControlKey ());
+///        cerr << "Ctrl + 9" << endl;
+      else
+        for (unsigned int cp = 0; cp < this->allScalars.size (); cp++)
+        {
+          ScalarsContainer s = this->allScalars[cp];
+          if (s.dimensions.size () < 9) continue;
+          changeActorScalarAppearance (s, 8, argc, argv);
+          
+          vtkLookupTable* lut = static_cast<vtkLookupTable*>(s.actor->GetMapper ()->GetLookupTable ());
+          lutActor->SetLookupTable (lut);
+          lutActor->Modified ();
+        }
+
+      // Change the text actor (if enabled)
+      if (this->textActor == NULL)
+        break;
+
+      if (this->textList.size () > 9)
+        this->cur_text = 9;
+
+      // Update objects
+      lutActor->SetTitle (this->textList.at (this->cur_text).c_str ());
+      lutActor->Modified ();
+      this->textActor->SetInput (this->textList.at (this->cur_text).c_str ());
+      this->textActor->Modified ();
+      break;
+    }
+    ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+    
+    
+    
+    // Display LUT 
+    case 'U':
+    case 'u':
+    {
+      if (!advanced) break;
+      
+      this->FindPokedRenderer (rwi->GetEventPosition ()[0],
+                               rwi->GetEventPosition ()[1]);
+      
+      for (unsigned int cp = 0; cp < this->allScalars.size (); cp++)
+      {
+        ScalarsContainer s = this->allScalars[cp];
+        if (s.dimensions.size () == 0) break;
+        vtkLookupTable* lut = static_cast<vtkLookupTable*>(s.actor->GetMapper ()->GetLookupTable ());
+        lutActor->SetLookupTable (lut);
+        lutActor->Modified ();
+        
+        if (!lut_enabled)
+        {
+          this->CurrentRenderer->AddActor (lutActor);
+          lutActor->SetVisibility (true);
+          this->lut_enabled = true;
+        }
+        else
+        {
+          this->CurrentRenderer->RemoveActor (lutActor);
+          this->lut_enabled = false;
+        }
+      }
+      
+      rwi->Render();
+      break;
+    }
+    
+    // Switch LUT between logarithmic and normal
+    case 'O':
+    case 'o':
+    {
+      if (!advanced) break;
+      
+      this->FindPokedRenderer (rwi->GetEventPosition ()[0],
+                               rwi->GetEventPosition ()[1]);
+      
+      for (unsigned int cp = 0; cp < this->allScalars.size (); cp++)
+      {
+        ScalarsContainer s = this->allScalars[cp];
+        if (s.dimensions.size () < 1) break;
+        vtkLookupTable* lut = static_cast<vtkLookupTable*>(s.actor->GetMapper ()->GetLookupTable ());
+///        cerr << lut->GetClassName () << endl;
+        lut->SetScale (!lut->GetScale ());
+        
+        lutActor->SetLookupTable (lut);
+        lutActor->Modified ();
+        
+        s.actor->GetMapper ()->SetLookupTable (lut);
+        s.actor->Modified ();
+      }
+      
+      rwi->Render();
+      break;
+    }
+    
+    case 'L':
+    case 'l':
+    {
+      if (!advanced) break;
+      
+      for (unsigned int cp = 0; cp < this->allScalars.size (); cp++)
+      {
+        ScalarsContainer s = this->allScalars[cp];
+        if (s.dimensions.size () == 0) break;
+        
+        cerr << "Available dimensions: default(0) ";
+        for (unsigned int dim = 0; dim < s.dimensions.size (); dim++)
+          cerr << s.dimensions[dim] << "(" << dim+1 << ") ";
+        cerr << endl;
+      }
+      if (this->Interactor->GetControlKey ())
+        cerr << "control" << endl;
+      
+      
+      break;
+    }
+    default:
+    {
+//      printf("Key hit: %d\n", this->Interactor->GetKeyCode());
+      this->Superclass::OnChar ();
+      break;
+    }
+  }
+  
+  
+  rwi->Render();
+}
+
 
 class vtkFPSCallback : public vtkCommand
 {
