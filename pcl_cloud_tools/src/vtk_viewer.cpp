@@ -29,7 +29,6 @@
 #include <terminal_tools/parse.h>
 #include <terminal_tools/time.h>
 
-//VTK dependencies -- still needed??
 #include <vtk3DSImporter.h>
 #include <vtkDataSet.h>
 #include <vtkRenderer.h>
@@ -39,6 +38,11 @@
 #include <vtkDataSetMapper.h>
 #include <vtkMaskPoints.h>
 #include <vtkLODActor.h> 
+#include <vtkFloatArray.h>
+#include <vtkPointData.h> 
+#include <vtkVectorText.h> 
+#include <vtkPolyDataMapper.h> 
+#include <vtkFollower.h> 
 
 #include <pcl_vtk_tools/misc.h>
 
@@ -55,6 +59,7 @@ using terminal_tools::TT_RED;
 using terminal_tools::TT_GREEN;
 using terminal_tools::TT_BLUE;
 
+#define SQR(x) ((x)*(x))
 //  dataPruner->PointMergingOn ();
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -70,19 +75,6 @@ GetRandomColors (double &r, double &g, double &b)
   print_value (stderr, "%g", b);
   print_warn (stderr, "] as foreground color.\n");
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// Loads a 3D point cloud from a given fileName.
-// Returns: a vtkPolyData object containing the point cloud.
-// vtkPolyData*
-// load_poly_data_as_data_set (const char* fileName)
-// {
-//   vtkPolyDataReader* reader = vtkPolyDataReader::New ();
-//   reader->SetFileName (fileName);
-//   reader->Update ();
-//   return reader->GetOutput ();
-// }
-
 
 /* ---[ */
 int
@@ -100,25 +92,25 @@ main (int argc, char** argv)
   bool no_shadows = false;
 
   if (argc < 2)
-    {
-      print_error (stderr, "Syntax is: %s [fileName1..N] <options>\n", argv[0]);
-      fprintf (stderr, "  where options are: -fc r,g,b = foreground color\n");
-      fprintf (stderr, "                     -ps X     = point size\n");
-      fprintf (stderr, "                     -lw X     = line width\n");
-      fprintf (stderr, "                     -sc X     = add X to scale the color (useful when using remission/distance)\n");
-      fprintf (stderr, "                     -lod 0/1  = use a LOD (Level Of Detail) actor instead (enabled by default)\n");
-      fprintf (stderr, "                     -text X   = add point indices as text labels with size as X * BB_DIAM (disabled by default)\n");
-      fprintf (stderr, "                     -minmaxIdx N,M  = use a minimum/maximum threshold for indices to be shown. OPTIONAL\n");
-      fprintf (stderr, "                     -lut_enable 0/1 = add a color rainbow legend (disabled by default)\n");
-      fprintf (stderr, "                     -save_cam 0/1   = save the last camera position to file on exit (default "); print_value (stderr, "enabled"); fprintf (stderr, ")\n");
-      fprintf (stderr, "                     -movie 0/1      = {dis/en}able movie mode (default "); print_value (stderr, "disabled"); fprintf (stderr, ")"); print_error (stderr, " NOTE: resolution set at 640x480!\n");
-      fprintf (stderr, "                     -cell 0/1       = put colors as scalars for cell data (1) or point data (0) (default : "); print_value (stderr, "point"); fprintf (stderr, ")\n");
-      fprintf (stderr, "                     -no_shadows 0/1 = turns shadows off (default : "); print_value (stderr, "disabled"); fprintf (stderr, ")\n");
-      fprintf (stderr, "\n");
-      fprintf (stderr, "                     -play   0/1    = replays the events and motions specified in the given <logdata.log> file\n");
-      //  _print_default_CommonVTK_options_ ();
-      return (-1);
-    }
+  {
+    print_error (stderr, "Syntax is: %s [fileName1..N] <options>\n", argv[0]);
+    fprintf (stderr, "  where options are: -fc r,g,b = foreground color\n");
+    fprintf (stderr, "                     -ps X     = point size\n");
+    fprintf (stderr, "                     -lw X     = line width\n");
+    fprintf (stderr, "                     -sc X     = add X to scale the color (useful when using remission/distance)\n");
+    fprintf (stderr, "                     -lod 0/1  = use a LOD (Level Of Detail) actor instead (enabled by default)\n");
+    fprintf (stderr, "                     -text X   = add point indices as text labels with size as X * BB_DIAM (disabled by default)\n");
+    fprintf (stderr, "                     -minmaxIdx N,M  = use a minimum/maximum threshold for indices to be shown. OPTIONAL\n");
+    fprintf (stderr, "                     -lut_enable 0/1 = add a color rainbow legend (disabled by default)\n");
+    fprintf (stderr, "                     -save_cam 0/1   = save the last camera position to file on exit (default "); print_value (stderr, "enabled"); fprintf (stderr, ")\n");
+    fprintf (stderr, "                     -movie 0/1      = {dis/en}able movie mode (default "); print_value (stderr, "disabled"); fprintf (stderr, ")"); print_error (stderr, " NOTE: resolution set at 640x480!\n");
+    fprintf (stderr, "                     -cell 0/1       = put colors as scalars for cell data (1) or point data (0) (default : "); print_value (stderr, "point"); fprintf (stderr, ")\n");
+    fprintf (stderr, "                     -no_shadows 0/1 = turns shadows off (default : "); print_value (stderr, "disabled"); fprintf (stderr, ")\n");
+    fprintf (stderr, "\n");
+    fprintf (stderr, "                     -play   0/1    = replays the events and motions specified in the given <logdata.log> file\n");
+    //  _print_default_CommonVTK_options_ ();
+    return (-1);
+  }
   int minIdx = 0, maxIdx = INT_MAX;
   //ParseRangeArguments (argc, argv, "-minmaxIdx", minIdx, maxIdx);
   terminal_tools::parse_2x_arguments (argc, argv, "-minmaxIdx", minIdx, maxIdx);
@@ -129,15 +121,15 @@ main (int argc, char** argv)
   terminal_tools::parse_argument (argc, argv, "-play", play);
   std::vector<int> pLogFileIndices;
   if (play)
+  {
+    //pLogFileIndices = ParseFileExtensionArgument (argc, argv, ".log");
+    pLogFileIndices = terminal_tools::parse_file_extension_argument (argc, argv, ".log");
+    if (pLogFileIndices.size () != 1)
     {
-      //pLogFileIndices = ParseFileExtensionArgument (argc, argv, ".log");
-      pLogFileIndices = terminal_tools::parse_file_extension_argument (argc, argv, ".log");
-      if (pLogFileIndices.size () != 1)
-	{
-	  print_error (stderr, "Need exactly 1 logfile!\n"); 
-	  return (-1);
-	}
+      print_error (stderr, "Need exactly 1 logfile!\n"); 
+      return (-1);
     }
+  }
   bool save_camera_position = true;
   //   ParseArgument (argc, argv, "-save_cam", save_camera_position);
   terminal_tools::parse_argument (argc, argv, "-save_cam", save_camera_position);
@@ -194,131 +186,131 @@ main (int argc, char** argv)
 
   // Create the dataset files
   for (unsigned int i = 0; i < pFileIndices.size (); i++)
+  {
+    vtkActor *dataActor;
+    double minmax[2];
+    print_info (stderr, "Loading ");
+    print_value (stderr, "%s ... ", argv[pFileIndices.at(i)]);
+    tictoc.tic ();
+    if (pFileIndices.size() != 0)
     {
-      vtkActor *dataActor;
-      double minmax[2];
-      print_info (stderr, "Loading ");
-      print_value (stderr, "%s ... ", argv[pFileIndices.at(i)]);
-      tictoc.tic ();
-      if (pFileIndices.size() != 0)
-	{
-	  data = load_poly_data_as_data_set(argv[pFileIndices.at (i)]);
-	  //stringstream filename_stream;
-	  //filename_stream << argv[pFileIndices.at (0)];
-	  //filename = filename_stream.str();
-	  print_info ("Loading vtk model with %d vertices/points.", (int)data->GetNumberOfPoints ());
-	}
+      data = load_poly_data_as_data_set(argv[pFileIndices.at (i)]);
+      //stringstream filename_stream;
+      //filename_stream << argv[pFileIndices.at (0)];
+      //filename = filename_stream.str();
+      print_info ("Loading vtk model with %d vertices/points.", (int)data->GetNumberOfPoints ());
+    }
 
-      data->GetScalarRange (minmax);
-      //  data->GetPointData ()->GetScalars ()->SetLookupTable (lut);
-      data->Update ();
-      fprintf (stderr, "[done, "); print_value (stderr, "%g", tictoc.toc ()); fprintf (stderr, " seconds : "); print_value (stderr, "%d", data->GetNumberOfPoints ()); fprintf (stderr, " 3D points]\n");
+    data->GetScalarRange (minmax);
+    //  data->GetPointData ()->GetScalars ()->SetLookupTable (lut);
+    data->Update ();
+    fprintf (stderr, "[done, "); print_value (stderr, "%g", tictoc.toc ()); fprintf (stderr, " seconds : "); print_value (stderr, "%d", data->GetNumberOfPoints ()); fprintf (stderr, " 3D points]\n");
 
-      // If no scalars, select the colors ourselves
-      if ((minmax[0] == 0) && (minmax[1] == 1))
-	{
-	  if (!fcolorparam)
-	    GetRandomColors (fcolor[0], fcolor[1], fcolor[2]);
-	  // Color parameters given
-	  else
+    // If no scalars, select the colors ourselves
+    if ((minmax[0] == 0) && (minmax[1] == 1))
+    {
+      if (!fcolorparam)
+        GetRandomColors (fcolor[0], fcolor[1], fcolor[2]);
+      // Color parameters given
+      else
 	    {
 	      // Do we have enough parameters for every point cloud ?
 	      if (fcolorR.size () > i)
-		{
-		  fcolor[0] = fcolorR[i];
-		  fcolor[1] = fcolorG[i];
-		  fcolor[2] = fcolorB[i];
-		}
+        {
+          fcolor[0] = fcolorR[i];
+          fcolor[1] = fcolorG[i];
+          fcolor[2] = fcolorB[i];
+        }
 	      // No, select a random color for this one
 	      else
-		GetRandomColors (fcolor[0], fcolor[1], fcolor[2]);
+          GetRandomColors (fcolor[0], fcolor[1], fcolor[2]);
 	    }
 
-	  //dataActor = createActorFromDataSet (data[i], fcolor[0], fcolor[1], fcolor[2], psize[i], lod_enable);
-	  dataActor = create_actor_from_data_set(data, fcolor[0], fcolor[1], fcolor[2], psize[i], lod_enable);
-	}
-      else
-	{
-	  print_info (stderr, "Scalar values found for %s: ", argv[pFileIndices.at (i)]);
-	  print_value (stderr, "%g", minmax[0]); fprintf (stderr, " -> ");
-	  print_value (stderr, "%g\n", minmax[1]);
-
-	  // Still, if the foreground color is given, overwrite the scalar values
-	  //      if (fcolorparam)
-	  //        dataActor = createActorFromDataSet (data[i], fcolor, psize[i], false);
-	  // Display the colors using a Lookup table for the scalar values
-	  //      else
-	  {
-	    vtkSmartPointer<vtkLookupTable> lut = create_LUT (minmax, argc, argv);
-
-	    // if (lut_enable)
-	    //           ren->AddActor (createScalarBarActor (lut, argc, argv));
-
-	    //         // Create the data actor 
-	    //         if (scale > 0)
-	    //         {
-	    //           vtkFloatArray *distances = (vtkFloatArray*)data[i]->GetPointData ()->GetScalars ();
-	    //           for (long int j = 0; j < distances->GetNumberOfTuples (); j++)
-	    //           {
-	    //             double c[1];
-	    //             distances->GetTuple (j, c);
-	    //             c[0] += scale;
-	    //             distances->SetTuple (j, c);
-	    //           }
-
-	    //           data[i]->GetPointData ()->SetScalars (distances);
-	    //         }
-	    //         dataActor = createActorFromDataSet (data[i], psize[i], lut, minmax, lod_enable);
-	    //         if (cell_scalar)
-	    //           dataActor->GetMapper ()->SetScalarModeToUseCellData ();
-	    // //        dataActor = createActorFromDataSet (data[i], psize, lod_enable);
-	    //       }
-	    //     }
-	    //     dataActor->GetProperty ()->SetRepresentationToPoints ();
-    
-	    //     // Disable shadows if necessary
-	    //     if (no_shadows)
-	    //     {
-	    //       dataActor->GetProperty ()->ShadingOff (); // is this needed?
-	    //       dataActor->GetProperty ()->SetAmbient (1);
-	    //       dataActor->GetProperty ()->SetDiffuse (0);
-	    //     }
-
-	    //     if (line_width != -1)
-	    //       dataActor->GetProperty ()->SetLineWidth (line_width);
-
-	    //     ren->AddActor (dataActor);
-
-	    //     if ((text > 0) && (i == 0))
-	    //     {
-	    //       char idx[10];
-	    //       vtkPolyData* polydata=reinterpret_cast<vtkPolyData*>(data[i]);
-	    //       double bounds[6];
-	    //       polydata->GetBounds (bounds);
-	    //       double text_scale = text * sqrt ( SQR(bounds[0]-bounds[1]) + SQR(bounds[2]-bounds[3]) +SQR(bounds[4]-bounds[5]) );
-	    //       double point[3];
-	    //       int start = max (minIdx, 0);
-	    //       int stop = min (maxIdx, int(data[i]->GetNumberOfPoints ())-1);
-	    //       print_info (stderr, "Labeling points with their indices in ");
-	    //       print_value (stderr, "[%d,%d]\n", start, stop);
-	    //       for (int j = start; j <= stop; j++)
-	    //       {
-	    //         data[i]->GetPoint (j, point);
-	    //         sprintf (idx, "%d", j);
-	    //         vtkVectorText *atext = vtkVectorText::New ();
-	    //         atext->SetText (idx);
-	    //         vtkPolyDataMapper *textMapper = vtkPolyDataMapper::New ();
-	    //         textMapper->SetInputConnection (atext->GetOutputPort ());
-	    //         vtkFollower *textActor = vtkFollower::New ();
-	    //         textActor->SetMapper (textMapper);
-	    //         textActor->SetScale (text_scale);
-	    //         textActor->SetPosition (point[0], point[1], point[2]);
-	    //         //textActor->AddPosition (0, -0.1, 0);
-	    //         textActor->SetCamera (ren->GetActiveCamera ());
-	    //         ren->AddActor (textActor);
-	  }
-	}
+      //dataActor = createActorFromDataSet (data[i], fcolor[0], fcolor[1], fcolor[2], psize[i], lod_enable);
+      dataActor = create_actor_from_data_set(data, fcolor[0], fcolor[1], fcolor[2], psize[i], lod_enable);
     }
+    else
+    {
+      print_info (stderr, "Scalar values found for %s: ", argv[pFileIndices.at (i)]);
+      print_value (stderr, "%g", minmax[0]); fprintf (stderr, " -> ");
+      print_value (stderr, "%g\n", minmax[1]);
+
+      // Still, if the foreground color is given, overwrite the scalar values
+      //      if (fcolorparam)
+      //        dataActor = createActorFromDataSet (data[i], fcolor, psize[i], false);
+      // Display the colors using a Lookup table for the scalar values
+      //      else
+      {
+        vtkSmartPointer<vtkLookupTable> lut = create_LUT (minmax, argc, argv);
+
+        if (lut_enable)
+          ren->AddActor (create_scalar_bar_actor (lut, argc, argv));
+        
+        //Create the data actor 
+        if (scale > 0)
+        {
+          vtkFloatArray *distances = (vtkFloatArray*)data->GetPointData ()->GetScalars ();
+          for (long int j = 0; j < distances->GetNumberOfTuples (); j++)
+          {
+            double c[1];
+            distances->GetTuple (j, c);
+            c[0] += scale;
+            distances->SetTuple (j, c);
+          }
+          
+          data->GetPointData ()->SetScalars (distances);
+        }
+        dataActor = create_actor_from_data_set (data, psize[i], lut, minmax, lod_enable);
+        if (cell_scalar)
+          dataActor->GetMapper ()->SetScalarModeToUseCellData ();
+        //dataActor = create_actor_from_data_set (data, psize, lod_enable);
+      }
+    }
+    dataActor->GetProperty ()->SetRepresentationToPoints ();
+    
+    // Disable shadows if necessary
+    if (no_shadows)
+    {
+      dataActor->GetProperty ()->ShadingOff (); // is this needed?
+      dataActor->GetProperty ()->SetAmbient (1);
+      dataActor->GetProperty ()->SetDiffuse (0);
+    }
+
+    if (line_width != -1)
+      dataActor->GetProperty ()->SetLineWidth (line_width);
+    
+    ren->AddActor (dataActor);
+    
+    if ((text > 0) && (i == 0))
+    {
+      char idx[10];
+      //vtkPolyData* polydata=reinterpret_cast<vtkPolyData*>(data);
+      double bounds[6];
+      data->GetBounds (bounds);
+      double text_scale = text * sqrt ( SQR(bounds[0]-bounds[1]) + SQR(bounds[2]-bounds[3]) +SQR(bounds[4]-bounds[5]) );
+      double point[3];
+      int start = max (minIdx, 0);
+      int stop = min (maxIdx, int(data->GetNumberOfPoints ())-1);
+      print_info (stderr, "Labeling points with their indices in ");
+      print_value (stderr, "[%d,%d]\n", start, stop);
+      for (int j = start; j <= stop; j++)
+      {
+        data->GetPoint (j, point);
+        sprintf (idx, "%d", j);
+        vtkVectorText *atext = vtkVectorText::New ();
+        atext->SetText (idx);
+        vtkPolyDataMapper *textMapper = vtkPolyDataMapper::New ();
+        textMapper->SetInputConnection (atext->GetOutputPort ());
+        vtkFollower *textActor = vtkFollower::New ();
+        textActor->SetMapper (textMapper);
+        textActor->SetScale (text_scale);
+        textActor->SetPosition (point[0], point[1], point[2]);
+        //textActor->AddPosition (0, -0.1, 0);
+        textActor->SetCamera (ren->GetActiveCamera ());
+        ren->AddActor (textActor);
+      }
+    }
+  }
 
   //vtkLightKit* lightKit = vtkLightKit::New ();
   //  lightKit->AddLightsToRenderer (ren);
