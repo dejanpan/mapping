@@ -10,6 +10,8 @@
 /* #include <vector> */
 #include <vtkCellArray.h>
 #include <vtkLookupTable.h>
+#include <vtkScalarBarActor.h>
+#include <vtkTextProperty.h>
 
 #define NR_COLOR 65536
 #define S_COLOR 100
@@ -150,7 +152,34 @@ create_LUT (double minmax[2], int argc, char** argv)
   int seed_rand = -1;  terminal_tools::parse_argument (argc, argv, "-randRGBseed", seed_rand); 
   /// Impose limits on the scalar data
   terminal_tools::parse_2x_arguments (argc, argv, "-lut_limits", minmax[0], minmax[1]);
-  //  return CreateLUT (minmax, log, seed_rand, nr_colors, (unsigned)step_rand, false);
+  return create_LUT (minmax, log, seed_rand, nr_colors, (unsigned)step_rand, false);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Loads a 3D point cloud from a given fileName containing Unstructured Grid data
+// Returns: a vtkDataSet object containing the point cloud.
+vtkScalarBarActor*
+create_scalar_bar_actor (vtkLookupTable *lut, int argc, char** argv)
+{
+  // Put in a color bar (called a scalar bar in vtk)
+  vtkScalarBarActor *barActor = vtkScalarBarActor::New ();
+  barActor->SetLookupTable (lut);
+  barActor->SetTitle ("");
+  barActor->SetOrientationToHorizontal ();
+  barActor->SetPosition (0.05, 0.01);
+  
+  int nr_labels = barActor->GetNumberOfLabels ();
+  terminal_tools::parse_argument (argc, argv, "-nr_bar_labels", nr_labels); 
+  barActor->SetNumberOfLabels (nr_labels);
+  
+  barActor->SetWidth (0.9); barActor->SetHeight (0.1);
+  vtkTextProperty *prop = barActor->GetLabelTextProperty ();
+  prop->SetFontSize (10);
+  barActor->SetLabelTextProperty (prop);
+  barActor->SetTitleTextProperty (prop);
+//    barActor->GetLabelTextProperty ()->PrintSelf (std::cerr, 0);
+  return barActor;
+}
+
 
 #endif
