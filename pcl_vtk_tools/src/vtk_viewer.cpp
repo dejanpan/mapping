@@ -1,23 +1,46 @@
 /*
- *  Export a VTK file into a different format (using vtkExporter)
- *  Copywrong (K) 2007 R.
+ * Software License Agreement (BSD License)
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  Copyright (c) 2010, Willow Garage, Inc.
+ *  All rights reserved.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
- * $Id: Viewer.cc,v 1.0 2006/10/04 12:00:00 radu Exp $
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *
  */
+
+/**
+  * \author Radu Bogdan Rusu
+  * \author prelimiary port Dejan Pangercic
+  *
+  * @b vtk_viewer visualizes .vtk and .ply formats
+  * Press w(wireframe), s(surface) or p(point) to switch between modes.
+  */
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -113,17 +136,13 @@ main (int argc, char** argv)
     return (-1);
   }
   int minIdx = 0, maxIdx = INT_MAX;
-  //ParseRangeArguments (argc, argv, "-minmaxIdx", minIdx, maxIdx);
   terminal_tools::parse_2x_arguments (argc, argv, "-minmaxIdx", minIdx, maxIdx);
   
-  //   // Parse the command line arguments for .log files
   bool play = false;
-  //   ParseArgument (argc, argv, "-play", play);
   terminal_tools::parse_argument (argc, argv, "-play", play);
   std::vector<int> pLogFileIndices;
   if (play)
   {
-    //pLogFileIndices = ParseFileExtensionArgument (argc, argv, ".log");
     pLogFileIndices = terminal_tools::parse_file_extension_argument (argc, argv, ".log");
     if (pLogFileIndices.size () != 1)
     {
@@ -132,48 +151,33 @@ main (int argc, char** argv)
     }
   }
   bool save_camera_position = true;
-  //   ParseArgument (argc, argv, "-save_cam", save_camera_position);
   terminal_tools::parse_argument (argc, argv, "-save_cam", save_camera_position);
-
-  //   ParseArgument (argc, argv, "-cell", cell_scalar);
   terminal_tools::parse_argument (argc, argv, "-cell", cell_scalar);
-  //   ParseArgument (argc, argv, "-no_shadows", no_shadows);
   terminal_tools::parse_argument (argc, argv, "-no_shadows", no_shadows);
   
   double text = 0;
-  //   ParseArgument (argc, argv, "-text", text);
   terminal_tools::parse_argument (argc, argv, "-text", text);
   int movieMode = 0;
-  //   ParseArgument (argc, argv, "-movie", movieMode);
   terminal_tools::parse_argument (argc, argv, "-movie", movieMode);
   const char* movieFile = "output.avi";
 
   double fcolor[3] = {0.9, 0.9, 0.9};
-  //  bool fcolorparam = Parse3xArguments (argc, argv, "-fc", fcolor[0], fcolor[1], fcolor[2]);
   std::vector<double> fcolorR, fcolorB, fcolorG;
-  //bool fcolorparam = ParseMultiple3xArguments (argc, argv, "-fc", fcolorR, fcolorG, fcolorB);
   bool fcolorparam = terminal_tools::parse_multiple_3x_arguments (argc, argv, "-fc", fcolorR, fcolorG, fcolorB);
    
   double line_width = -1;
-  //   ParseArgument (argc, argv, "-lw", line_width);
   terminal_tools::parse_argument (argc, argv, "-lw", line_width);
-  //   ParseMultipleArguments (argc, argv, "-ps", psize);
   terminal_tools::parse_multiple_arguments (argc, argv, "-ps", psize);
-  //   ParseArgument (argc, argv, "-sc", scale);
   terminal_tools::parse_argument (argc, argv, "-sc", scale);
-  //   ParseArgument (argc, argv, "-lut", lut_enable);
   terminal_tools::parse_argument (argc, argv, "-lut", lut_enable);
-  //   ParseArgument (argc, argv, "-lod", lod_enable);
   terminal_tools::parse_argument (argc, argv, "-lod", lod_enable);
   if (lod_enable)
     print_info (stdout, "LOD enabled.\n");
 
   // Parse the command line arguments for .vtk or .ply files
-  //pFileIndices = ParseFileNamesArgument (argc, argv);
   pFileIndices = terminal_tools::parse_file_extension_argument (argc, argv, ".vtk");;
   //TODO: implement parser for ply too
 
-  //vtkDataSet *data[pFileIndices.size ()];
   vtkSmartPointer<vtkPolyData> data;
   
   // Create Renderer
