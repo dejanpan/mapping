@@ -35,7 +35,8 @@ rosbuild_add_library (pcl_cloud_algos
   #src/pcl_cloud_algos/segment_differences.cpp
   #src/pcl_cloud_algos/global_rsd.cpp
   src/pcl_cloud_algos/depth_image_triangulation.cpp
-  src/pcl_cloud_algos/svm_classification.cpp)
+  src/pcl_cloud_algos/svm_classification.cpp
+  )
 
 target_link_libraries (pcl_cloud_algos pcl_ias_sample_consensus)
 

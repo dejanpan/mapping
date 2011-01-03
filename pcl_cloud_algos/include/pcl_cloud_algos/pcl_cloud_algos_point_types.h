@@ -72,4 +72,5 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::GRSDSignature21,
                                    (float[21], histogram, grsd)
 );
 
-#endif  //#ifndef PCL_CLOUD_ALGOS_POINT_TYPES_H_
+#endif 
+
