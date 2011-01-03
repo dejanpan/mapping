@@ -34,30 +34,12 @@
 #include <pcl_cloud_algos/cloud_algos.h>
 #include <pcl_cloud_algos/pcl_cloud_algos_point_types.h>
 
-// For extra Eigen functions
+// For Extra Eigen functions
 #include <Eigen3/Core>
-// If needed:
 #include <Eigen3/LU> // matrix inversion
 #include <Eigen3/Geometry> // cross product
 
-// Kd Tree
-// #include <point_cloud_mapping/kdtree/kdtree_ann.h>
-
-// Cloud geometry
-// #include <point_cloud_mapping/geometry/angles.h>
-// #include <point_cloud_mapping/geometry/areas.h>
-// #include <point_cloud_mapping/geometry/point.h>
-// #include <point_cloud_mapping/geometry/distances.h>
-// #include <point_cloud_mapping/geometry/nearest.h>
-// #include <point_cloud_mapping/geometry/transforms.h>
-// #include <point_cloud_mapping/geometry/statistics.h>
-
-// Sample Consensus
-// #include <point_cloud_mapping/sample_consensus/sac.h>
-// #include <point_cloud_mapping/sample_consensus/msac.h>
-// #include <point_cloud_mapping/sample_consensus/ransac.h>
-
-// TriangleMesh to output resultant triangles
+// TriangleMesh to Output Triangles
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Point32.h>
@@ -80,8 +62,8 @@ class DepthImageTriangulation : public CloudAlgo
 
   // Input/Output type
   typedef sensor_msgs::PointCloud2 InputType;
-  //typedef mapping_msgs::PolygonalMap OutputType;
   typedef triangle_mesh_msgs::TriangleMesh OutputType;
+  
   // Topic name to advertise
   static std::string default_output_topic ()
   {
@@ -137,17 +119,18 @@ class DepthImageTriangulation : public CloudAlgo
   {
     max_length = 0.05;
     max_index_ = max_line_ = 0;
-    write_to_vtk_ = false;
+    write_to_vtk_ = true;
     save_pcd_ = false;
     line_nr_in_channel_ = index_nr_in_channel_ = -1;
   }
-  // DepthImageTriangulation () { }
 
+  // DepthImageTriangulation () { }
   ros::Publisher createPublisher (ros::NodeHandle& nh)
   {
     ros::Publisher p = nh.advertise<OutputType> (default_output_topic (), 5);
     return p;
   }
+
 private:
   //! \brief lock the function when restoring line id
   boost::mutex  cloud_lock_;
@@ -170,8 +153,7 @@ private:
   //! \brief write output to vtk yes/no, save PCD file yes/no
   bool write_to_vtk_, save_pcd_;
 
-  // \brief resultant output triangulated map
-  //OutputType pmap_;
+  //! \brief resultant output triangulated map
   boost::shared_ptr<OutputType> mesh_;
 };
 }

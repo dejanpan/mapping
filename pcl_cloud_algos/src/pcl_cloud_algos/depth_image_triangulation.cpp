@@ -335,7 +335,7 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
         // move to next point
         a++;
 
-        //skipped = false;
+        // skipped = false;
         if ((unsigned int)a >= cloud_with_line_.points.size())
           break;
       } // END OF : top left corner found 
@@ -350,7 +350,6 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
   tr.resize(nr);
   mesh_->header = cloud_with_line_.header;   
   mesh_->sending_node = ros::this_node::getName();   
-  //geometry_msgs::Point32 tr_i, tr_j, tr_k;
   triangle_mesh_msgs::Triangle tr_mesh;
 
 #ifdef DEBUG  
@@ -386,7 +385,7 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
     } 
   }
 
-  // fill in intensities (needed for e.g. laser-to-camera calibration
+  // fill in intensities (needed e.g. laser-to-camera calibration)
   std::vector<sensor_msgs::PointField> fields;
   int iIdx = getFieldIndex (cloud_with_line_, "intensity", fields);
   if (iIdx == -1)
@@ -400,7 +399,7 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
       mesh_->intensities[i] = cloud_with_line_.points[i].intensities;
   }
 
-  // write to vtk file for display in e.g. Viewer
+  // write to vtk file for display in e.g. vtk viewer
   if (write_to_vtk_)
     write_vtk_file ("data/triangles.vtk", tr, cloud_with_line_, nr);
   if (verbosity_level_ > 0) ROS_INFO ("Triangulation with %d triangles completed in %g seconds", tr.size(), (ros::Time::now() - ts).toSec());
