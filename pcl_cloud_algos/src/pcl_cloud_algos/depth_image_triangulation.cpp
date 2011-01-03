@@ -38,7 +38,6 @@
 #include <math.h>
 
 #include <ros/this_node.h>
-
 #include <pcl/io/pcd_io.h>
 
 #include <pcl_cloud_algos/cloud_algos.h>
@@ -79,13 +78,13 @@ void DepthImageTriangulation::get_scan_and_point_id (pcl::PointCloud<pcl::PointX
 
   if (save_pcd_)
   {
-    if (verbosity_level_ > 0) ROS_INFO("Saving PCD containing line numbers as cloud_line.pcd in ROS home.");
+    if (verbosity_level_ > 0) ROS_INFO ("Saving PCD containing line numbers as cloud_line.pcd in ROS home.");
     pcl::PCDWriter pcd_writer;
     pcd_writer.write ("cloud_line.pcd", cloud_in, false);
   }
 
 #ifdef DEBUG
-  if (verbosity_level_ > 1) ROS_INFO("Nr lines: %d, Max point ID: %d Completed in %f seconds", max_line_, max_index_, (ros::Time::now () - ts).toSec ());
+  if (verbosity_level_ > 1) ROS_INFO ("Nr lines: %d, Max point ID: %d Completed in %f seconds", max_line_, max_index_, (ros::Time::now () - ts).toSec ());
 #endif
 }
 
@@ -100,10 +99,9 @@ float DepthImageTriangulation::dist_3d (const pcl::PointCloud<pcl::PointXYZINorm
 ////////////////////////////////////////////////////////////////////////////////
 void DepthImageTriangulation::init (ros::NodeHandle &nh)
 {
-  // node handler and publisher
-  nh_ = nh;
-
-  // ROS_INFO("DepthImageTriangulation Node initialized");
+  // node handler and publisher 
+  nh_ = nh; 
+  ROS_INFO ("Depth Image Triangulation Node initialized");
   nh_.param("save_pcd", save_pcd_, save_pcd_);
 }
 
@@ -123,14 +121,12 @@ void DepthImageTriangulation::post ()
 std::vector<std::string> DepthImageTriangulation::requires () 
   {
     std::vector<std::string> requires;
-
     // requires 3D coordinates
     requires.push_back("x");
     requires.push_back("y");
     requires.push_back("z");
     // requires index
     requires.push_back("index");
-
     return requires;
   }
 
@@ -138,9 +134,7 @@ std::vector<std::string> DepthImageTriangulation::requires ()
 std::vector<std::string> DepthImageTriangulation::provides ()
   {
     std::vector<std::string> provides;
-
     provides.push_back ("Triangled Mesh");
-
     return provides;
   }
 
@@ -148,40 +142,39 @@ std::vector<std::string> DepthImageTriangulation::provides ()
 std::string DepthImageTriangulation::process (const boost::shared_ptr<const DepthImageTriangulation::InputType>& cloud_in)
 {
 #ifdef DEBUG
-  if (verbosity_level_ > 1) ROS_INFO("\n");
-  if (verbosity_level_ > 1) ROS_INFO("PointCloud msg with size %ld received", cloud_in->points.size());
+  if (verbosity_level_ > 1) ROS_INFO ("\n");
+  if (verbosity_level_ > 1) ROS_INFO ("PointCloud msg with size %ld received", cloud_in->points.size());
 #endif
   
   // we assume here having either SICK LMS400 data which has line and index coeff
   // or
   // Hokuyo UTM 30LX which only returns index coeff, line has to be computed
 
-  std::cerr << " before" << std::endl ;
-  fromROSMsg (*cloud_in, cloud_with_line_);
-  std::cerr << " after" << std::endl ;
-  
-
-  // lock down the point cloud 
-  boost::mutex::scoped_lock lock (cloud_lock_);
-  // cloud_in gets processed and copied into cloud_with_line_
-  // max_line_ and max_index_ are also computed in get_scan_and_point_id
-  get_scan_and_point_id (cloud_with_line_);
-  // print the size of point cloud 
-  if (verbosity_level_ > 0) ROS_INFO("max line: %d, max index: %d", max_line_, max_index_);
-
   ros::Time ts = ros::Time::now ();
 
-  std::vector<triangle> tr;
-  // resize big time to prevent seg fault
-  tr.resize(2*max_line_*max_index_);    
-  mesh_ = boost::shared_ptr<DepthImageTriangulation::OutputType>(new DepthImageTriangulation::OutputType);
-  mesh_->points.resize(0); // 2*max_line_*max_index_);
-  mesh_->triangles.resize(0); // 2*max_line_*max_index_);
-  mesh_->intensities.resize(0);
+  // convert from sensor_msgs::PointCloud2 to pcl::PointCloud<T>
+  fromROSMsg (*cloud_in, cloud_with_line_);
+ 
+  // lock down the point cloud 
+  boost::mutex::scoped_lock lock (cloud_lock_);
 
-  int nr = 0; // number of triangles
+  // <cloud_in> gets processed into <cloud_with_line_> and <max_line_> with <max_index_> are computed in get_scan_and_point_id ()
+  get_scan_and_point_id (cloud_with_line_);
+
+  // print the size of point cloud 
+  if (verbosity_level_ > 0) ROS_INFO ("max line: %d, max index: %d", max_line_, max_index_);
+
+  std::vector<triangle> tr;
+  tr.resize (2*max_line_*max_index_);  
+  mesh_ = boost::shared_ptr<DepthImageTriangulation::OutputType>(new DepthImageTriangulation::OutputType);
+  mesh_->points.resize (0);
+  mesh_->triangles.resize (0);
+  mesh_->intensities.resize (0);
+
+  // number of triangles
+  int nr = 0; 
   int nr_tr;
-    
+   
   int a = 0, b, c, d, e;
   bool skipped = false;
     
@@ -193,7 +186,7 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
     {
       if (cloud_with_line_.points[a].line == i && cloud_with_line_.points[a].index == j)
       {
-        ROS_INFO("found point a = %d\n", a);
+        ROS_INFO ("found point a = %d\n", a);
 
         b = -1;
         c = -1;
@@ -204,14 +197,14 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
         if ((unsigned int)a+1 < cloud_with_line_.points.size() && cloud_with_line_.points[a+1].line == i && cloud_with_line_.points[a+1].index == j+1)
           b = a+1;
 
-        ROS_INFO("resolved point b = %d\n", b);
+        ROS_INFO ("resolved point b = %d\n", b);
 
         // go to next line
         int test = a;
         while ((unsigned int)test < cloud_with_line_.points.size() &&  cloud_with_line_.points[test].line < i+1)
           test++;
 
-        ROS_INFO("resolved next line\n");
+        ROS_INFO ("resolved next line\n");
 
         // if next line exists
         if ((unsigned int)test < cloud_with_line_.points.size() && cloud_with_line_.points[test].line == i+1)
@@ -219,7 +212,8 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
           // a skipped triangle exists because of missing 'a'
           if (skipped)
           {
-            skipped = false; // reset var
+            // reset var
+            skipped = false;
 
             // go to column j-1
             while ((unsigned int)test < cloud_with_line_.points.size() &&  cloud_with_line_.points[test].index < j-1)
@@ -246,7 +240,7 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
           // if not at the end of dataset
           if ((unsigned int)test < cloud_with_line_.points.size())
           {
-            // if column exists
+          // if column exists
             if (cloud_with_line_.points[test].line == i+1 && cloud_with_line_.points[test].index == j)
             {
               c = test;
@@ -264,8 +258,8 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
           float AC = dist_3d (cloud_with_line_, a, c);
           if (e != -1)
           {
-            //ROS_INFO ("a c e\n");
             // a c e
+            // ROS_INFO ("a c e\n");
             float AE = dist_3d (cloud_with_line_, a, e);
             float CE = dist_3d (cloud_with_line_, c, e);
             if (AC < max_length && CE < max_length && AE < max_length)
@@ -279,9 +273,8 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
 
           if (b != -1)
           {
-            ROS_INFO ("a b c\n");
-
             // a b c
+            // ROS_INFO ("a b c\n");
             float AB = dist_3d (cloud_with_line_, a, b);
             float BC = dist_3d (cloud_with_line_, b, c);
             float AC = dist_3d (cloud_with_line_, a, c);
@@ -295,8 +288,8 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
 
             if (d != -1)
             {
-              //ROS_INFO ("b c d\n");
               // b c d
+              // ROS_INFO ("b c d\n");
               float BD = dist_3d (cloud_with_line_, b, d);
               float CD = dist_3d (cloud_with_line_, c, d);
               if (BD < max_length && BC < max_length && CD < max_length)
@@ -310,8 +303,8 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
           }
           else if (d != -1)
           {
-            //ROS_INFO ("a c d\n");
             // a c d
+            // ROS_INFO ("a c d\n");
             float AD = dist_3d (cloud_with_line_, a, d);
             float CD = dist_3d (cloud_with_line_, c, d);
             if (AD < max_length && CD < max_length && AC < max_length)
@@ -325,8 +318,8 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
         }
         else if (b != -1 && d != -1)
         {
-          //ROS_INFO ("a b d\n");
           // a b d
+          // ROS_INFO ("a b d\n");
           float AB = dist_3d (cloud_with_line_, a, b);
           float AD = dist_3d (cloud_with_line_, a, d);
           float BD = dist_3d (cloud_with_line_, b, d);
@@ -341,29 +334,31 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
 
         // move to next point
         a++;
+
         //skipped = false;
         if ((unsigned int)a >= cloud_with_line_.points.size())
           break;
-      } // END OF: top left corner found
+      } // END OF : top left corner found 
       else
         skipped = true;
-    }
+      } // END OF : number of indexes 
     if ((unsigned int)a >= cloud_with_line_.points.size())
       break;
-  }
+  } // END OF : number of lines 
+
   nr_tr = nr;
   tr.resize(nr);
   mesh_->header = cloud_with_line_.header;   
   mesh_->sending_node = ros::this_node::getName();   
-  geometry_msgs::Point32 tr_i, tr_j, tr_k;
+  //geometry_msgs::Point32 tr_i, tr_j, tr_k;
   triangle_mesh_msgs::Triangle tr_mesh;
 
 #ifdef DEBUG  
-  if (verbosity_level_ > 1) ROS_INFO("Triangle a: %d, b: %d, c: %d", tr[i].a, tr[i].b, tr[i].c);
+  if (verbosity_level_ > 1) ROS_INFO ("Triangle a: %d, b: %d, c: %d", tr[i].a, tr[i].b, tr[i].c);
 #endif
 
+  // fill up triangular mesh msg and send it on the topic
   geometry_msgs::Point32 p;
-  // fill up TriangularMesh msg and send it on the topic
   for (unsigned int i = 0; i < cloud_with_line_.points.size(); i++)
   {
     p.x = cloud_with_line_.points[i].x;
@@ -374,14 +369,14 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
   
   for (int i = 0; i < nr; i++)
   {
-    if ((unsigned int)tr[i].a >= cloud_with_line_.points.size() || tr[i].a < 0 || isnan(tr[i].a))
-      ;//printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, tr[i].a, tr[i].b, tr[i].c, cloud_with_line_.points.size());
-    else if ((unsigned int)tr[i].b >= cloud_with_line_.points.size() || tr[i].b < 0 || isnan(tr[i].b))
-      ;//printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, tr[i].a, tr[i].b, tr[i].c, cloud_with_line_.points.size());
-    else if ((unsigned int)tr[i].c >= cloud_with_line_.points.size() || tr[i].c < 0 || isnan(tr[i].c))
-      ;//printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, tr[i].a, tr[i].b, tr[i].c, cloud_with_line_.points.size());
-    else if (tr[i].a == tr[i].b || tr[i].a == tr[i].c || tr[i].b == tr[i].c)
-      ;//printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, tr[i].a, tr[i].b, tr[i].c, cloud_with_line_.points.size());
+    if ((unsigned int)tr[i].a >= cloud_with_line_.points.size() || tr[i].a < 0 || isnan(tr[i].a)); 
+      // printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, tr[i].a, tr[i].b, tr[i].c, cloud_with_line_.points.size());
+    else if ((unsigned int)tr[i].b >= cloud_with_line_.points.size() || tr[i].b < 0 || isnan(tr[i].b));
+      // printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, tr[i].a, tr[i].b, tr[i].c, cloud_with_line_.points.size());
+    else if ((unsigned int)tr[i].c >= cloud_with_line_.points.size() || tr[i].c < 0 || isnan(tr[i].c)); 
+      // printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, tr[i].a, tr[i].b, tr[i].c, cloud_with_line_.points.size());
+    else if (tr[i].a == tr[i].b || tr[i].a == tr[i].c || tr[i].b == tr[i].c);
+      // printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, tr[i].a, tr[i].b, tr[i].c, cloud_with_line_.points.size());
     else
     {
       tr_mesh.i = tr[i].a;
@@ -405,15 +400,9 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
       mesh_->intensities[i] = cloud_with_line_.points[i].intensities;
   }
 
-  ////set indices back to initial values
-  //line_nr_in_channel_ = index_nr_in_channel_ = -1;
-  //
-  ////  mesh_.triangles.resize(nr);
-  ////  mesh_.points.resize(nr*3);
-
   // write to vtk file for display in e.g. Viewer
-  // if (write_to_vtk_)
-  // write_vtk_file ("triangles.vtk", tr, cloud_with_line_, nr);
+  if (write_to_vtk_)
+    write_vtk_file ("data/triangles.vtk", tr, cloud_with_line_, nr);
   if (verbosity_level_ > 0) ROS_INFO ("Triangulation with %d triangles completed in %g seconds", tr.size(), (ros::Time::now() - ts).toSec());
   return std::string("");
 }
@@ -438,19 +427,19 @@ void DepthImageTriangulation::write_vtk_file (std::string output, std::vector<tr
   for (unsigned int i = 0; i < cloud_with_line_.points.size(); i++)
     fprintf(f,"1 %d\n", i);
 
-  if (verbosity_level_ > 0) ROS_INFO("vector: %d, nr: %d  ", triangles.size(), nr_tr);
+  if (verbosity_level_ > 0) ROS_INFO ("vector: %d, nr: %d  ", triangles.size(), nr_tr);
 
   fprintf(f,"\nPOLYGONS %d %d\n", nr_tr, 4*nr_tr);
   for (int i = 0; i < nr_tr; i++)
   {
-    if ((unsigned int)triangles[i].a >= cloud_with_line_.points.size() || triangles[i].a < 0 || isnan(triangles[i].a))
-      ;//printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, triangles[i].a, triangles[i].b, triangles[i].c, cloud_with_line_.points.size());
-    else if ((unsigned int)triangles[i].b >= cloud_with_line_.points.size() || triangles[i].b < 0 || isnan(triangles[i].b))
-      ;//printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, triangles[i].a, triangles[i].b, triangles[i].c, cloud_with_line_.points.size());
-    else if ((unsigned int)triangles[i].c >= cloud_with_line_.points.size() || triangles[i].c < 0 || isnan(triangles[i].c))
-      ;//printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, triangles[i].a, triangles[i].b, triangles[i].c, cloud_with_line_.points.size());
-    else if (triangles[i].a == triangles[i].b || triangles[i].a == triangles[i].c || triangles[i].b == triangles[i].c)
-      ;//printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, triangles[i].a, triangles[i].b, triangles[i].c, cloud_with_line_.points.size());
+    if ((unsigned int)triangles[i].a >= cloud_with_line_.points.size() || triangles[i].a < 0 || isnan(triangles[i].a));
+      //printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, triangles[i].a, triangles[i].b, triangles[i].c, cloud_with_line_.points.size());
+    else if ((unsigned int)triangles[i].b >= cloud_with_line_.points.size() || triangles[i].b < 0 || isnan(triangles[i].b));
+      // printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, triangles[i].a, triangles[i].b, triangles[i].c, cloud_with_line_.points.size());
+    else if ((unsigned int)triangles[i].c >= cloud_with_line_.points.size() || triangles[i].c < 0 || isnan(triangles[i].c));
+      // printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, triangles[i].a, triangles[i].b, triangles[i].c, cloud_with_line_.points.size());
+    else if (triangles[i].a == triangles[i].b || triangles[i].a == triangles[i].c || triangles[i].b == triangles[i].c);
+      // printf("triangle %d/%d: %d %d %d / %d\n", i, nr_tr, triangles[i].a, triangles[i].b, triangles[i].c, cloud_with_line_.points.size());
     else
       fprintf(f,"3 %d %d %d\n",triangles[i].a, triangles[i].c, triangles[i].b);
   }
