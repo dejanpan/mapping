@@ -387,10 +387,10 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
 
   // fill in intensities (needed e.g. laser-to-camera calibration)
   std::vector<sensor_msgs::PointField> fields;
-  int iIdx = getFieldIndex (cloud_with_line_, "intensity", fields);
+  int iIdx = getFieldIndex (cloud_with_line_, "intensities", fields);
   if (iIdx == -1)
   {
-    if (verbosity_level_ > -1) ROS_WARN ("[DepthImageTriangulaton] \"intensites\" channel does not exist");
+    if (verbosity_level_ > -1) ROS_WARN ("[DepthImageTriangulaton] \"intensities\" channel does not exist");
   }
   else
   {
