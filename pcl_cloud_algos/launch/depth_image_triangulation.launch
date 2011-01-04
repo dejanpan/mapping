@@ -1,0 +1,15 @@
+
+<launch>
+
+  <node pkg="pcl_ros" type="pcd_to_pointcloud" name="pcd_to_pointcloud" args="$(find pcl_cloud_algos)/data/icedtea-ascii.pcd 1" output="screen" respawn="true">
+    <remap from="/cloud_pcd" to="/depth_image_triangulation_node/cloud_pcd" />
+  </node>
+
+  <node pkg="pcl_cloud_algos" type="depth_image_triangulation_node" name="depth_image_triangulation_node" output="screen" respawn="true">
+  </node>
+
+  <node pkg="rviz" type="rviz" name="rviz"> 
+  </node>
+
+</launch>
+

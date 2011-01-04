@@ -187,7 +187,7 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
     {
       if (cloud_with_line_.points[a].line == i && cloud_with_line_.points[a].index == j)
       {
-        ROS_INFO ("found point a = %d\n", a);
+        // ROS_INFO ("found point a = %d\n", a);
 
         b = -1;
         c = -1;
@@ -198,14 +198,14 @@ std::string DepthImageTriangulation::process (const boost::shared_ptr<const Dept
         if ((unsigned int)a+1 < cloud_with_line_.points.size() && cloud_with_line_.points[a+1].line == i && cloud_with_line_.points[a+1].index == j+1)
           b = a+1;
 
-        ROS_INFO ("resolved point b = %d\n", b);
+        // ROS_INFO ("resolved point b = %d\n", b);
 
         // go to next line
         int test = a;
         while ((unsigned int)test < cloud_with_line_.points.size() &&  cloud_with_line_.points[test].line < i+1)
           test++;
 
-        ROS_INFO ("resolved next line\n");
+        // ROS_INFO ("resolved next line\n");
 
         // if next line exists
         if ((unsigned int)test < cloud_with_line_.points.size() && cloud_with_line_.points[test].line == i+1)
