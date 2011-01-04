@@ -1,4 +1,3 @@
-
 /* 
  * Copyright (c) 2010, Dejan Pangercic <dejan.pangercic@cs.tum.edu>, 
  Zoltan-Csaba Marton <marton@cs.tum.edu>, Nico Blodow <blodow@cs.tum.edu>
