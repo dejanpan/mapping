@@ -35,7 +35,7 @@ rosbuild_add_library (pcl_cloud_algos
   #src/pcl_cloud_algos/segment_differences.cpp
   #src/pcl_cloud_algos/global_rsd.cpp
   src/pcl_cloud_algos/depth_image_triangulation.cpp
-  src/pcl_cloud_algos/svm_classification.cpp
+#  src/pcl_cloud_algos/svm_classification.cpp
   )
 
 target_link_libraries (pcl_cloud_algos pcl_ias_sample_consensus)
@@ -58,7 +58,7 @@ rosbuild_add_executable (depth_image_triangulation_node  src/pcl_cloud_algos/dep
 get_target_property(prev_props depth_image_triangulation_node COMPILE_FLAGS)
 set_target_properties (depth_image_triangulation_node PROPERTIES COMPILE_FLAGS "${prev_props} -DCREATE_NODE")
 
-rosbuild_add_executable (svm_classification_node  src/pcl_cloud_algos/svm_classification.cpp)
-get_target_property(prev_props svm_classification_node COMPILE_FLAGS)
-set_target_properties (svm_classification_node PROPERTIES COMPILE_FLAGS "${prev_props} -DCREATE_NODE")
+#rosbuild_add_executable (svm_classification_node  src/pcl_cloud_algos/svm_classification.cpp)
+#get_target_property(prev_props svm_classification_node COMPILE_FLAGS)
+#set_target_properties (svm_classification_node PROPERTIES COMPILE_FLAGS "${prev_props} -DCREATE_NODE")
 
