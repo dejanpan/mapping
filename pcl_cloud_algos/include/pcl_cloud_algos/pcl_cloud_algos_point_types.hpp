@@ -58,6 +58,17 @@ namespace pcl
     return (os);
   }
 
+  struct ColorCHLACSignature117
+  {
+    float histogram[117];
+  };
+  inline std::ostream& operator << (std::ostream& os, const ColorCHLACSignature117& p)
+  {
+    for (int i = 0; i < 117; ++i) 
+      os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 117 ? ", " : ")");
+    return (os);
+  }
+
   struct GRSDSignature21
   {
     float histogram[21];
