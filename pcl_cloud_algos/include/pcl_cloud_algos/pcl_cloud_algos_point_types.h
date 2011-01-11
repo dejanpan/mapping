@@ -78,5 +78,16 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::GRSDSignature21,
                                    (float[21], histogram, grsd)
 );
 
+POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PointNormalRADII,
+                                   (float, x, x)
+                                   (float, y, y)
+                                   (float, z, z)
+                                   (float, normal_x, normal_x)
+                                   (float, normal_y, normal_y)
+                                   (float, normal_z, normal_z)
+                                   (float, curvature, curvature)
+                                   (float, r_min, r_min)
+                                   (float, r_max, r_max)
+);
 #endif 
 
