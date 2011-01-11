@@ -79,5 +79,20 @@ namespace pcl
       os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 21 ? ", " : ")");
     return (os);
   }
+
+
+struct PointNormalRADII
+{
+  PCL_ADD_POINT4D;    // This adds the members x,y,z which can also be accessed using the point (which is float[4])                                                              
+  PCL_ADD_NORMAL4D;   // This adds the member normal[3] which can also be accessed using the point (which is float[4])                                                           
+  float curvature, r_min, r_max;
+  
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+} EIGEN_ALIGN16;
+inline std::ostream& operator << (std::ostream& os, const PointNormalRADII& p)
+{
+  os << "(" << p.x << "," << p.y << "," << p.z << " - " << p.normal[0] << "," << p.normal[1] << "," << p.normal[2] << " - " << p.curvature << " - " << p.r_min << "," << p.r_max << ")";
+  return (os);
+}
   
 }  // End namespace
