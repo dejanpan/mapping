@@ -71,6 +71,8 @@ protected:
   octomap::OcTreePCL* octree_;
   octomap::ScanGraph* octomap_graph_;
 
+  octomap::KeyRay ray;
+
   sensor_msgs::PointCloud2 cloud_in_;
   geometry_msgs::PoseArray nbv_pose_array_;
 
@@ -400,27 +402,25 @@ void Nbv::castRayAndLabel(pcl::PointCloud<pcl::PointXYZ>& cloud, octomap::pose6d
     octomap_point3d(0) = pcl_pt.x;
     octomap_point3d(1) = pcl_pt.y;
     octomap_point3d(2) = pcl_pt.z;
-    octomap::OcTreeNodePCL * octree_node1 = octree_->search(octomap_point3d);
-    if (octree_node1 != NULL) {
+    octomap::OcTreeNodePCL * octree_end_node = octree_->search(octomap_point3d);
+    if (octree_end_node != NULL) {
       // Get the nodes along the ray and label them as free
-      std::vector<octomap::point3d> ray;
-      if (octree_->computeRay(origin.trans(), octomap_point3d, ray)) {
-	BOOST_FOREACH (const octomap::point3d& pt, ray) {
-	  octomap::OcTreeNodePCL * free_node = octree_->search(pt);
+      if (octree_->computeRayKeys(origin.trans(), octomap_point3d, ray)) {
+	for(octomap::KeyRay::iterator it=ray.begin(); it != ray.end(); it++) {
+	  octomap::OcTreeNodePCL * free_node = octree_->searchKey(*it);
 	  if (free_node != NULL) {
 	    if (free_node->getLabel() != occupied_label_)
 	      free_node->setLabel(free_label_);
 	  }
 	  else
-	    ROS_DEBUG("free node at x=%f y=%f z=%f not found", pt(0), pt(1), pt(2));
+	    ROS_DEBUG("node in ray not found!");
 	}
       }
       else {
-	ROS_DEBUG("could not compute ray from [%f %f %f] to [%f %f %f]",
-		  origin.x(), origin.y(), origin.z(), pcl_pt.x, pcl_pt.y, pcl_pt.z);
+	ROS_DEBUG("could not compute ray from [%f %f %f] to [%f %f %f]", origin.x(), origin.y(), origin.z(), pcl_pt.x, pcl_pt.y, pcl_pt.z);
       }
-      octree_node1->set3DPointInliers(0);
-      octree_node1->setLabel(occupied_label_);
+      octree_end_node->set3DPointInliers(0);
+      octree_end_node->setLabel(occupied_label_);
     }
     else {
       ROS_DEBUG("ERROR: node at [%f %f %f] not found", pcl_pt.x, pcl_pt.y, pcl_pt.z);
