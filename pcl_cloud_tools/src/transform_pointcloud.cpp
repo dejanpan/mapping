@@ -48,12 +48,10 @@
 
 #include "pcl/io/pcd_io.h"
 #include "pcl/point_types.h"
+#include "pcl_ros/transforms.h"
 
 //#include "pcl_ros/publisher.h"
 //#include "pcl_ros/subscriber.h"
-
-//for transformPointCloud
-#include <pcl_tf/transforms.h>
 
 #include <tf/transform_listener.h>
 
@@ -63,10 +61,10 @@ class TransformPointcloudNode
 {
 protected:
   ros::NodeHandle nh_;
-  
+
 public:
   string output_cloud_topic_, input_cloud_topic_, to_frame_;
-  
+
   ros::Subscriber sub_;
   ros::Publisher pub_;
   tf::TransformListener tf_;
@@ -97,7 +95,7 @@ public:
       //ROS_ASSERT_MSG(found_transform, "Could not transform to camera frame");
       tf::StampedTransform transform;
       tf_.lookupTransform(to_frame_,pc->header.frame_id, pc->header.stamp, transform);
-      pcl::transformPointCloud(to_frame_, transform, *pc, output_cloud_);
+      pcl_ros::transformPointCloud(to_frame_, transform, *pc, output_cloud_);
       ROS_DEBUG("[TransformPointcloudNode:] Point cloud published in frame %s", output_cloud_.header.frame_id.c_str());
       pub_.publish (output_cloud_);
     }
