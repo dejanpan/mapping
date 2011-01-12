@@ -52,9 +52,6 @@ and publishes them along with the cloud's centroid.
 #include "pcl/common/common.h"
 #include "pcl/ModelCoefficients.h"
 
-//for transformPointCloud
-#include <pcl_tf/transforms.h>
-
 #include <tf/transform_listener.h>
 #include <geometry_msgs/PoseStamped.h>
 
@@ -67,7 +64,7 @@ protected:
 
 public:
   string output_pose_topic_, input_model_topic_;
-  
+
   ros::Subscriber sub_;
   ros::Publisher pub_;
 

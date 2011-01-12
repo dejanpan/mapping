@@ -50,9 +50,6 @@
 #include "pcl/point_types.h"
 #include "pcl/common/common.h"
 
-//for transformPointCloud
-#include <pcl_tf/transforms.h>
-
 #include <tf/transform_listener.h>
 #include <visualization_msgs/Marker.h>
 
@@ -62,10 +59,10 @@ class HullContractNode
 {
 protected:
   ros::NodeHandle nh_;
-  
+
 public:
   string output_cloud_topic_, input_cloud_topic_;
-  
+
   ros::Subscriber sub_;
   ros::Publisher pub_;
   ros::Publisher vis_pub_;
@@ -77,7 +74,7 @@ public:
   pcl::PointXYZ point_center_;
   visualization_msgs::Marker marker_;
 
-  double padding_, offset_x_; 
+  double padding_, offset_x_;
   ////////////////////////////////////////////////////////////////////////////////
   HullContractNode  (ros::NodeHandle &n) : nh_(n)
   {
@@ -109,7 +106,7 @@ public:
     // float min_x, max_y, min_y, z;
     // min_x = min_y = FLT_MAX;
     // max_y = FLT_MIN;
-    
+
     for (unsigned long i = 0; i < cloud_in_.points.size(); i++)
     {
       //hack to preserve the closest edge of the plane
@@ -125,7 +122,7 @@ public:
       // 	  min_x = cloud_in_.points[i].x;
       // 	  z = cloud_in_.points[i].z;
       // 	}
-      double dist_to_center = sqrt((point_center_.x - cloud_in_.points[i].x) * (point_center_.x - cloud_in_.points[i].x) + 
+      double dist_to_center = sqrt((point_center_.x - cloud_in_.points[i].x) * (point_center_.x - cloud_in_.points[i].x) +
                                    (point_center_.y - cloud_in_.points[i].y) * (point_center_.y - cloud_in_.points[i].y));
       ROS_DEBUG("[HullContractNode:] Dist to center: %lf", dist_to_center);
       double angle;
@@ -175,7 +172,7 @@ public:
 
   void publish_center_radius()
   {
-    
+
   }
 };
 

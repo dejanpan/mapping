@@ -15,8 +15,10 @@
   <depend package="mapping_msgs" />
   <depend package="yaml_cpp" />
   <!--See http://octomap.sourceforge.net/ -->
-  <depend package="vtk" />
   <depend package="pcl_visualization" />
+
+  <rosdep name="libvtk" />
+
 <!--   <depend package="cop_for_external_dependencies" /> -->
   <export>
     <cpp cflags="-I${prefix}/include/" />
