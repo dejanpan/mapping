@@ -31,85 +31,96 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: transform_pointcloud.cpp 30719 2010-07-09 20:28:41Z rusu $
+ * $Id: human_tracker.cpp 30719 2010-07-09 20:28:41Z rusu $
  *
  */
 
 /**
-
+human tracker tracks human using openni_tracker and detects
+stop (right hand streched-out) and start (right hand in L) gestures.
 \author Dejan Pangercic
 
-@b transform_pointcloud transforms cloud from frame1 to frame2.
+@b 
 
 **/
 
 // ROS core
 #include <ros/ros.h>
-
-#include "pcl/io/pcd_io.h"
-#include "pcl/point_types.h"
-
-//#include "pcl_ros/publisher.h"
-//#include "pcl_ros/subscriber.h"
-
-//for transformPointCloud
-#include <pcl_tf/transforms.h>
+#include <pcl/common/angles.h>
 
 #include <tf/transform_listener.h>
 
 using namespace std;
 
-class TransformPointcloudNode
+class HumanTracker
 {
 protected:
   ros::NodeHandle nh_;
   
 public:
-  string output_cloud_topic_, input_cloud_topic_, to_frame_;
-  
-  ros::Subscriber sub_;
-  ros::Publisher pub_;
   tf::TransformListener tf_;
-
-  sensor_msgs::PointCloud2 output_cloud_;
+  std::string source_frame_, target_frame_;
+  double tf_buffer_time_;
   ////////////////////////////////////////////////////////////////////////////////
-  TransformPointcloudNode  (ros::NodeHandle &n) : nh_(n)
+  HumanTracker  (ros::NodeHandle &n) : nh_(n)
   {
-    // Maximum number of outgoing messages to be queued for delivery to subscribers = 1
-    nh_.param("input_cloud_topic", input_cloud_topic_, std::string("cloud_pcd"));
-    output_cloud_topic_ = input_cloud_topic_ + "_transformed";
-    nh_.param("to_frame", to_frame_, std::string("base_link"));
-
-    sub_ = nh_.subscribe (input_cloud_topic_, 1,  &TransformPointcloudNode::cloud_cb, this);
-    ROS_INFO ("[TransformPointcloudNode:] Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
-    pub_ = nh_.advertise<sensor_msgs::PointCloud2>(output_cloud_topic_, 1);
-    ROS_INFO ("[TransformPointcloudNode:] Will be publishing data on topic %s.", nh_.resolveName (output_cloud_topic_).c_str ());
+    nh_.param("source_frame", source_frame_, std::string("neck"));
+    nh_.param("target_frame", target_frame_, std::string("right_elbow"));
+    nh_.param("tf_buffer_time", tf_buffer_time_, 10.0);
   }
 
   ////////////////////////////////////////////////////////////////////////////////
-  // cloud_cb (!)
-  void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pc)
+  // spin (!)
+  void spin ()
   {
-    bool found_transform = tf_.waitForTransform(pc->header.frame_id, to_frame_,
-                                                pc->header.stamp, ros::Duration(10.0));
-    if (found_transform)
+    ros::Rate loop_rate(20);
+    while (ros::ok())
     {
-      //ROS_ASSERT_MSG(found_transform, "Could not transform to camera frame");
-      tf::StampedTransform transform;
-      tf_.lookupTransform(to_frame_,pc->header.frame_id, pc->header.stamp, transform);
-      pcl::transformPointCloud(to_frame_, transform, *pc, output_cloud_);
-      ROS_DEBUG("[TransformPointcloudNode:] Point cloud published in frame %s", output_cloud_.header.frame_id.c_str());
-      pub_.publish (output_cloud_);
+      ros::Time time = ros::Time::now();
+      bool found_transform = tf_.waitForTransform(source_frame_, target_frame_,
+                                                   time, ros::Duration(tf_buffer_time_));
+      if (found_transform)
+      {
+        //ROS_ASSERT_MSG(found_transform, "Could not transform to camera frame");
+        tf::StampedTransform transform;
+        tf_.lookupTransform(source_frame_, target_frame_, time, transform);
+        double r, p, y;
+        btMatrix3x3 m = transform.getBasis();
+        m.getRPY(r, p, y);
+        // ROS_INFO("[HumanTracker:] Transform between %s and %s: %f, %f, %f, %f, %f, %f", source_frame_.c_str(), 
+        //       target_frame_.c_str(), transform.getOrigin().x(), transform.getOrigin().y(), 
+        //       transform.getOrigin().z(), r, p, y);
+        if (pcl::deg2rad(80.0) < r && r <  pcl::deg2rad(100.0)
+            && pcl::deg2rad(-10.0) < p && p <  pcl::deg2rad(10.0)
+            pcl::deg2rad(80.0) < y && y <  pcl::deg2rad(100.0))
+        {
+          ROS_INFO("Stop");
+        }
+        else if (pcl::deg2rad(80.0) < r && r <  pcl::deg2rad(100.0)
+                 && pcl::deg2rad(-10.0) < p && p <  pcl::deg2rad(10.0)
+                 pcl::deg2rad(80.0) < y && y <  pcl::deg2rad(100.0))
+        {
+          ROS_INFO("Start");
+        }
+        else
+        {
+          //nothing
+        }
+      }
+      ros::spinOnce();
+      loop_rate.sleep();
+      //      ROS_INFO("Sleeping!");
     }
   }
 };
 
 int main (int argc, char** argv)
 {
-  ros::init (argc, argv, "transform_pointcloud_node");
+  ros::init (argc, argv, "human_tracker_node");
   ros::NodeHandle n("~");
-  TransformPointcloudNode tp(n);
-  ros::spin ();
+  HumanTracker ht(n);
+  //ros::spin ();
+  ht.spin();
   return (0);
 }
 
