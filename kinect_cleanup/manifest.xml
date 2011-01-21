@@ -1,14 +1,14 @@
 <package>
-  <description brief="kinekt_cleanup">
+  <description brief="kinect_cleanup">
 
-     kinekt_cleanup is a package to demonstrate desired object locations by
+     kinect_cleanup is a package to demonstrate desired object locations by
      pointing at objects and virtually moving them somewhere
 
   </description>
-  <author>Zoltan-Csaba Marton</author>
+  <author>Zoltan-Csaba Marton, Dejan Pangercic</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/kinekt_cleanup</url>
+  <url>http://ros.org/wiki/kinect_cleanup</url>
   <depend package="roscpp"/>
   <depend package="pcl"/>
 
