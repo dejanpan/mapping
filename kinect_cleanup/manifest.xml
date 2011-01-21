@@ -11,7 +11,7 @@
   <url>http://ros.org/wiki/kinect_cleanup</url>
   <depend package="roscpp"/>
   <depend package="pcl"/>
-
+  <depend package="tf"/>
 </package>
 
 
