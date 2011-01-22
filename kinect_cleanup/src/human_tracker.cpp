@@ -98,14 +98,14 @@ public:
         tf_.lookupTransform(neck_frame_, hand_frame_, time, transform2);                
         if (transform2.getOrigin().x() > 1.5 * transform1.getOrigin().x())
         {
-          //ROS_INFO("Stop");
+          ROS_INFO("Stop");
           stop_ = true;
         }
         else if (0.9 * transform1.getOrigin().x() < transform2.getOrigin().x() && 
                  transform2.getOrigin().x() < 1.1 * transform1.getOrigin().x() &&
                  transform1.getOrigin().y() < transform2.getOrigin().y())
         {
-          //ROS_INFO("Start");
+          ROS_INFO("Start");
           start_ = true;
         }
         else
