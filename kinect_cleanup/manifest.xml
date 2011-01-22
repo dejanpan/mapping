@@ -12,6 +12,7 @@
   <depend package="roscpp"/>
   <depend package="pcl"/>
   <depend package="tf"/>
+  <depend package="sensor_msgs"/>
 </package>
 
 
