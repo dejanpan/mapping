@@ -1,0 +1,8 @@
+uint32 min_row
+uint32 min_col
+uint32 max_row
+uint32 max_col
+float64[4] plane_normal
+float32 rgb
+---
+string error
