@@ -61,6 +61,7 @@ public:
   tf::TransformListener tf_;
   std::string neck_frame_, elbow_frame_, hand_frame_;
   double tf_buffer_time_;
+  bool start_, stop_;
   ////////////////////////////////////////////////////////////////////////////////
   HumanTracker  (ros::NodeHandle &n) : nh_(n)
   {
@@ -68,7 +69,14 @@ public:
     nh_.param("elbow_frame", elbow_frame_, std::string("right_elbow"));
     nh_.param("hand_frame", hand_frame_, std::string("right_hand"));
     nh_.param("tf_buffer_time", tf_buffer_time_, 10.0);
+    start_ = stop_ = false;
   }
+
+  // computeLineCloudIntersection(vector <double> &point)
+  // {
+    
+  
+  // }
 
   ////////////////////////////////////////////////////////////////////////////////
   // spin (!)
@@ -90,18 +98,51 @@ public:
         tf_.lookupTransform(neck_frame_, hand_frame_, time, transform2);                
         if (transform2.getOrigin().x() > 1.5 * transform1.getOrigin().x())
         {
-          ROS_INFO("Start");
+          //ROS_INFO("Stop");
+          stop_ = true;
         }
         else if (0.9 * transform1.getOrigin().x() < transform2.getOrigin().x() && 
                  transform2.getOrigin().x() < 1.1 * transform1.getOrigin().x() &&
                  transform1.getOrigin().y() < transform2.getOrigin().y())
         {
-          ROS_INFO("Stop");
+          //ROS_INFO("Start");
+          start_ = true;
         }
         else
         {
-          ROS_INFO("No gesture");
+          //          ROS_INFO("No gesture");
         }
+      }
+      if (start_)
+      {
+        sleep(17);
+        time = ros::Time::now();
+        bool found_transform3 = tf_.waitForTransform("openni_depth", "left_elbow",
+                                                     time, ros::Duration(tf_buffer_time_));
+
+        bool found_transform4 = tf_.waitForTransform("openni_depth", "left_hand",
+                                                     time, ros::Duration(tf_buffer_time_));
+
+        if (found_transform3 && found_transform4)
+        {
+          tf::StampedTransform transform3, transform4;
+          tf_.lookupTransform("openni_depth", "left_elbow", time, transform3);
+          tf_.lookupTransform("openni_depth", "left_hand", time, transform4);
+          btVector3 direction = transform4.getOrigin() - transform3.getOrigin();
+          std::vector <float> point_axis (6, 0.0);
+          point_axis[0] = transform4.getOrigin().x();
+          point_axis[1] = transform4.getOrigin().y();
+          point_axis[2] = transform4.getOrigin().z();
+          point_axis[3] = direction.normalize().x();
+          point_axis[4] = direction.normalize().y();
+          point_axis[5] = direction.normalize().z();
+          cerr << "point and direction:";
+          for (unsigned long i=0; i < point_axis.size(); i++)
+            cerr << " " << point_axis[i];
+          
+          cerr << endl;
+          start_ = false;
+        } 
       }
       ros::spinOnce();
       loop_rate.sleep();
