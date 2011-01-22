@@ -59,13 +59,14 @@ protected:
   
 public:
   tf::TransformListener tf_;
-  std::string source_frame_, target_frame_;
+  std::string neck_frame_, elbow_frame_, hand_frame_;
   double tf_buffer_time_;
   ////////////////////////////////////////////////////////////////////////////////
   HumanTracker  (ros::NodeHandle &n) : nh_(n)
   {
-    nh_.param("source_frame", source_frame_, std::string("neck"));
-    nh_.param("target_frame", target_frame_, std::string("right_elbow"));
+    nh_.param("neck_frame", neck_frame_, std::string("neck"));
+    nh_.param("elbow_frame", elbow_frame_, std::string("right_elbow"));
+    nh_.param("hand_frame", hand_frame_, std::string("right_hand"));
     nh_.param("tf_buffer_time", tf_buffer_time_, 10.0);
   }
 
@@ -77,39 +78,33 @@ public:
     while (ros::ok())
     {
       ros::Time time = ros::Time::now();
-      bool found_transform = tf_.waitForTransform(source_frame_, target_frame_,
+      bool found_transform1 = tf_.waitForTransform(neck_frame_, elbow_frame_,
                                                    time, ros::Duration(tf_buffer_time_));
-      if (found_transform)
+      bool found_transform2 = tf_.waitForTransform(neck_frame_, hand_frame_,
+                                                   time, ros::Duration(tf_buffer_time_));
+
+      if (found_transform1 && found_transform2)
       {
-        //ROS_ASSERT_MSG(found_transform, "Could not transform to camera frame");
-        tf::StampedTransform transform;
-        tf_.lookupTransform(source_frame_, target_frame_, time, transform);
-        double r, p, y;
-        btMatrix3x3 m = transform.getBasis();
-        m.getRPY(r, p, y);
-        // ROS_INFO("[HumanTracker:] Transform between %s and %s: %f, %f, %f, %f, %f, %f", source_frame_.c_str(), 
-        //       target_frame_.c_str(), transform.getOrigin().x(), transform.getOrigin().y(), 
-        //       transform.getOrigin().z(), r, p, y);
-        if (pcl::deg2rad(80.0) < r && r <  pcl::deg2rad(100.0)
-            && pcl::deg2rad(-10.0) < p && p <  pcl::deg2rad(10.0)
-            pcl::deg2rad(80.0) < y && y <  pcl::deg2rad(100.0))
-        {
-          ROS_INFO("Stop");
-        }
-        else if (pcl::deg2rad(80.0) < r && r <  pcl::deg2rad(100.0)
-                 && pcl::deg2rad(-10.0) < p && p <  pcl::deg2rad(10.0)
-                 pcl::deg2rad(80.0) < y && y <  pcl::deg2rad(100.0))
+        tf::StampedTransform transform1, transform2;
+        tf_.lookupTransform(neck_frame_, elbow_frame_, time, transform1);
+        tf_.lookupTransform(neck_frame_, hand_frame_, time, transform2);                
+        if (transform2.getOrigin().x() > 1.5 * transform1.getOrigin().x())
         {
           ROS_INFO("Start");
         }
+        else if (0.9 * transform1.getOrigin().x() < transform2.getOrigin().x() && 
+                 transform2.getOrigin().x() < 1.1 * transform1.getOrigin().x() &&
+                 transform1.getOrigin().y() < transform2.getOrigin().y())
+        {
+          ROS_INFO("Stop");
+        }
         else
         {
-          //nothing
+          ROS_INFO("No gesture");
         }
       }
       ros::spinOnce();
       loop_rate.sleep();
-      //      ROS_INFO("Sleeping!");
     }
   }
 };
