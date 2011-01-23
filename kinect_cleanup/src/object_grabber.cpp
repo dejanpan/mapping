@@ -70,6 +70,8 @@
 #include <tf/message_filter.h>
 
 #include "kinect_cleanup/FilterObject.h"
+#include "kinect_cleanup/GrabObject.h"
+#include "kinect_cleanup/GetReleasedObject.h"
 
 typedef pcl::PointXYZRGB Point;
 typedef pcl::PointCloud<Point> PointCloud;
@@ -101,9 +103,12 @@ class ObjectGrabber
       nh_.param("cluster_min_height", cluster_min_height_, 0.01);
       nh_.param("cluster_max_height", cluster_max_height_, 0.4);
 
-      cloud_objects_pub_.advertise (nh_, "/moved_object", 10);
-      service_ = nh_.advertiseService("/get_released_object", &ObjectGrabber::getObject, this);
-      ROS_INFO ("[%s] Advertising service on: %s", getName ().c_str (), service_.getService ().c_str ());
+      //cloud_objects_pub_.advertise (nh_, "/moved_object", 10);
+      object_pub_ = nh_.advertise<sensor_msgs::PointCloud2> ("/moved_object", 10);
+      object_service_ = nh_.advertiseService("/get_released_object", &ObjectGrabber::getObject, this);
+      ROS_INFO ("[%s] Advertising service on: %s", getName ().c_str (), object_service_.getService ().c_str ());
+      grab_service_ = nh_.advertiseService("/grab_object", &ObjectGrabber::grabDirection, this);
+      ROS_INFO ("[%s] Advertising service on: %s", getName ().c_str (), object_service_.getService ().c_str ());
 
       vgrid_.setFilterFieldName ("z");
       vgrid_.setFilterLimits (z_min_limit_, z_max_limit_);
@@ -145,7 +150,7 @@ class ObjectGrabber
       // If there is no TF data available
       ros::Time time = ros::Time::now();
       tf::TransformListener tf_listener;
-      bool found_transform = tf_listener.waitForTransform("openni_depth", "object_frame", time, ros::Duration(1.0));
+      bool found_transform = tf_listener.waitForTransform("right_hand", "openni_depth", time, ros::Duration(1.0));
       if (!found_transform)
         return;
       tf::StampedTransform c2h_transform;
@@ -243,10 +248,10 @@ class ObjectGrabber
       // transform_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(),
       //                                                           cloud_raw.header.frame_id, rot_table_frame_));
 
-      // ---[ Get the objects on top of the table
+      // ---[ Get the objects on top of the table - from the raw cloud!
       pcl::PointIndices cloud_object_indices;
       prism_.setHeightLimits (cluster_min_height_, cluster_max_height_);
-      prism_.setInputCloud (boost::make_shared<PointCloud> (cloud));
+      prism_.setInputCloud (boost::make_shared<PointCloud> (cloud_raw));
       prism_.setInputPlanarHull (boost::make_shared<PointCloud>(cloud_hull));
       prism_.segment (cloud_object_indices);
       //ROS_INFO ("[%s] Number of object point indices: %d.", getName ().c_str (), (int)cloud_object_indices.indices.size ());
@@ -254,7 +259,7 @@ class ObjectGrabber
       pcl::PointCloud<Point> cloud_object;
       pcl::ExtractIndices<Point> extract_object_indices;
       //extract_object_indices.setInputCloud (cloud_all_minus_table_ptr);
-      extract_object_indices.setInputCloud (boost::make_shared<PointCloud> (cloud));
+      extract_object_indices.setInputCloud (boost::make_shared<PointCloud> (cloud_raw));
       extract_object_indices.setIndices (boost::make_shared<const pcl::PointIndices> (cloud_object_indices));
       extract_object_indices.filter (cloud_object);
       //ROS_INFO ("[%s ] Publishing number of object point candidates: %d.", getName ().c_str (), (int)cloud_objects.points.size ());
@@ -270,38 +275,45 @@ class ObjectGrabber
       // TODO take closest to ray
       for (size_t i = 0; i < clusters.size (); i++)
       {
-        // TODO compute center and see if it is close enough to ray
-
-        // TODO compute transform between hand and object
+        // compute center and see if it is close enough to ray
+        int cluster_center = clusters[i].indices[clusters[i].indices.size () / 2];
+        Eigen3::Vector4f pt = Eigen3::Vector4f (cloud_object.points[cluster_center].x, cloud_object.points[cluster_center].y, cloud_object.points[cluster_center].z, 0);
+        Eigen3::Vector4f c = line_dir_.cross3 (line_point_ - pt); c[3] = 0;
+        if (c.squaredNorm () / line_dir_squaredNorm_ > 0.1*0.1) // further then 10cm
+          continue;
+        // TODO make more optimal? + ERRORS/INCONSISTENCY IN PCL: second formula and in c computation!
 
         //tf::transformPoint();
         //Eigen3::Matrix4f transform_matrix;
         //pcl_ros::transformAsMatrix (c2h_transform, transform_matrix);
 
         // broadcast transform
-        tf::Transform fixed_transform;
-        fixed_transform.setOrigin (tf::Vector3(0.0, 0.0, 0.1)); // TODO use computed transform
-        fixed_transform.setRotation (tf::Quaternion(0, 0, 0));
-        transform_broadcaster_.sendTransform(tf::StampedTransform(fixed_transform, ros::Time::now(), "right_hand", "object_frame"));
+//        tf::Transform fixed_transform;
+//        fixed_transform.setOrigin (tf::Vector3(0.0, 0.0, 0.1));
+//        fixed_transform.setRotation (tf::Quaternion(0, 0, 0));
+//        transform_broadcaster_.sendTransform(tf::StampedTransform(fixed_transform, ros::Time::now(), "right_hand", "object_frame"));
 
-        // transform object into hand frame
+        // transform object into right_hand frame
         pcl::PointCloud<Point> cloud_object_clustered ;
         pcl::copyPointCloud (cloud_object, clusters[i], cloud_object_clustered);
-        pcl_ros::transformPointCloud("right_hand", c2h_transform, cloud_object_clustered, output_cloud_);
-
-        // TODO make it nicer after previous todos are addressed
-        for (unsigned cp = 0; cp < output_cloud_.points.size (); cp++)
-        {
-          output_cloud_.points[i].x -= output_cloud_.points[0].x;
-          output_cloud_.points[i].y -= output_cloud_.points[0].y;
-          output_cloud_.points[i].z -= output_cloud_.points[0].z;
-        }
-        output_cloud_.header.frame_id = "object_frame";
-        cloud_objects_pub_.publish (output_cloud_);
-        ROS_INFO("Published object with %d points", (int)output_cloud_.points ());
+//        for (unsigned cp = 0; cp < output_cloud_.points.size (); cp++)
+//        {
+//          output_cloud_.points[i].x -= output_cloud_.points[0].x;
+//          output_cloud_.points[i].y -= output_cloud_.points[0].y;
+//          output_cloud_.points[i].z -= output_cloud_.points[0].z;
+//        }
+//        template <typename PointT> void transformPointCloud (const pcl::PointCloud <PointT> &cloud_in, pcl::PointCloud <PointT> &cloud_out, const tf::Transform &transform);
+//        void transformPointCloud (const std::string &target_frame, const tf::Transform &net_transform, const sensor_msgs::PointCloud2 &in, sensor_msgs::PointCloud2 &out);
+        sensor_msgs::PointCloud2 cluster;
+        pcl::toROSMsg (cloud_object_clustered, cluster);
+        pcl_ros::transformPointCloud("right_hand", (tf::Transform)c2h_transform, cluster, output_cloud_);
+        //output_cloud_.header.frame_id = "right_hand"; TODO needed?
+        //cloud_objects_pub_.publish (output_cloud_);
+        object_pub_.publish (output_cloud_);
+        ROS_INFO("Published object with %d points", (int)clusters[i].indices.size ());
 
         // TODO get a nicer rectangle around the object
-        unsigned center_idx = clusters[i].indices[0];
+        unsigned center_idx = cloud_object_indices.indices.at (cluster_center);
         unsigned row = center_idx / 640;
         unsigned col = center_idx - row * 640;
         ros::ServiceClient client = nh_.serviceClient<kinect_cleanup::FilterObject>("/filter_object");
@@ -310,7 +322,7 @@ class ObjectGrabber
         srv.request.min_col = std::max (0, (int)col-50);
         srv.request.max_row = std::min (479, (int)row+50);
         srv.request.max_col = std::min (479, (int)col+50);
-        srv.request.rgb = output_cloud_.points[640 * srv.request.min_row + srv.request.min_col].rgb;
+        srv.request.rgb = cloud_raw.points[640 * srv.request.min_row + srv.request.min_col].rgb;
         for (int i=0; i<4; i++)
           srv.request.plane_normal[i] = table_coeff.values[i];
         if (client.call(srv))
@@ -324,10 +336,14 @@ class ObjectGrabber
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    bool grab (kinect_cleanup::GrabObject::Request  &req,
-               kinect_cleanup::GrabObject::Response &res)
+    bool grabDirection (kinect_cleanup::GrabObject::Request  &req,
+                        kinect_cleanup::GrabObject::Response &res)
     {
       to_select_ = true;
+      line_point_ = Eigen3::Vector4f (req.point_line[0], req.point_line[1], req.point_line[2], 0);
+      line_dir_ = Eigen3::Vector4f (req.point_line[3], req.point_line[4], req.point_line[5], 0);
+      line_dir_squaredNorm_ = line_dir_.squaredNorm ();
+      res.error = "grabbing enabled";
       return true;
     }
 
@@ -335,7 +351,8 @@ class ObjectGrabber
     bool getObject (kinect_cleanup::GetReleasedObject::Request  &req,
                     kinect_cleanup::GetReleasedObject::Response &res)
     {
-      pcl::toROSMsg (output_cloud_, res.object);
+      //pcl::toROSMsg (output_cloud_, res.object);
+      res.object = output_cloud_;
       return true;
     }
 
@@ -379,11 +396,16 @@ class ObjectGrabber
     tf::TransformBroadcaster transform_broadcaster_;
     tf::TransformListener tf_listener_;
     ros::Subscriber point_cloud_sub_;
-    pcl_ros::Publisher<Point> cloud_objects_pub_;
-    ros::ServiceServer service_;
+    //pcl_ros::Publisher<Point> cloud_objects_pub_;
+    ros::Publisher object_pub_;
+    ros::ServiceServer object_service_;
+    ros::ServiceServer grab_service_;
 
     // Switch to enable segmenting
     bool to_select_;
+    Eigen3::Vector4f line_point_;
+    Eigen3::Vector4f line_dir_;
+    float line_dir_squaredNorm_;
 
     // Parameters
     double object_cluster_tolerance_, cluster_min_height_, cluster_max_height_;
@@ -405,8 +427,9 @@ class ObjectGrabber
     pcl::EuclideanClusterExtraction<Point> cluster_;
     KdTreePtr clusters_tree_, normals_tree_;
 
-    // Grabbed object in object_frame
-    pcl::PointCloud<Point> output_cloud_;
+    // Grabbed object in right_hand frame
+    //pcl::PointCloud<Point> output_cloud_;
+    sensor_msgs::PointCloud2 output_cloud_;
   
     // TODO why are these saved as fields?
     std::vector<Eigen3::Vector4d *> table_coeffs_;
