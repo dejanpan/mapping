@@ -299,7 +299,7 @@ class ObjectGrabber
         Eigen3::Vector4f pt = Eigen3::Vector4f (cloud_object.points[cluster_center].x, cloud_object.points[cluster_center].y, cloud_object.points[cluster_center].z, 0);
         Eigen3::Vector4f c = line_dir_.cross3 (line_point_ - pt); c[3] = 0;
 #ifndef TEST
-        if (c.squaredNorm () / line_dir_squaredNorm_ > 0.5*0.5) // further then 10cm
+        if (c.squaredNorm () / line_dir_squaredNorm_ > 0.25*0.25) // further then 10cm
           continue;
 #endif
         std::cerr << "found cluster" << std::endl;
