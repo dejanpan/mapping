@@ -69,7 +69,7 @@ public:
   ////////////////////////////////////////////////////////////////////////////////
   HumanTracker  (ros::NodeHandle &n) : nh_(n)
   {
-    nh_.param("world", world_, std::string("openni_depth"));
+    nh_.param("world", world_, std::string("openni_depth_optical_frame"));
     nh_.param("neck_frame", neck_frame_, std::string("neck"));
     nh_.param("gesture_arm", gesture_arm_, std::string("left"));
     nh_.param("pointing_arm", pointing_arm_, std::string("right"));
@@ -100,7 +100,10 @@ public:
         tf_.lookupTransform(neck_frame_, gesture_arm_ + "_hand", time, transform2);                
         
         //stop gesture
-        if (transform2.getOrigin().x() > 1.5 * transform1.getOrigin().x())
+        //std::cerr << fabs(transform2.getOrigin().x()) <<  " " << fabs(transform1.getOrigin().x()) << std::endl;
+        //if (fabs(transform2.getOrigin().x()) > 1.5 * fabs(transform1.getOrigin().x()))
+        //std::cerr << transform1.getOrigin().z() <<  " " << transform2.getOrigin().z() << std::endl;
+        if (fabs(transform2.getOrigin().x()) > 0.6)
         {
           ROS_INFO("Stop");
           stop_ = true;
@@ -117,9 +120,10 @@ public:
         }
 
         //start gesture (triggers computation of hand end-effector point and pointing direction)
-        else if (0.9 * transform1.getOrigin().x() < transform2.getOrigin().x() && 
-                 transform2.getOrigin().x() < 1.1 * transform1.getOrigin().x() &&
-                 transform1.getOrigin().y() < transform2.getOrigin().y())
+        // else if (0.9 * fabs(transform1.getOrigin().x()) < fabs(transform2.getOrigin().x()) && 
+        //          fabs(transform2.getOrigin().x()) < 1.1 * fabs(transform1.getOrigin().x()) &&
+        //          transform1.getOrigin().y() < transform2.getOrigin().y())
+        else if (-0.3 > transform2.getOrigin().z())
         {
           ROS_INFO("Start");
           start_ = true;
