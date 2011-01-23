@@ -61,8 +61,8 @@ protected:
   
 public:
   tf::TransformListener tf_;
-  std::string neck_frame_, right_elbow_frame_, right_hand_frame_, left_elbow_frame_, 
-    left_hand_frame_, world_;
+  std::string gesture_arm_, pointing_arm_;
+  std::string neck_frame_, world_;
   double tf_buffer_time_;
   bool start_, stop_;
   ros::ServiceClient client_grab, client_release;
@@ -71,10 +71,8 @@ public:
   {
     nh_.param("world", world_, std::string("openni_depth"));
     nh_.param("neck_frame", neck_frame_, std::string("neck"));
-    nh_.param("right_elbow_frame", right_elbow_frame_, std::string("right_elbow"));
-    nh_.param("right_hand_frame", right_hand_frame_, std::string("right_hand"));
-    nh_.param("left_elbow_frame", left_elbow_frame_, std::string("left_elbow"));
-    nh_.param("left_hand_frame", left_hand_frame_, std::string("left_hand"));
+    nh_.param("gesture_arm", gesture_arm_, std::string("left"));
+    nh_.param("pointing_arm", pointing_arm_, std::string("right"));
 
     nh_.param("tf_buffer_time", tf_buffer_time_, 10.0);
     start_ = stop_ = false;
@@ -91,15 +89,15 @@ public:
     {
       //find if we have start or stop gesture
       ros::Time time = ros::Time::now();
-      bool found_transform1 = tf_.waitForTransform(neck_frame_, right_elbow_frame_,
+      bool found_transform1 = tf_.waitForTransform(neck_frame_, gesture_arm_ + "_elbow",
                                                    time, ros::Duration(tf_buffer_time_));
-      bool found_transform2 = tf_.waitForTransform(neck_frame_, right_hand_frame_,
+      bool found_transform2 = tf_.waitForTransform(neck_frame_, gesture_arm_ + "_hand",
                                                    time, ros::Duration(tf_buffer_time_));
       if (found_transform1 && found_transform2)
       {
         tf::StampedTransform transform1, transform2;
-        tf_.lookupTransform(neck_frame_, right_elbow_frame_, time, transform1);
-        tf_.lookupTransform(neck_frame_, right_hand_frame_, time, transform2);                
+        tf_.lookupTransform(neck_frame_, gesture_arm_ + "_elbow", time, transform1);
+        tf_.lookupTransform(neck_frame_, gesture_arm_ + "_hand", time, transform2);                
         
         //stop gesture
         if (transform2.getOrigin().x() > 1.5 * transform1.getOrigin().x())
@@ -137,17 +135,17 @@ public:
       {
         //sleep(17);
         time = ros::Time::now();
-        bool found_transform3 = tf_.waitForTransform(world_, left_elbow_frame_,
+        bool found_transform3 = tf_.waitForTransform(world_, pointing_arm_ + "_elbow",
                                                      time, ros::Duration(tf_buffer_time_));
 
-        bool found_transform4 = tf_.waitForTransform(world_, left_hand_frame_,
+        bool found_transform4 = tf_.waitForTransform(world_, pointing_arm_ + "_hand",
                                                      time, ros::Duration(tf_buffer_time_));
 
         if (found_transform3 && found_transform4)
         {
           tf::StampedTransform transform3, transform4;
-          tf_.lookupTransform(world_, left_elbow_frame_, time, transform3);
-          tf_.lookupTransform(world_, left_hand_frame_, time, transform4);
+          tf_.lookupTransform(world_, pointing_arm_ + "_elbow", time, transform3);
+          tf_.lookupTransform(world_, pointing_arm_ + "_hand", time, transform4);
           btVector3 direction = transform4.getOrigin() - transform3.getOrigin();
           std::vector <float> point_axis (6, 0.0);
           point_axis[0] = transform4.getOrigin().x();
