@@ -296,19 +296,23 @@ class ObjectGrabber
         // transform object into right_hand frame
         pcl::PointCloud<Point> cloud_object_clustered ;
         pcl::copyPointCloud (cloud_object, clusters[i], cloud_object_clustered);
+//        Eigen3::Matrix4f eigen_transform;
+//        pcl_ros::transformAsMatrix (c2h_transform, eigen_transform);
+//        pcl::transformPointCloud(cloud_object_clustered, output_cloud_, eigen_transform);
+//        output_cloud_.header.frame_id = ""right_hand";
+        sensor_msgs::PointCloud2 cluster;
+        pcl::toROSMsg (cloud_object_clustered, cluster);
+//        template <typename PointT> void transformPointCloud (const pcl::PointCloud <PointT> &cloud_in, pcl::PointCloud <PointT> &cloud_out, const tf::Transform &transform);
+//        void transformPointCloud (const std::string &target_frame, const tf::Transform &net_transform, const sensor_msgs::PointCloud2 &in, sensor_msgs::PointCloud2 &out);
+        pcl_ros::transformPointCloud("right_hand", (tf::Transform)c2h_transform, cluster, output_cloud_);
+        output_cloud_.header.frame_id = "right_hand"; // TODO needed?
 //        for (unsigned cp = 0; cp < output_cloud_.points.size (); cp++)
 //        {
 //          output_cloud_.points[i].x -= output_cloud_.points[0].x;
 //          output_cloud_.points[i].y -= output_cloud_.points[0].y;
 //          output_cloud_.points[i].z -= output_cloud_.points[0].z;
 //        }
-//        template <typename PointT> void transformPointCloud (const pcl::PointCloud <PointT> &cloud_in, pcl::PointCloud <PointT> &cloud_out, const tf::Transform &transform);
-//        void transformPointCloud (const std::string &target_frame, const tf::Transform &net_transform, const sensor_msgs::PointCloud2 &in, sensor_msgs::PointCloud2 &out);
-        sensor_msgs::PointCloud2 cluster;
-        pcl::toROSMsg (cloud_object_clustered, cluster);
-        pcl_ros::transformPointCloud("right_hand", (tf::Transform)c2h_transform, cluster, output_cloud_);
-        //output_cloud_.header.frame_id = "right_hand"; TODO needed?
-        //cloud_objects_pub_.publish (output_cloud_);
+//        cloud_objects_pub_.publish (output_cloud_);
         object_pub_.publish (output_cloud_);
         ROS_INFO("Published object with %d points", (int)clusters[i].indices.size ());
 
