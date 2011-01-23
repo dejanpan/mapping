@@ -112,6 +112,7 @@ class ObjectGrabber
       point_cloud_sub_ = nh_.subscribe("input", 1, &ObjectGrabber::inputCallback, this);
       ROS_INFO ("[%s] Subscribed to topic: %s", getName ().c_str (), point_cloud_sub_.getTopic ().c_str ());
 
+      object_released_ = false;
       vgrid_.setFilterFieldName ("z");
       vgrid_.setFilterLimits (z_min_limit_, z_max_limit_);
 
@@ -148,10 +149,13 @@ class ObjectGrabber
     {
       if (output_cloud_.width != 0)
       {
-        output_cloud_.header.stamp = ros::Time::now();
-        object_pub_.publish (output_cloud_);
-        float *xzy = (float*)&output_cloud_.data[0];
-        ROS_INFO("Republished object in frame %s (%g,%g,%g)", output_cloud_.header.frame_id.c_str(), xzy[0], xzy[1], xzy[2]);
+        if (!object_released_)
+        {
+          output_cloud_.header.stamp = ros::Time::now();
+          object_pub_.publish (output_cloud_);
+          float *xzy = (float*)&output_cloud_.data[0];
+          ROS_INFO("Republished object in frame %s (%g,%g,%g)", output_cloud_.header.frame_id.c_str(), xzy[0], xzy[1], xzy[2]);
+        }
         return;
       }
 
@@ -341,10 +345,10 @@ class ObjectGrabber
         ros::ServiceClient client = nh_.serviceClient<kinect_cleanup::FilterObject>("/filter_object");
         kinect_cleanup::FilterObject srv;
         srv.request.min_row = std::max (0, (int)row-50);
-        srv.request.min_col = std::max (0, (int)col-50);
+        srv.request.min_col = std::max (0, (int)col-40);
         srv.request.max_row = std::min (479, (int)row+50);
-        srv.request.max_col = std::min (479, (int)col+50);
-        srv.request.rgb = cloud_raw.points[640 * srv.request.min_row + srv.request.min_col].rgb;
+        srv.request.max_col = std::min (479, (int)col+40);
+        srv.request.rgb = cloud_raw.points[640 * srv.request.max_row + srv.request.max_col].rgb;
         for (int i=0; i<4; i++)
           srv.request.plane_normal[i] = table_coeff.values[i];
         if (client.call(srv))
@@ -380,6 +384,7 @@ class ObjectGrabber
                     kinect_cleanup::GetReleasedObject::Response &res)
     {
       //pcl::toROSMsg (output_cloud_, res.object);
+      object_released_ = req.object_released;
       res.object = output_cloud_;
       return true;
     }
@@ -430,7 +435,7 @@ class ObjectGrabber
     ros::ServiceServer grab_service_;
 
     // Switch to enable segmenting
-    bool to_select_;
+    bool to_select_, object_released_;
     Eigen3::Vector4f line_point_;
     Eigen3::Vector4f line_dir_;
     float line_dir_squaredNorm_;

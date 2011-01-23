@@ -103,7 +103,7 @@ class ObjectFilter
             {
               cloud.points[idx].rgb = it->rgb;
               // TODO map to eigen?
-              double extend_backwards = it->plane[3]/(cloud.points[idx].x * it->plane[0] + cloud.points[idx].y * it->plane[1] + cloud.points[idx].z * it->plane[2]);
+              double extend_backwards = -it->plane[3]/(cloud.points[idx].x * it->plane[0] + cloud.points[idx].y * it->plane[1] + cloud.points[idx].z * it->plane[2]);
               cloud.points[idx].x *= extend_backwards;
               cloud.points[idx].y *= extend_backwards;
               cloud.points[idx].z *= extend_backwards;

@@ -8,4 +8,11 @@
 <node pkg="kinect_cleanup" type="object_grabber" name="object_grabber" output="screen" respawn="true" >
       <remap from="~input" to="/camera/depth/points2"/>
 </node>
+
+<node pkg="kinect_cleanup" type="object_filter" name="object_filter" output="screen" respawn="true" >
+      <remap from="~input" to="/camera/depth/points2"/>
+</node>
+
+<node pkg="kinect_cleanup" type="object_releaser_node" name="object_releaser_node" output="screen" respawn="true" >
+</node>
 </launch>
