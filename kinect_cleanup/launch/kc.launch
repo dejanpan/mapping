@@ -1,0 +1,11 @@
+<launch>
+<node pkg="openni_tracker" type="openni_tracker" name="openni_tracker" output="screen" respawn="true" >
+</node>
+
+<node pkg="kinect_cleanup" type="human_tracker_node" name="human_tracker_node" output="screen" respawn="true" >
+</node>
+
+<node pkg="kinect_cleanup" type="object_grabber" name="object_grabber" output="screen" respawn="true" >
+      <remap from="~input" to="/camera/depth/points2"/>
+</node>
+</launch>
