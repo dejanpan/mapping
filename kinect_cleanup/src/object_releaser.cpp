@@ -72,6 +72,7 @@ public:
   sensor_msgs::PointCloud2 output_cloud_;
   ros::Publisher pub_;
   ros::ServiceClient client_get_released_object;
+  ros::ServiceServer service;
   ////////////////////////////////////////////////////////////////////////////////
   ObjectReleaser  (ros::NodeHandle &n) : nh_(n)
   {
@@ -79,7 +80,7 @@ public:
     nh_.param("object_frame", object_frame_, std::string("object_frame"));
     nh_.param("output_cloud_topic_", output_cloud_topic_, std::string("/moved_object"));
     nh_.param("tf_buffer_time", tf_buffer_time_, 10.0);
-    ros::ServiceServer service = nh_.advertiseService("/release_object", &ObjectReleaser::calculate_transform, this);
+    service = nh_.advertiseService("/release_object", &ObjectReleaser::calculate_transform, this);
     pub_ = nh_.advertise<sensor_msgs::PointCloud2>(output_cloud_topic_, 1);
     client_get_released_object = nh_.serviceClient<kinect_cleanup::GetReleasedObject>("/get_released_object");
     got_object_ = false;
