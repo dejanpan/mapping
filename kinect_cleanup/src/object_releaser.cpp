@@ -76,10 +76,10 @@ public:
   ////////////////////////////////////////////////////////////////////////////////
   ObjectReleaser  (ros::NodeHandle &n) : nh_(n)
   {
-    nh_.param("world", world_, std::string("openni_depth"));
-    nh_.param("object_frame", object_frame_, std::string("object_frame"));
+    nh_.param("world", world_, std::string("openni_depth_optical_frame"));
+    nh_.param("object_frame", object_frame_, std::string("right_hand"));
     nh_.param("output_cloud_topic_", output_cloud_topic_, std::string("/moved_object"));
-    nh_.param("tf_buffer_time", tf_buffer_time_, 10.0);
+    nh_.param("tf_buffer_time", tf_buffer_time_, 0.05);
     service = nh_.advertiseService("/release_object", &ObjectReleaser::calculate_transform, this);
     pub_ = nh_.advertise<sensor_msgs::PointCloud2>(output_cloud_topic_, 1);
     client_get_released_object = nh_.serviceClient<kinect_cleanup::GetReleasedObject>("/get_released_object");
@@ -92,6 +92,7 @@ public:
   void get_object(sensor_msgs::PointCloud2 &cloud)
     {
       kinect_cleanup::GetReleasedObject srv_rel_obj;
+      srv_rel_obj.request.object_released = true;
       if (client_get_released_object.call (srv_rel_obj))
       {
         cloud = srv_rel_obj.response.object;
