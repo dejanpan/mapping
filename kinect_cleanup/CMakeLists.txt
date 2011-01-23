@@ -30,6 +30,6 @@ rosbuild_gensrv()
 #target_link_libraries(example ${PROJECT_NAME})
 
 rosbuild_add_executable(object_filter src/object_filter.cpp)
-rosbuild_add_executable(object_grabber src/object_grabber.cpp)
+#rosbuild_add_executable(object_grabber src/object_grabber.cpp)
 rosbuild_add_executable(human_tracker_node src/human_tracker.cpp)
 rosbuild_add_executable(object_releaser_node src/object_releaser.cpp)
