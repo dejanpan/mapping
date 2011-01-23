@@ -139,7 +139,7 @@ public:
         {
           output_cloud_.header.stamp = ros::Time::now();
           pub_.publish (output_cloud_);
-          ROS_INFO("[ObjectReleaser:] Point cloud published in frame %s", output_cloud_.header.frame_id.c_str());
+          //ROS_INFO("[ObjectReleaser:] Point cloud published in frame %s", output_cloud_.header.frame_id.c_str());
         }
         ros::spinOnce();
         loop_rate.sleep();
