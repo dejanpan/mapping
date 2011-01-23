@@ -102,7 +102,7 @@ public:
         //stop gesture
         //std::cerr << fabs(transform2.getOrigin().x()) <<  " " << fabs(transform1.getOrigin().x()) << std::endl;
         //if (fabs(transform2.getOrigin().x()) > 1.5 * fabs(transform1.getOrigin().x()))
-        std::cerr << transform1.getOrigin().z() <<  " " << transform2.getOrigin().z() << std::endl;
+        //std::cerr << transform1.getOrigin().z() <<  " " << transform2.getOrigin().z() << std::endl;
         if (fabs(transform2.getOrigin().x()) > 0.6)
         {
           ROS_INFO("Stop");
