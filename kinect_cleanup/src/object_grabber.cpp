@@ -70,6 +70,8 @@
 #include <tf/message_filter.h>
 
 #include "kinect_cleanup/FilterObject.h"
+#include "kinect_cleanup/GrabObject.h"
+#include "kinect_cleanup/GetReleasedObject.h"
 
 typedef pcl::PointXYZRGB Point;
 typedef pcl::PointCloud<Point> PointCloud;
@@ -287,7 +289,10 @@ class ObjectGrabber
         // transform object into hand frame
         pcl::PointCloud<Point> cloud_object_clustered ;
         pcl::copyPointCloud (cloud_object, clusters[i], cloud_object_clustered);
-        pcl_ros::transformPointCloud("right_hand", c2h_transform, cloud_object_clustered, output_cloud_);
+        Eigen3::Matrix4f eigen_transform;
+        pcl_ros::transformAsMatrix (c2h_transform, eigen_transform);
+//        pcl::transformPointCloud("right_hand", c2h_transform, cloud_object_clustered, output_cloud_);
+        pcl::transformPointCloud(cloud_object_clustered, output_cloud_, eigen_transform);
 
         // TODO make it nicer after previous todos are addressed
         for (unsigned cp = 0; cp < output_cloud_.points.size (); cp++)
@@ -298,7 +303,7 @@ class ObjectGrabber
         }
         output_cloud_.header.frame_id = "object_frame";
         cloud_objects_pub_.publish (output_cloud_);
-        ROS_INFO("Published object with %d points", (int)output_cloud_.points ());
+        ROS_INFO("Published object with %d points", (int)output_cloud_.points.size ());
 
         // TODO get a nicer rectangle around the object
         unsigned center_idx = clusters[i].indices[0];
