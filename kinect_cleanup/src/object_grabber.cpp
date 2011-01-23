@@ -34,8 +34,6 @@
  */
 
 /**
-  * \author Romain Thibaux, Radu Bogdan Rusu
-  * \author modified: Dejan Pangercic
   * \author modified: Zoltan-Csaba Marton
   */
 
@@ -73,7 +71,7 @@
 #include "kinect_cleanup/GrabObject.h"
 #include "kinect_cleanup/GetReleasedObject.h"
 
-#define TEST
+//#define TEST
 
 typedef pcl::PointXYZRGB Point;
 typedef pcl::PointCloud<Point> PointCloud;
@@ -89,8 +87,8 @@ class ObjectGrabber
     ObjectGrabber (const ros::NodeHandle &nh) : nh_ (nh), to_select_ (false)
     {
       nh_.param("sac_distance", sac_distance_, 0.03);
-      nh_.param("z_min_limit", z_min_limit_, 0.0);
-      nh_.param("z_max_limit", z_max_limit_, 1.5);
+      nh_.param("z_min_limit", z_min_limit_, 0.8);
+      nh_.param("z_max_limit", z_max_limit_, 1.9);
       nh_.param("max_iter", max_iter_, 500);
       nh_.param("normal_distance_weight", normal_distance_weight_, 0.1);
       nh_.param("eps_angle", eps_angle_, 15.0);
@@ -100,17 +98,19 @@ class ObjectGrabber
       nh_.param("object_cluster_min_size", object_cluster_min_size_, 100);
       nh_.param("object_cluster_max_size", object_cluster_max_size_, 10000);
       nh_.param("k", k_, 10);
-      nh_.param("base_link_head_tilt_link_angle", base_link_head_tilt_link_angle_, 0.8);
+      nh_.param("base_link_head_tilt_link_angle", base_link_head_tilt_link_angle_, 0.277);
       nh_.param("min_table_inliers", min_table_inliers_, 100);
       nh_.param("cluster_min_height", cluster_min_height_, 0.01);
       nh_.param("cluster_max_height", cluster_max_height_, 0.4);
 
-      //cloud_objects_pub_.advertise (nh_, "/moved_object", 10);
+      hull_pub_.advertise (nh_, "/hull", 10);
       object_pub_ = nh_.advertise<sensor_msgs::PointCloud2> ("/moved_object", 10);
       object_service_ = nh_.advertiseService("/get_released_object", &ObjectGrabber::getObject, this);
       ROS_INFO ("[%s] Advertising service on: %s", getName ().c_str (), object_service_.getService ().c_str ());
       grab_service_ = nh_.advertiseService("/grab_object", &ObjectGrabber::grabDirection, this);
       ROS_INFO ("[%s] Advertising service on: %s", getName ().c_str (), object_service_.getService ().c_str ());
+      point_cloud_sub_ = nh_.subscribe("input", 1, &ObjectGrabber::inputCallback, this);
+      ROS_INFO ("[%s] Subscribed to topic: %s", getName ().c_str (), point_cloud_sub_.getTopic ().c_str ());
 
       vgrid_.setFilterFieldName ("z");
       vgrid_.setFilterLimits (z_min_limit_, z_max_limit_);
@@ -146,17 +146,30 @@ class ObjectGrabber
     void
     inputCallback (const sensor_msgs::PointCloud2ConstPtr &cloud_in)
     {
+      if (output_cloud_.width != 0)
+      {
+        output_cloud_.header.stamp = ros::Time::now();
+        object_pub_.publish (output_cloud_);
+        float *xzy = (float*)&output_cloud_.data[0];
+        ROS_INFO("Republished object in frame %s (%g,%g,%g)", output_cloud_.header.frame_id.c_str(), xzy[0], xzy[1], xzy[2]);
+        return;
+      }
+
       // If nothing is pointed at
       if (!to_select_)
         return;
+      std::cerr << "to_select_" << std::endl;
       // If there is no TF data available
       ros::Time time = ros::Time::now();
       tf::TransformListener tf_listener;
-      bool found_transform = tf_listener.waitForTransform("right_hand", "openni_depth", time, ros::Duration(1.0));
+      bool found_transform = tf_listener.waitForTransform("right_hand", "openni_depth_optical_frame", time, ros::Duration(0.05));
       if (!found_transform)
+      {
+        std::cerr << "no transform found" << std::endl;
         return;
+      }
       tf::StampedTransform c2h_transform;
-      tf_listener.lookupTransform("right_hand", "openni_depth", time, c2h_transform);
+      tf_listener.lookupTransform("right_hand", "openni_depth_optical_frame", time, c2h_transform);
       to_select_ = false;
 
       ROS_INFO_STREAM ("[" << getName ().c_str () << "] Received cloud: cloud time " << cloud_in->header.stamp);
@@ -212,7 +225,7 @@ class ObjectGrabber
       chull_.setInputCloud (boost::make_shared<PointCloud> (cloud_projected));
       chull_.reconstruct (cloud_hull);
       //ROS_INFO ("Convex hull has: %d data points.", (int)cloud_hull.points.size ());
-      //cloud_pub_.publish (cloud_hull);
+      hull_pub_.publish (cloud_hull);
 
       // //Compute the area of the plane
       // std::vector<double> plane_normal(3);
@@ -282,9 +295,10 @@ class ObjectGrabber
         Eigen3::Vector4f pt = Eigen3::Vector4f (cloud_object.points[cluster_center].x, cloud_object.points[cluster_center].y, cloud_object.points[cluster_center].z, 0);
         Eigen3::Vector4f c = line_dir_.cross3 (line_point_ - pt); c[3] = 0;
 #ifndef TEST
-        if (c.squaredNorm () / line_dir_squaredNorm_ > 0.1*0.1) // further then 10cm
+        if (c.squaredNorm () / line_dir_squaredNorm_ > 0.5*0.5) // further then 10cm
           continue;
 #endif
+        std::cerr << "found cluster" << std::endl;
         // TODO make more optimal? + ERRORS/INCONSISTENCY IN PCL: second formula and in c computation!
 
         //tf::transformPoint();
@@ -347,11 +361,17 @@ class ObjectGrabber
     bool grabDirection (kinect_cleanup::GrabObject::Request  &req,
                         kinect_cleanup::GrabObject::Response &res)
     {
+      if (to_select_)
+      {
+        res.error = "already grabbed";
+        return true;
+      }
       to_select_ = true;
       line_point_ = Eigen3::Vector4f (req.point_line[0], req.point_line[1], req.point_line[2], 0);
       line_dir_ = Eigen3::Vector4f (req.point_line[3], req.point_line[4], req.point_line[5], 0);
       line_dir_squaredNorm_ = line_dir_.squaredNorm ();
       res.error = "grabbing enabled";
+      std::cerr << "point: " << line_point_.transpose() << " direction: " << line_dir_.transpose() <<  std::endl;
       return true;
     }
 
@@ -404,7 +424,7 @@ class ObjectGrabber
     tf::TransformBroadcaster transform_broadcaster_;
     tf::TransformListener tf_listener_;
     ros::Subscriber point_cloud_sub_;
-    //pcl_ros::Publisher<Point> cloud_objects_pub_;
+    pcl_ros::Publisher<Point> hull_pub_;
     ros::Publisher object_pub_;
     ros::ServiceServer object_service_;
     ros::ServiceServer grab_service_;
