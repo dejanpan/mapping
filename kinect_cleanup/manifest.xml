@@ -2,7 +2,7 @@
   <description brief="kinect_cleanup">
 
      kinect_cleanup is a package to demonstrate desired object locations by
-     pointing at objects and virtually moving them somewhere
+     pointing at objects and virtually moving them somewhere (for ROS 3D Contest)
 
   </description>
   <author>Zoltan-Csaba Marton, Dejan Pangercic</author>
