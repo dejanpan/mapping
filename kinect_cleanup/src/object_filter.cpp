@@ -33,16 +33,14 @@ class ObjectFilter
 
   public:
 
-    ObjectFilter (ros::NodeHandle nh, double std_noise)
+    ObjectFilter (ros::NodeHandle &nh, double std_noise) : nh_ (nh), std_noise_ (std_noise)
     {
-      std_noise_ = std_noise;
-      nh_ = nh;
       sub_ = nh_.subscribe("input", 1, &ObjectFilter::inputCallback, this);
       ROS_INFO ("[ObjectFilter] Subscribed to: %s", sub_.getTopic ().c_str ());
       pub_ = nh_.advertise<sensor_msgs::PointCloud2>("output", 0 );
       //pub_ = pcl_ros::Publisher<pcl::PointXYZRGB> (nh_, "output", 1);
       ROS_INFO ("[ObjectFilter] Publishing on: %s", pub_.getTopic ().c_str ());
-      service_ = nh_.advertiseService("filter_object", &ObjectFilter::add2filter, this);
+      service_ = nh_.advertiseService("/filter_object", &ObjectFilter::add2filter, this);
       ROS_INFO ("[ObjectFilter] Advertising service on: %s", service_.getService ().c_str ());
 
       // -cam "0.005132195795,5.132195795/-0.01565100066,0.03999799863,0.9129999876/-0.00633858571,-0.04486026046,0.1577823364/0.01037906958,-0.9936787337,0.1117803609"
@@ -79,7 +77,7 @@ class ObjectFilter
       for (int i=0; i<4; i++)
         f.plane[i] = req.plane_normal[i];
       to_filter.push_back (f);
-      res.error = "OK"; // TODO add out of bounds checks, return vector length
+      res.error = "filtering " + to_filter.size (); // TODO add out of bounds checks and reflect in result
       return true;
     }
 
