@@ -74,7 +74,7 @@ public:
     nh_.param("gesture_arm", gesture_arm_, std::string("left"));
     nh_.param("pointing_arm", pointing_arm_, std::string("right"));
 
-    nh_.param("tf_buffer_time", tf_buffer_time_, 10.0);
+    nh_.param("tf_buffer_time", tf_buffer_time_, 1.0);
     start_ = stop_ = false;
     client_grab = nh_.serviceClient<kinect_cleanup::GrabObject>("/grab_object");
     client_release = nh_.serviceClient<kinect_cleanup::ReleaseObject>("/release_object");
@@ -102,7 +102,7 @@ public:
         //stop gesture
         //std::cerr << fabs(transform2.getOrigin().x()) <<  " " << fabs(transform1.getOrigin().x()) << std::endl;
         //if (fabs(transform2.getOrigin().x()) > 1.5 * fabs(transform1.getOrigin().x()))
-        //std::cerr << transform1.getOrigin().z() <<  " " << transform2.getOrigin().z() << std::endl;
+        std::cerr << transform1.getOrigin().z() <<  " " << transform2.getOrigin().z() << std::endl;
         if (fabs(transform2.getOrigin().x()) > 0.6)
         {
           ROS_INFO("Stop");
@@ -161,11 +161,11 @@ public:
           
           //service call
           kinect_cleanup::GrabObject srv_grab;
-          ROS_INFO("point and direction:");
+          //ROS_INFO("point and direction:");
           for (unsigned long i=0; i < point_axis.size(); i++)
           {
             srv_grab.request.point_line[i] = point_axis[i];
-            ROS_INFO_STREAM(" " << point_axis[i]);
+            //ROS_INFO_STREAM(" " << point_axis[i]);
           }
           
           if (client_grab.call (srv_grab))
