@@ -1,0 +1,3 @@
+bool object_released
+---
+sensor_msgs/PointCloud2 object
