@@ -1,0 +1,19 @@
+<package>
+  <description brief="kinect_cleanup">
+
+     kinect_cleanup is a package to demonstrate desired object locations by
+     pointing at objects and virtually moving them somewhere (for ROS 3D Contest)
+
+  </description>
+  <author>Zoltan-Csaba Marton, Dejan Pangercic</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/kinect_cleanup</url>
+  <depend package="roscpp"/>
+  <depend package="pcl"/>
+  <depend package="tf"/>
+  <depend package="sensor_msgs"/>
+  <depend package="pcl_ros"/>
+</package>
+
+
