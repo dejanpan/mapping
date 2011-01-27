@@ -166,7 +166,7 @@ class ObjectGrabber
       // If there is no TF data available
       ros::Time time = ros::Time::now();
       tf::TransformListener tf_listener;
-      bool found_transform = tf_listener.waitForTransform("right_hand", "openni_depth_optical_frame", time, ros::Duration(0.05));
+      bool found_transform = tf_listener.waitForTransform("right_hand", "openni_depth_optical_frame", time, ros::Duration(0.1));
       if (!found_transform)
       {
         std::cerr << "no transform found" << std::endl;
