@@ -82,8 +82,8 @@ TF.Update\ Interval=0
 Tool\ 2D\ Nav\ GoalTopic=move_base_simple/goal
 Tool\ 2D\ Pose\ EstimateTopic=initialpose
 Camera\ Type=rviz::OrbitViewController
-Camera\ Config=2.64558 6.26448 2.77514 -0.0961505 2.13314 0.0407316
-Property\ Grid\ State=selection=Point Cloud23.Enabled;expanded=.Global Options,.Global StatusTopStatus,Point Cloud2.Enabled,Markers2.Enabled.Markers2.StatusTopStatus,Markers2.Enabled.Markers2.Namespaces,Point Cloud22.Enabled,Point Cloud23.Enabled,TF.Enabled,TF.Enabled.TF.Frames,TF.Enabled.TF.Tree;scrollpos=0,0;splitterpos=220,370;ispageselected=1
+Camera\ Config=2.54059 0.0513 3.56766 -0.762204 2.23251 -0.0269364
+Property\ Grid\ State=selection=Point Cloud2.Enabled;expanded=.Global Options,Origin Axes.Enabled.Origin Axes.StatusTopStatus,Point Cloud2.Enabled,Markers2.Enabled.Markers2.StatusTopStatus,Markers2.Enabled.Markers2.Namespaces,Point Cloud22.Enabled,Point Cloud23.Enabled,TF.Enabled,TF.Enabled.TF.StatusTopStatus,TF.Enabled.TF.Tree;scrollpos=0,0;splitterpos=184,370;ispageselected=1
 [Display0]
 Name=Origin Axes
 Package=rviz
