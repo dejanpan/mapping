@@ -31,7 +31,6 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: transform_pointcloud.cpp 30719 2010-07-09 20:28:41Z rusu $
  *
  */
 
@@ -39,7 +38,7 @@
 
 \author Dejan Pangercic
 
-@b transform_pointcloud transforms cloud from frame1 to frame2.
+@b detect_circle detects circles in 3D point clouds
 
 **/
 
