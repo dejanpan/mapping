@@ -81,7 +81,10 @@ public:
   pcl::NormalEstimation<Point, pcl::Normal> ne;
   pcl::SACSegmentationFromNormals<Point, pcl::Normal> seg;
   KdTreePtr tree_;
-  pcl::PointCloud<pcl::Normal> cloud_normals_;
+  pcl::PointCloud<pcl::Normal>::ConstPtr cloud_normals_;
+  //  pcl::PointCloud<pcl::Normal> cloud_normals_;
+  pcl::PointIndices circle_inliers_;
+  pcl::ModelCoefficients circle_coeff;
   ////////////////////////////////////////////////////////////////////////////////
   DetectCircle  (ros::NodeHandle &n) : nh_(n)
   {
@@ -108,7 +111,24 @@ public:
     PointCloud cloud_raw;
     pcl::fromROSMsg (*pc, cloud_raw);
     ne.setInputCloud (boost::make_shared<PointCloud> (cloud_raw));
-    ne.compute (cloud_normals_);
+    pcl::PointCloud<pcl::Normal> cloud_normals;
+    ne.compute (cloud_normals);
+    cloud_normals_.reset (new pcl::PointCloud<pcl::Normal> (cloud_normals));
+    // Create the segmentation object for circle segmentation and set all the parameters
+    seg.setOptimizeCoefficients (true);
+    //seg.setModelType (pcl::SACMODEL_CIRCLE3D);
+    seg.setModelType (pcl::SACMODEL_CIRCLE2D);
+    seg.setMethodType (pcl::SAC_RANSAC);
+    seg.setNormalDistanceWeight (0.1);
+    seg.setMaxIterations (1000);
+    seg.setDistanceThreshold (0.05);
+    seg.setRadiusLimits (0.05, 0.2);
+    seg.setInputCloud (boost::make_shared<PointCloud> (cloud_raw));
+    seg.setInputNormals (cloud_normals_);
+    // Obtain the circle inliers and coefficients
+    seg.segment (circle_inliers_, circle_coeff);
+    std::cerr << "Circle inliers " << circle_inliers_.indices.size() << std::endl;
+    std::cerr << "Circle coefficients: " << circle_coeff << std::endl;
   }
 };
 
