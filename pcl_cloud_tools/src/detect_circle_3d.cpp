@@ -59,7 +59,7 @@
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
-
+#include <pcl_ros/point_cloud.h>
 using namespace std;
 
 typedef pcl::PointXYZ Point;
@@ -77,11 +77,7 @@ public:
   string output_cloud_topic_, input_cloud_topic_;
   ros::Subscriber sub_;
   ros::Publisher pub_;
-  pcl::NormalEstimation<Point, pcl::Normal> ne;
-  pcl::SACSegmentationFromNormals<Point, pcl::Normal> seg;
-  KdTreePtr tree_;
-  pcl::PointCloud<pcl::Normal>::ConstPtr cloud_normals_;
-  //  pcl::PointCloud<pcl::Normal> cloud_normals_;
+  pcl::SACSegmentation<Point> seg;
   pcl::PointIndices circle_inliers_;
   pcl::ModelCoefficients circle_coeff;
   ////////////////////////////////////////////////////////////////////////////////
@@ -92,15 +88,9 @@ public:
     nh_.param("output_cloud_topic", output_cloud_topic_, std::string("circle"));
    
     sub_ = nh_.subscribe (input_cloud_topic_, 1,  &DetectCircle::cloud_cb, this);
-    ROS_INFO ("[DetectCircle:] Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
+    ROS_INFO ("[DetectCircle3D:] Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
     pub_ = nh_.advertise<sensor_msgs::PointCloud2>(output_cloud_topic_, 1);
-    ROS_INFO ("[DetectCircle:] Will be publishing data on topic %s.", nh_.resolveName (output_cloud_topic_).c_str ());
-    tree_ = boost::make_shared<pcl::KdTreeFLANN<Point> > ();
-    tree_->setEpsilon (1);
-
-    // Estimate point normals                                                                                                               
-    ne.setSearchMethod (tree_);
-    ne.setKSearch (50);
+    ROS_INFO ("[DetectCircle3D:] Will be publishing data on topic %s.", nh_.resolveName (output_cloud_topic_).c_str ());
   }
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -109,25 +99,24 @@ public:
   {
     PointCloud cloud_raw;
     pcl::fromROSMsg (*pc, cloud_raw);
-    ne.setInputCloud (boost::make_shared<PointCloud> (cloud_raw));
-    pcl::PointCloud<pcl::Normal> cloud_normals;
-    ne.compute (cloud_normals);
-    cloud_normals_.reset (new pcl::PointCloud<pcl::Normal> (cloud_normals));
-    // Create the segmentation object for circle segmentation and set all the parameters
     seg.setOptimizeCoefficients (true);
-    //seg.setModelType (pcl::SACMODEL_CIRCLE3D);
     seg.setModelType (pcl::SACMODEL_CIRCLE2D);
     seg.setMethodType (pcl::SAC_RANSAC);
-    seg.setNormalDistanceWeight (0.1);
-    seg.setMaxIterations (1000);
+    seg.setMaxIterations (10000);
     seg.setDistanceThreshold (0.05);
-    seg.setRadiusLimits (0.05, 0.2);
+    seg.setRadiusLimits (0.05, 0.1);
     seg.setInputCloud (boost::make_shared<PointCloud> (cloud_raw));
-    seg.setInputNormals (cloud_normals_);
     // Obtain the circle inliers and coefficients
     seg.segment (circle_inliers_, circle_coeff);
     std::cerr << "Circle inliers " << circle_inliers_.indices.size() << std::endl;
     std::cerr << "Circle coefficients: " << circle_coeff << std::endl;
+
+    pcl::ExtractIndices<Point> extract_object_indices;
+    extract_object_indices.setInputCloud (boost::make_shared<PointCloud> (cloud_raw));
+    extract_object_indices.setIndices (boost::make_shared<const pcl::PointIndices> (circle_inliers_));
+    pcl::PointCloud<Point> cloud_object;
+    extract_object_indices.filter (cloud_object);
+    pub_.publish(cloud_object);
   }
 };
 
@@ -139,5 +128,3 @@ int main (int argc, char** argv)
   ros::spin ();
   return (0);
 }
-
-/* ]--- */
