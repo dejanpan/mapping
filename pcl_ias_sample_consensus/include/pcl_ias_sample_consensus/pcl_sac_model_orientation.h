@@ -11,8 +11,8 @@
 //#include <pcl/kdtree/kdtree_ann.h>
 
 // Eigen
-//#include <Eigen3/Array>
-//#include <Eigen3/Geometry>
+//#include <Eigen/Array>
+//#include <Eigen/Geometry>
 
 namespace pcl
 {
@@ -22,7 +22,7 @@ namespace pcl
    * \param axis the rotation axis
    * \param angle the rotation angle in radians
    */
-  inline Eigen3::Vector3f rotateAroundAxis (Eigen3::Vector3f r, Eigen3::Vector3f axis, float angle)
+  inline Eigen::Vector3f rotateAroundAxis (Eigen::Vector3f r, Eigen::Vector3f axis, float angle)
   {
     // Rodrigues' rotation formula
     return r * cos(angle) + (axis.cross(r)) * sin(angle) + axis * axis.dot(r) * (1-cos(angle));
@@ -45,7 +45,7 @@ namespace pcl
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief The fixed axis. */
-      Eigen3::Vector3f axis_;
+      Eigen::Vector3f axis_;
 
       /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Constructor for base SACModelOrientation
@@ -81,7 +81,7 @@ namespace pcl
         * @note Model coefficients are the normal of the sample point (and it's index for testModelCoefficients)
         * \param samples the point indices found as possible good candidates for creating a valid model
         */
-      bool computeModelCoefficients (const std::vector<int> &samples, Eigen3::VectorXf &model_coefficients);
+      bool computeModelCoefficients (const std::vector<int> &samples, Eigen::VectorXf &model_coefficients);
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Recompute the model coefficients using the given inlier set and return them to the user. Pure virtual.
@@ -96,7 +96,7 @@ namespace pcl
         * \param model_coefficients the coefficients of a model that we need to compute distances to
         * \param distances the resultant estimated distances
         */
-      void getDistancesToModel (const Eigen3::VectorXf &model_coefficients, std::vector<double> &distances) {}
+      void getDistancesToModel (const Eigen::VectorXf &model_coefficients, std::vector<double> &distances) {}
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Select all the points which respect the given model coefficients as inliers.
@@ -106,7 +106,7 @@ namespace pcl
         * @note: To get the refined inliers of a model, use:
         *        refined_coeff = refitModel (...); selectWithinDistance (refined_coeff, threshold);
         */
-      void selectWithinDistance (const Eigen3::VectorXf &model_coefficients, double threshold, std::vector<int> &inliers);
+      void selectWithinDistance (const Eigen::VectorXf &model_coefficients, double threshold, std::vector<int> &inliers);
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Create a new point cloud with inliers projected onto the model.
@@ -114,7 +114,7 @@ namespace pcl
         * \param model_coefficients the coefficients of a model
         * \param projected_points the resultant projected points
         */
-      void projectPoints (const std::vector<int> &inliers, const Eigen3::VectorXf &model_coefficients, Normals &projected_points, bool copy_data_fields = true){}
+      void projectPoints (const std::vector<int> &inliers, const Eigen::VectorXf &model_coefficients, Normals &projected_points, bool copy_data_fields = true){}
 
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,14 +122,14 @@ namespace pcl
         * \param indices the data indices that need to be tested against the model (each element is an index of indices_)
         * \param threshold a maximum admissible distance threshold for determining the inliers from the outliers
         */
-      bool doSamplesVerifyModel (const std::set<int> &indices, const Eigen3::VectorXf &model_coefficients, double threshold) { return true; }
+      bool doSamplesVerifyModel (const std::set<int> &indices, const Eigen::VectorXf &model_coefficients, double threshold) { return true; }
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Return an unique id for each type of model employed. */
       inline int getModelType () { return 1001; }
 
-      inline void optimizeModelCoefficients(   const std::vector<int> &inliers, const Eigen3::VectorXf &model_coefficients,
-                                        Eigen3::VectorXf &optimized_coefficients){}
+      inline void optimizeModelCoefficients(   const std::vector<int> &inliers, const Eigen::VectorXf &model_coefficients,
+                                        Eigen::VectorXf &optimized_coefficients){}
 
     protected:
 
@@ -138,7 +138,7 @@ namespace pcl
         * \param model_coefficients the set of model coefficients
         */
        inline bool
-          isModelValid (const Eigen3::VectorXf &model_coefficients)
+          isModelValid (const Eigen::VectorXf &model_coefficients)
        {
           // Needs a valid model coefficients
           ROS_ASSERT (model_coefficients.size () == 4);

@@ -129,7 +129,7 @@ std::string GlobalRSD::process (const boost::shared_ptr<const GlobalRSD::InputTy
     vector<int> neighbors;
     if (step_ == 0)
     {
-      Eigen3::Vector4f central_point;
+      Eigen::Vector4f central_point;
       pcl::compute3DCentroid (cloud_vrsd_, indices_i, central_point);
       vector<float> sqr_distances;
       QueryPoint central_point_pcl(central_point[0], central_point[1], central_point[2]);

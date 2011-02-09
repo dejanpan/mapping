@@ -1,10 +1,10 @@
-/* 
+/*
  * Copyright (c) 2010, Hozefa Indorewala <indorewala@ias.in.tum.de>
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of Willow Garage, Inc. nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -36,7 +36,7 @@
 #include <pointcloud_registration/spin_image_estimation/spin_image_estimation.h>
 #include <pointcloud_registration/pointcloud_registration_point_types.h>
 #include <pcl/io/pcd_io.h>
-#include "pcl/kdtree/kdtree_ann.h" //for the kdtree
+#include "pcl/kdtree/kdtree_flann.h" //for the kdtree
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/features/normal_3d_tbb.h>
 
@@ -54,10 +54,10 @@ int main()
   pcl::PointCloud<pcl::PointXYZ> cloud;
   pcl::SpinImageEstimation<pcl::PointXYZ, pcl::PointNormal, pcl::SpinImageLocal> s;
   pcl::PointCloud<pcl::SpinImageLocal> sil;
-  vector<int> indices;
+  std::vector<int> indices;
 
   int sil_indices_array[] = {277816, 205251, 198723, 221146, 271903};
-  vector<int> sil_indices (sil_indices_array, sil_indices_array + sizeof(sil_indices_array) / sizeof(int) );
+  std::vector<int> sil_indices (sil_indices_array, sil_indices_array + sizeof(sil_indices_array) / sizeof(int) );
   if (pcl::io::loadPCDFile (PCD_FILE, cloud_blob) == -1)
   {
     ROS_ERROR ("Couldn't read pcd file.");
@@ -69,8 +69,8 @@ int main()
   pcl::fromROSMsg(cloud_blob, cloud);
 
   //KdTree stuff
-  pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree;
-  tree = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
+  pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr tree;
+  tree = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ> > ();
   tree->setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (cloud));
 
   //indices stuff
@@ -84,7 +84,7 @@ int main()
   pcl::PointCloud<pcl::PointNormal> normals;
   // set parameters
   n.setInputCloud (boost::make_shared <const pcl::PointCloud<pcl::PointXYZ> > (cloud));
-  n.setIndices (boost::make_shared <vector<int> > (indices));
+  n.setIndices (boost::make_shared <std::vector<int> > (indices));
   n.setSearchMethod (tree);
   n.setKSearch (30);    // Use 10 nearest neighbors to estimate the normals
   // estimate
@@ -95,7 +95,7 @@ int main()
   //s.setSearchSurface(boost::make_shared< pcl::PointCloud<pcl::PointXYZ> > (cloud));
   s.setInputNormals(boost::make_shared< pcl::PointCloud<pcl::PointNormal> > (normals));
   s.setInputCloud(boost::make_shared< pcl::PointCloud<pcl::PointXYZ> > (cloud));
-  s.setIndices(boost::make_shared< vector<int> > (sil_indices));
+  s.setIndices(boost::make_shared< std::vector<int> > (sil_indices));
   s.setSearchMethod(tree);
   s.setKSearch(MAX_NN);
   s.setNrSubdivisions(SUB_DIVISIONS);
@@ -105,7 +105,7 @@ int main()
   ROS_INFO("Spin Image Estimation Complete.");
 
   //Write the histogram values of a selected point to a PPM file
-  ofstream ppm_file;
+  std::ofstream ppm_file;
 
   //std::cout<<sil.points.size()<<std::endl;
   for(size_t idx = 0 ; idx < sil_indices.size(); idx++)
