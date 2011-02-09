@@ -78,8 +78,8 @@ public:
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_in_;
   pcl::PointXYZ point_min_;
   pcl::PointXYZ point_max_;
-  //  Eigen3::Vector4f point_min_;
-  //Eigen3::Vector4f point_max_;
+  //  Eigen::Vector4f point_min_;
+  //Eigen::Vector4f point_max_;
   pcl::PointXYZ point_center_;
   visualization_msgs::Marker marker_center_;
   visualization_msgs::Marker marker_min_;

@@ -30,7 +30,7 @@
 #ifndef POINTCLOUD_REGISTRATION_POINT_TYPES_H_
 #define POINTCLOUD_REGISTRATION_POINT_TYPES_H_
 
-#include <Eigen3/Core>
+#include <Eigen/Core>
 #include <bitset>
 #include <vector>
 #include "pcl/ros/register_point_struct.h"
