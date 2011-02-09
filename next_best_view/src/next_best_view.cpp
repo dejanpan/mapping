@@ -230,7 +230,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   pass.filter(border_cloud);
 
   // tree object used for search
-  pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
+  pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr tree = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ> > ();
 
   // Estimate point normals
   ne.setSearchMethod(tree);
@@ -260,7 +260,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
   ROS_INFO("%d points in normals cloud after NaN removal", (int)border_normals.points.size());
 
   // tree object used for search
-  pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree2 = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
+  pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr tree2 = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ> > ();
 
   tree2->setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointXYZ> > (border_cloud));
   // Decompose a region of space into clusters based on the euclidean distance between points, and the normal
@@ -353,7 +353,7 @@ void Nbv::computeBoundaryPoints(pcl::PointCloud<pcl::PointXYZ>& border_cloud, pc
       nextract.filter(cluster_normals);
 
       // find boundary points of cluster
-      pcl::KdTreeANN<pcl::PointXYZ>::Ptr tree3 = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZ> > ();
+      pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr tree3 = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ> > ();
       pcl::PointCloud<pcl::Boundary> boundary_cloud;
       pcl::BoundaryEstimation<pcl::PointXYZ, pcl::Normal, pcl::Boundary> be;
       be.setSearchMethod(tree3);
