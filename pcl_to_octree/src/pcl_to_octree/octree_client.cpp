@@ -23,7 +23,7 @@ class OctreeClient
 public:
   OctreeClient();
   ~OctreeClient();
-	void OctreeCallback(const octomap_server::OctomapBinary& mapMsg);
+	void OctreeCallback(const octomap_ros::OctomapBinary& mapMsg);
 	void run();
     
 private:
@@ -77,7 +77,7 @@ OctreeClient::~OctreeClient()
   octree_marker_publisher_.shutdown();
 }
 
-void OctreeClient::OctreeCallback(const octomap_server::OctomapBinary& mapMsg)
+void OctreeClient::OctreeCallback(const octomap_ros::OctomapBinary& mapMsg)
 {
   ROS_INFO("Received an octree.");
   octomap::OcTreePCL* octree = new octomap::OcTreePCL(0);
