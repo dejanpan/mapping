@@ -77,7 +77,7 @@ void PclToOctree::run()
 
   octree_marker_publisher_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 100);
 
-  octree_binary_publisher_ = nh_.advertise<octomap_server::OctomapBinary>("octree_binary", 100);
+  octree_binary_publisher_ = nh_.advertise<octomap_ros::OctomapBinary>("octree_binary", 100);
 
   pointcloud_subscriber_ = nh_.subscribe(point_cloud_topic_, 100, &PclToOctree::pclToOctreeCallback, this);
 
@@ -97,7 +97,7 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud2& pointcloud
 
   frame_id_ = pointcloud2_msg.header.frame_id;
   //sensor_msgs::PointCloud2 pointcloud2_msg;
-  octomap_server::OctomapBinary octree_msg;
+  octomap_ros::OctomapBinary octree_msg;
 
   // Converting from PointCloud msg format to PointCloud2 msg format
   //sensor_msgs::convertPointCloudToPointCloud2(pointcloud_msg, pointcloud2_msg);

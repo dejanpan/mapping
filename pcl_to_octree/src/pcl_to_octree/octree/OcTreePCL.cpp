@@ -41,7 +41,7 @@ void OcTreePCL::insertScan(const ScanNode& scan, double maxrange, bool pruning) 
 
     for (octomap::Pointcloud::iterator point_it = scan.scan->begin(); 
          point_it != scan.scan->end(); point_it++) {
-      p = scan_pose.transform(**point_it);
+      p = scan_pose.transform(*point_it);
       this->insertRay(origin, p, maxrange);
     } // end for all points
   } 
@@ -218,7 +218,7 @@ void OcTreePCL::insertScanUniform(const ScanNode& scan, double maxrange) {
 
   for (octomap::Pointcloud::iterator point_it = scan.scan->begin(); point_it != scan.scan->end(); point_it++) {
 
-    p = scan_pose.transform(**point_it);
+    p = scan_pose.transform(*point_it);
 
     bool is_maxrange = false;
     if ( (maxrange > 0.0) && ((p - origin).norm2() > maxrange) ) is_maxrange = true;

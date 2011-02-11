@@ -9,8 +9,8 @@
 
 #include <octomap/octomap.h>
 #include "OcTreePCL.h"
-#include <octomap_server/OctomapBinary.h>
-#include <octomap_server/GetOctomap.h>
+#include <octomap_ros/OctomapBinary.h>
+#include <octomap_ros/GetOctomap.h>
 #include <iostream>
 
 
@@ -24,7 +24,7 @@ namespace octomap_server{
 	 * @param octomap input OcTree
 	 * @param mapMsg output msg
 	 */
-	static inline void octomapMapToMsg(const octomap::OcTreePCL& octree, OctomapBinary& mapMsg){
+	static inline void octomapMapToMsg(const octomap::OcTreePCL& octree, octomap_ros::OctomapBinary& mapMsg){
 		// conversion via stringstream
 
 		// TODO: read directly into buffer? see
@@ -42,7 +42,7 @@ namespace octomap_server{
 	 * @param mapMsg
 	 * @param octomap
 	 */
-	static inline void octomapMsgToMap(const OctomapBinary& mapMsg, octomap::OcTreePCL& octree){
+	static inline void octomapMsgToMap(const octomap_ros::OctomapBinary& mapMsg, octomap::OcTreePCL& octree){
 		std::stringstream datastream;
 		assert(mapMsg.data.size() > 0);
 		datastream.write((const char*) &mapMsg.data[0], mapMsg.data.size());

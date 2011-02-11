@@ -9,7 +9,8 @@
 //#include "pcl_to_octree/octree/OcTreeNodePCL.h"
 //#include "pcl_to_octree/octree/OcTreePCL.h"
 //#include "pcl_to_octree/octree/OcTreeServerPCL.h"
-#include "octomap_server/octomap_server.h"
+#include <octomap_ros/conversions.h>
+#include <octomap/octomap.h>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -23,7 +24,7 @@ class OctreeClient
 public:
   OctreeClient();
   ~OctreeClient();
-	void OctreeCallback(const octomap_server::OctomapBinary& mapMsg);
+	void OctreeCallback(const octomap_ros::OctomapBinary& mapMsg);
 	void run();
     
 private:
@@ -74,13 +75,13 @@ OctreeClient::~OctreeClient()
   octree_marker_publisher_.shutdown();
 }
 
-void OctreeClient::OctreeCallback(const octomap_server::OctomapBinary& mapMsg)
+void OctreeClient::OctreeCallback(const octomap_ros::OctomapBinary& mapMsg)
 {
   ROS_INFO("Received an octree.");
   //create new OcTree with arbitrary resolution - 0.25 in this case
   //the resolution gets overridden from the incoming octree
   octomap::OcTree* octree = new octomap::OcTree(0.25);
-  octomap_server::octomapMsgToMap(mapMsg, *octree);
+  octomap::octomapMsgToMap(mapMsg, *octree);
   ROS_INFO("OctomapBinary converted to Octree with resolution %lf", octree->getResolution());
 
   //ROS_INFO("Octree Node List size: %ld",octree->octree_node_list.size());
