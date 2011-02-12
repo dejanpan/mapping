@@ -53,7 +53,7 @@ def plot_confusion_matrix(conf_arr, nr):
     plt.title('GRSD Confusion Matrix for Testing Views')
 #    plt.title('GRSD Confusion Matrix for Training Objects')
     ax = fig.add_subplot(111)
-    res = ax.imshow(array(norm_conf),  cmap=cm.jet, interpolation='nearest', aspect='auto')
+    res = ax.imshow(array(norm_conf),  cmap=cm.gray, interpolation='nearest', aspect='auto')
     cb = fig.colorbar(res)
     savefig("confmat.png", format="png", bbox_inches='tight')
 
