@@ -2,8 +2,8 @@
 #define CLOUD_ALGOS_GRSD_H
 
 // Eigen
-//#include <Eigen3/StdVector>
-//#include <Eigen3/Array>
+//#include <Eigen/StdVector>
+//#include <Eigen/Array>
 
 //#include <ros/ros.h>
 //#include <sensor_msgs/PointCloud.h>

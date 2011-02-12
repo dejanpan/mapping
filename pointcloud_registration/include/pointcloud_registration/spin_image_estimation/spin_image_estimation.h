@@ -59,7 +59,7 @@ namespace pcl
       {
         if( p_idx == q_idx)
           return(false);
-        Eigen3::Vector3f delta_vector, u;
+        Eigen::Vector3f delta_vector, u;
 
         // Compute the Cartesian difference between the two points i.e. (p_idx - q_idx)
         delta_vector[0] = cloud.points[p_idx].x - cloud.points[q_idx].x;
@@ -72,7 +72,7 @@ namespace pcl
           return (false);
         }
 
-        //Eigen3::Vector4f u = Eigen3::Vector4f::Map (normals.points[q_idx].normal[0], 3);
+        //Eigen::Vector4f u = Eigen::Vector4f::Map (normals.points[q_idx].normal[0], 3);
         u[0] = normals.points[q_idx].normal[0];
         u[1] = normals.points[q_idx].normal[1];
         u[2] = normals.points[q_idx].normal[2];
@@ -192,7 +192,7 @@ namespace pcl
       int nr_subdiv_;
 
       /** \brief Placeholder for a point's Spin Image signature. */
-      Eigen3::VectorXf spin_image_histogram_;
+      Eigen::VectorXf spin_image_histogram_;
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Get a string representation of the name of this class. */

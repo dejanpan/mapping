@@ -193,33 +193,33 @@ namespace pcl
         * \param transformation_matrix the resultant transformation matrix
         */
 
-      void estimateRigidTransformationSVD (const PointCloudSource &cloud_src, const PointCloudTarget &cloud_tgt, Eigen3::Matrix4f &transformation_matrix)
+      void estimateRigidTransformationSVD (const PointCloudSource &cloud_src, const PointCloudTarget &cloud_tgt, Eigen::Matrix4f &transformation_matrix)
       {
         ROS_ASSERT (cloud_src.points.size () == cloud_tgt.points.size ());
 
         // <cloud_src,cloud_src> is the source dataset
         transformation_matrix.setIdentity ();
 
-        Eigen3::Vector4f centroid_src, centroid_tgt;
+        Eigen::Vector4f centroid_src, centroid_tgt;
         // Estimate the centroids of source, target
         compute3DCentroid (cloud_src, centroid_src);
         compute3DCentroid (cloud_tgt, centroid_tgt);
 
         // Subtract the centroids from source, target
-        Eigen3::MatrixXf cloud_src_demean;
+        Eigen::MatrixXf cloud_src_demean;
         demeanPointCloud (cloud_src, centroid_src, cloud_src_demean);
 
 
-        Eigen3::MatrixXf cloud_tgt_demean;
+        Eigen::MatrixXf cloud_tgt_demean;
         demeanPointCloud (cloud_tgt, centroid_tgt, cloud_tgt_demean);
 
         // Assemble the correlation matrix H = source * target'
-        Eigen3::Matrix3f H = (cloud_src_demean * cloud_tgt_demean.transpose ()).topLeftCorner<3, 3>();
+        Eigen::Matrix3f H = (cloud_src_demean * cloud_tgt_demean.transpose ()).topLeftCorner<3, 3>();
 
         // Compute the Singular Value Decomposition
-        Eigen3::JacobiSVD<Eigen3::Matrix3f> svd (H);
-        Eigen3::Matrix3f u = svd.matrixU ();
-        Eigen3::Matrix3f v = svd.matrixV ();
+        Eigen::JacobiSVD<Eigen::Matrix3f> svd (H);
+        Eigen::Matrix3f u = svd.matrixU ();
+        Eigen::Matrix3f v = svd.matrixV ();
 
         // Compute R = V * U'
         //if (u.determinant () * v.determinant () < 0)
@@ -229,32 +229,32 @@ namespace pcl
         //    v (x, 2) *= -1;
         //}
 
-        Eigen3::Matrix3f R = v * u.transpose ();
+        Eigen::Matrix3f R = v * u.transpose ();
 
         // Return the correct transformation
         transformation_matrix.topLeftCorner<3, 3> () = R;
-        Eigen3::Vector3f Rc = R * centroid_src.head<3> ();
+        Eigen::Vector3f Rc = R * centroid_src.head<3> ();
         transformation_matrix.block <3, 1> (0, 3) = centroid_tgt.head<3> () - Rc;
 
         // Assemble the correlation matrix H = source' * target
-        //Eigen3::Matrix3f H = (cloud_src_demean.transpose () * cloud_tgt_demean).corner<3, 3>(Eigen3::TopLeft);
+        //Eigen::Matrix3f H = (cloud_src_demean.transpose () * cloud_tgt_demean).corner<3, 3>(Eigen::TopLeft);
 
         // Compute the Singular Value Decomposition
-        //Eigen3::SVD<Eigen3::Matrix3f> svd (H);
-        //Eigen3::Matrix3f u = svd.matrixU ();
-        //Eigen3::Matrix3f v = svd.matrixV ();
+        //Eigen::SVD<Eigen::Matrix3f> svd (H);
+        //Eigen::Matrix3f u = svd.matrixU ();
+        //Eigen::Matrix3f v = svd.matrixV ();
 
         // Compute R = V * U'
         //if (u.determinant () * v.determinant () < 0)
           //for (int x = 0; x < 3; ++x)
             //v (x, 2) *= -1;
 
-        //Eigen3::Matrix3f R = u * v.transpose ();
-        //Eigen3::Matrix3f Rinv;
+        //Eigen::Matrix3f R = u * v.transpose ();
+        //Eigen::Matrix3f Rinv;
         //R.computeInverse (&Rinv);
         // Return the correct transformation
-        //transformation_matrix.corner<3, 3> (Eigen3::TopLeft) = Rinv;
-        //Eigen3::Vector3f Rc = Rinv * centroid_src.start<3> ();
+        //transformation_matrix.corner<3, 3> (Eigen::TopLeft) = Rinv;
+        //Eigen::Vector3f Rc = Rinv * centroid_src.start<3> ();
         //transformation_matrix.block <3, 1> (0, 3) = centroid_tgt.start<3> () - Rc;
       }
 

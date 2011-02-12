@@ -35,9 +35,9 @@
 #include <pcl_cloud_algos/pcl_cloud_algos_point_types.h>
 
 // For Extra Eigen functions
-#include <Eigen3/Core>
-#include <Eigen3/LU> // matrix inversion
-#include <Eigen3/Geometry> // cross product
+#include <Eigen/Core>
+#include <Eigen/LU> // matrix inversion
+#include <Eigen/Geometry> // cross product
 
 // TriangleMesh to Output Triangles
 #include <sensor_msgs/PointCloud.h>

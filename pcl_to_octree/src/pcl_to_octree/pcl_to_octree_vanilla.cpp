@@ -12,7 +12,8 @@
 //#include "octree/OcTreeNode.h"
 //#include "octree/OcTree.h"
 //#include "octree/OcTreeServerPCL.h"
-#include "octomap_server/octomap_server.h"
+#include <octomap_ros/conversions.h>
+#include <octomap/octomap.h>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/ros/conversions.h>
@@ -72,7 +73,7 @@ PclToOctree::PclToOctree() : nh_("~")
 
 void PclToOctree::run()
 {
-  octree_binary_publisher_ = nh_.advertise<octomap_server::OctomapBinary>("octree_binary", 100);
+  octree_binary_publisher_ = nh_.advertise<octomap_ros::OctomapBinary>("octree_binary", 100);
     
   pointcloud_subscriber_ = nh_.subscribe(point_cloud_topic_, 100, &PclToOctree::pclToOctreeCallback, this);
     
@@ -88,7 +89,7 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
 {
   ROS_INFO("Received a point cloud.");
   sensor_msgs::PointCloud2 pointcloud2_msg;
-  octomap_server::OctomapBinary octree_msg;
+  octomap_ros::OctomapBinary octree_msg;
       
   // Converting from PointCloud msg format to PointCloud2 msg format
   sensor_msgs::convertPointCloudToPointCloud2(pointcloud_msg, pointcloud2_msg);
@@ -129,7 +130,7 @@ void PclToOctree::pclToOctreeCallback(const sensor_msgs::PointCloud& pointcloud_
 
   
   //convert octree to OctreeBinary (serialization)
-  octomap_server::octomapMapToMsg(*octree, octree_msg);
+  octomap::octomapMapToMsg(*octree, octree_msg);
   octree_binary_publisher_.publish(octree_msg);
   ROS_INFO("OctreeBinary built and published");
 }

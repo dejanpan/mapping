@@ -33,7 +33,7 @@
 //  }
 
 //template<typename Normal> void
-//    pcl::SACModelOrientation<Normal>::getMinAndMax (boost::shared_ptr<pcl::PointCloud<pcl::PointT> > cloud, Eigen3::VectorXf *model_coefficients, std::vector<int> *inliers, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances)
+//    pcl::SACModelOrientation<Normal>::getMinAndMax (boost::shared_ptr<pcl::PointCloud<pcl::PointT> > cloud, Eigen::VectorXf *model_coefficients, std::vector<int> *inliers, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances)
 //  {
 //    // Initialize result vectors
 //    min_max_indices.resize (6);
@@ -42,17 +42,17 @@
 //    min_max_distances[1] = min_max_distances[3] = min_max_distances[5] = -DBL_MAX;
 //
 //    // The 3 coordinate axes are nm, nc and axis_
-//    Eigen3::Vector3f nm = Eigen3::Vector3d::Map(&(*model_coefficients)[0]).cast<float> ();
-//    Eigen3::Vector3f nc = axis_.cross (nm);
+//    Eigen::Vector3f nm = Eigen::Vector3d::Map(&(*model_coefficients)[0]).cast<float> ();
+//    Eigen::Vector3f nc = axis_.cross (nm);
 //
 //    // Find minimum and maximum distances from origin along the three axes
 //    for (std::vector<int>::iterator it = inliers->begin (); it != inliers->end (); it++)
 //    //for (unsigned i = 0; i < inliers.size (); i++)
 //    {
 //      /// @NOTE inliers is a list of indices of the indices_ array!
-//      Eigen3::Vector3f point (input_->points[(*indices_)[*it]].x, input_->points[(*indices_)[*it]].y, input_->points[(*indices_)[*it]].z);
-//      //Eigen3::Vector3f point (cloud_->points[indices_[*it]].x - center.x, cloud_->points[indices_[*it]].y - center.y, cloud_->points[indices_[*it]].z - center.z);
-//      //Eigen3::Vector3f point (cloud_->points[indices_[inliers[i]]].x, cloud_->points[indices_[inliers[i]]].y, cloud_->points[indices_[inliers[i]]].z);
+//      Eigen::Vector3f point (input_->points[(*indices_)[*it]].x, input_->points[(*indices_)[*it]].y, input_->points[(*indices_)[*it]].z);
+//      //Eigen::Vector3f point (cloud_->points[indices_[*it]].x - center.x, cloud_->points[indices_[*it]].y - center.y, cloud_->points[indices_[*it]].z - center.z);
+//      //Eigen::Vector3f point (cloud_->points[indices_[inliers[i]]].x, cloud_->points[indices_[inliers[i]]].y, cloud_->points[indices_[inliers[i]]].z);
 //      double dists[3];
 //      dists[0] = nm.dot(point);
 //      dists[1] = nc.dot(point);
@@ -87,7 +87,7 @@ template <typename Normal> void
   }
 
 template <typename Normal> bool
-   pcl::SACModelOrientation<Normal>::computeModelCoefficients (const std::vector<int> &samples, Eigen3::VectorXf &model_coefficients)
+   pcl::SACModelOrientation<Normal>::computeModelCoefficients (const std::vector<int> &samples, Eigen::VectorXf &model_coefficients)
   {
     // Check whether the given index samples can form a valid model
     // compute the model coefficients from these samples
@@ -124,17 +124,17 @@ template <typename Normal> void
     //*
 
     // Get source and acceptable distance from it
-    Eigen3::Vector3f nm (input_->points[refit_coefficients[3]].normal[0], input_->points[refit_coefficients[3]].normal[1], input_.points[refit_coefficients[3]].normal[2]);
+    Eigen::Vector3f nm (input_->points[refit_coefficients[3]].normal[0], input_->points[refit_coefficients[3]].normal[1], input_.points[refit_coefficients[3]].normal[2]);
     double eps_angle = M_PI/6; // or use a user defined threshold (eps_angle_)?
     double radius = 2 * sin (eps_angle/2);
     double sqr_radius = radius*radius;
 
     // get local coordinate system from the axis
-    //Eigen3::Vector3f v = axis_.unitOrthogonal ();
-    //Eigen3::Vector3f u = axis_.cross (v);
+    //Eigen::Vector3f v = axis_.unitOrthogonal ();
+    //Eigen::Vector3f u = axis_.cross (v);
 
-    //Eigen3::MatrixXf rotated_normals(inliers.size (), 3);
-    Eigen3::Vector3f sum_rotated_normals = Eigen3::VectorXf::Zero(3);
+    //Eigen::MatrixXf rotated_normals(inliers.size (), 3);
+    Eigen::Vector3f sum_rotated_normals = Eigen::VectorXf::Zero(3);
 
     // Rotate all inliers onto the first direction and sum them up
     for (unsigned it = 0; it < inliers.size (); it++)
@@ -142,9 +142,9 @@ template <typename Normal> void
     {
       /// @NOTE inliers is a list of indices of the indices_ array!
       /// @NOTE normal_ contains only the elements listed in the indices_ array!
-      Eigen3::Vector3f ni (input_->points[inliers[it]].normal[0], input_->points[inliers[it]].normal[1], input_->points[inliers[it]].normal[2]);
+      Eigen::Vector3f ni (input_->points[inliers[it]].normal[0], input_->points[inliers[it]].normal[1], input_->points[inliers[it]].normal[2]);
       //std::cerr << "inlier " << it << "/" << inliers[it] << ": " << ni.transpose () << std::endl;
-      //Eigen3::Vector3f ni2 = ni.cwise.square ();
+      //Eigen::Vector3f ni2 = ni.cwise.square ();
       for (int i=0; i<4; i++)
       {
         // Find the orientation that is pointing in the same direction as the model
@@ -167,7 +167,7 @@ template <typename Normal> void
   }
 
 template <typename Normal>  void
-   pcl::SACModelOrientation<Normal>::selectWithinDistance (const Eigen3::VectorXf &model_coefficients, double threshold, std::vector<int> &inliers)
+   pcl::SACModelOrientation<Normal>::selectWithinDistance (const Eigen::VectorXf &model_coefficients, double threshold, std::vector<int> &inliers)
   {
     //std::cerr << model_coefficients[3] << ": " << model_coefficients[0] << " " << model_coefficients[1] << " " << model_coefficients[2] << " ";
 
