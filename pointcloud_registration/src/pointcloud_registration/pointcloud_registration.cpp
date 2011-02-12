@@ -39,13 +39,13 @@
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <pointcloud_registration/pointcloud_registration_point_types.h>
 #include <pcl/io/pcd_io.h>
-#include <Eigen3/SVD>
+#include <Eigen/SVD>
 
 #include "pcl/filters/statistical_outlier_removal.h" // to filter outliers
 
 #include "pcl/filters/voxel_grid.h" //for downsampling the point cloud
 
-#include "pcl/kdtree/kdtree_ann.h" //for the kdtree
+#include "pcl/kdtree/kdtree_flann.h" //for the kdtree
 
 #include "pcl/registration/transforms.h" //for the transformation function
 
@@ -85,7 +85,7 @@ class PointCloudRegistration
     PointCloudRegistration();
     ~PointCloudRegistration();
     void pointcloudRegistrationCallBack(const sensor_msgs::PointCloud& msg);
-    Eigen3::Matrix4f getOverlapTransformation();
+    Eigen::Matrix4f getOverlapTransformation();
     void publishPointCloud(pcl::PointCloud<pcl::PointXYZINormal> &pointcloud);
     pcl::PointCloud<pcl::PointXYZINormal> convertFromMsgToPointCloud(const sensor_msgs::PointCloud& pointcloud_msg);
 
@@ -99,19 +99,19 @@ class PointCloudRegistration
     bool downsample_pointcloud_before_, downsample_pointcloud_after_, filter_outliers_, curvature_check_;
     int scan_index_;
     time_t start, end;
-    Eigen3::Matrix4f final_transformation_;
+    Eigen::Matrix4f final_transformation_;
     ros::Subscriber pointcloud_subscriber_;
     ros::Publisher pointcloud_merged_publisher_;
 
     pcl::IterativeClosestPointCorrespondencesCheck<pcl::PointXYZINormal, pcl::PointXYZINormal> icp_; // for icp
-    pcl::KdTreeANN<pcl::PointXYZINormal> kdtree_;  // for kdtree
+    pcl::KdTreeFLANN<pcl::PointXYZINormal> kdtree_;  // for kdtree
     bool firstCloudReceived_, secondCloudReceived_;
     pcl::PointCloud<pcl::PointXYZINormal> pointcloud2_current_, pointcloud2_merged_, pointcloud2_transformed_;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Eigen3::Matrix4f PointCloudRegistration::getOverlapTransformation()
+Eigen::Matrix4f PointCloudRegistration::getOverlapTransformation()
 {
   // In this function we extract the overlapped region of the two points cloud and compute
   // the transformation and return it.
@@ -129,9 +129,9 @@ Eigen3::Matrix4f PointCloudRegistration::getOverlapTransformation()
     std::vector<float> nn_dists (max_nn_overlap_);
 
     pcl::PointCloud<pcl::PointXYZINormal> overlap_model, overlap_current;
-    Eigen3::Matrix4f transformation;
+    Eigen::Matrix4f transformation;
 
-    std::vector<pcl:: PointXYZINormal, Eigen3::aligned_allocator<pcl:: PointXYZINormal> >::iterator it;
+    std::vector<pcl:: PointXYZINormal, Eigen::aligned_allocator<pcl:: PointXYZINormal> >::iterator it;
     for(size_t idx = 0 ; idx < pointcloud2_current_.points.size(); idx++ )
     {
       kdtree_.radiusSearch(pointcloud2_current_, idx, radius_overlap_, nn_indices, nn_dists, max_nn_overlap_);
@@ -202,9 +202,9 @@ pcl::PointCloud<pcl::PointXYZINormal> PointCloudRegistration::convertFromMsgToPo
   pcl::PointCloud<pcl::PointXYZI> pointcloud_pcl_step01, pointcloud_pcl_step02;
   pcl::PointCloud<pcl::PointXYZINormal> pointcloud_pcl_normals;
   pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> n;
-  pcl::KdTreeANN<pcl::PointXYZI>::Ptr tree_ptr_;
-  tree_ptr_ = boost::make_shared<pcl::KdTreeANN<pcl::PointXYZI> > ();
-  vector<int> indices;
+  pcl::KdTreeFLANN<pcl::PointXYZI>::Ptr tree_ptr_;
+  tree_ptr_ = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZI> > ();
+  std::vector<int> indices;
 
   // Converting from PointCloud msg format to PointCloud2 msg format
 
@@ -270,7 +270,7 @@ pcl::PointCloud<pcl::PointXYZINormal> PointCloudRegistration::convertFromMsgToPo
   // set parameters
 
   n.setInputCloud (boost::make_shared <const pcl::PointCloud<pcl::PointXYZI> > (pointcloud_pcl_step02));
-  n.setIndices (boost::make_shared <vector<int> > (indices));
+  n.setIndices (boost::make_shared <std::vector<int> > (indices));
   n.setSearchMethod (tree_ptr_);
   n.setKSearch (10);
 

@@ -207,7 +207,7 @@ class ObjectGrabber
 
       seg_.setInputCloud (boost::make_shared<PointCloud> (cloud));
       seg_.setInputNormals (cloud_normals_);
-      seg_.setAxis (Eigen3::Vector3f(fabs(axis2.getX()), fabs(axis2.getY()), fabs(axis2.getZ())));
+      seg_.setAxis (Eigen::Vector3f(fabs(axis2.getX()), fabs(axis2.getY()), fabs(axis2.getZ())));
       // seg_.setIndices (boost::make_shared<pcl::PointIndices> (selection));
       seg_.segment (table_inliers, table_coeff);
       ROS_INFO ("[%s] Table model: [%f, %f, %f, %f] with %d inliers.", getName ().c_str (),
@@ -296,8 +296,8 @@ class ObjectGrabber
       {
         // compute center and see if it is close enough to ray
         int cluster_center = clusters[i].indices[clusters[i].indices.size () / 2];
-        Eigen3::Vector4f pt = Eigen3::Vector4f (cloud_object.points[cluster_center].x, cloud_object.points[cluster_center].y, cloud_object.points[cluster_center].z, 0);
-        Eigen3::Vector4f c = line_dir_.cross3 (line_point_ - pt); c[3] = 0;
+        Eigen::Vector4f pt = Eigen::Vector4f (cloud_object.points[cluster_center].x, cloud_object.points[cluster_center].y, cloud_object.points[cluster_center].z, 0);
+        Eigen::Vector4f c = line_dir_.cross3 (line_point_ - pt); c[3] = 0;
 #ifndef TEST
         if (c.squaredNorm () / line_dir_squaredNorm_ > 0.25*0.25) // further then 10cm
           continue;
@@ -306,7 +306,7 @@ class ObjectGrabber
         // TODO make more optimal? + ERRORS/INCONSISTENCY IN PCL: second formula and in c computation!
 
         //tf::transformPoint();
-        //Eigen3::Matrix4f transform_matrix;
+        //Eigen::Matrix4f transform_matrix;
         //pcl_ros::transformAsMatrix (c2h_transform, transform_matrix);
 
         // broadcast transform
@@ -318,7 +318,7 @@ class ObjectGrabber
         // transform object into right_hand frame
         pcl::PointCloud<Point> cloud_object_clustered ;
         pcl::copyPointCloud (cloud_object, clusters[i], cloud_object_clustered);
-//        Eigen3::Matrix4f eigen_transform;
+//        Eigen::Matrix4f eigen_transform;
 //        pcl_ros::transformAsMatrix (c2h_transform, eigen_transform);
 //        pcl::transformPointCloud(cloud_object_clustered, output_cloud_, eigen_transform);
 //        output_cloud_.header.frame_id = ""right_hand";
@@ -371,8 +371,8 @@ class ObjectGrabber
         return true;
       }
       to_select_ = true;
-      line_point_ = Eigen3::Vector4f (req.point_line[0], req.point_line[1], req.point_line[2], 0);
-      line_dir_ = Eigen3::Vector4f (req.point_line[3], req.point_line[4], req.point_line[5], 0);
+      line_point_ = Eigen::Vector4f (req.point_line[0], req.point_line[1], req.point_line[2], 0);
+      line_dir_ = Eigen::Vector4f (req.point_line[3], req.point_line[4], req.point_line[5], 0);
       line_dir_squaredNorm_ = line_dir_.squaredNorm ();
       res.error = "grabbing enabled";
       std::cerr << "point: " << line_point_.transpose() << " direction: " << line_dir_.transpose() <<  std::endl;
@@ -436,8 +436,8 @@ class ObjectGrabber
 
     // Switch to enable segmenting
     bool to_select_, object_released_;
-    Eigen3::Vector4f line_point_;
-    Eigen3::Vector4f line_dir_;
+    Eigen::Vector4f line_point_;
+    Eigen::Vector4f line_dir_;
     float line_dir_squaredNorm_;
 
     // Parameters
@@ -465,7 +465,7 @@ class ObjectGrabber
     sensor_msgs::PointCloud2 output_cloud_;
   
     // TODO why are these saved as fields?
-    std::vector<Eigen3::Vector4d *> table_coeffs_;
+    std::vector<Eigen::Vector4d *> table_coeffs_;
     pcl::PointCloud<pcl::Normal>::ConstPtr cloud_normals_; // The resultant estimated point cloud normals for \a cloud_filtered_
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////

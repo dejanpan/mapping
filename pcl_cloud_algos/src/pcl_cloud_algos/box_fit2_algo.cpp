@@ -43,7 +43,7 @@ using namespace pcl_cloud_algos;
 using namespace pcl;
 //using namespace sample_consensus;
 
-void RobustBoxEstimation::getMinAndMax(Eigen3::VectorXf model_coefficients, boost::shared_ptr<SACModelOrientation<Normal> > model, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances)
+void RobustBoxEstimation::getMinAndMax(Eigen::VectorXf model_coefficients, boost::shared_ptr<SACModelOrientation<Normal> > model, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances)
 {
 
   boost::shared_ptr<vector<int> > inliers = model->getIndices();
@@ -56,21 +56,21 @@ void RobustBoxEstimation::getMinAndMax(Eigen3::VectorXf model_coefficients, boos
   min_max_distances[1] = min_max_distances[3] = min_max_distances[5] = -DBL_MAX;
 
   // The 3 coordinate axes are nm, nc and axis_
-  Eigen3::Vector3f nm;
+  Eigen::Vector3f nm;
   nm[0] = model_coefficients[0];
   nm[1] = model_coefficients[1];
   nm[2] = model_coefficients[2];
-  //Eigen3::Vector3f nm = Eigen3::Vector3d::Map(&(*model_coefficients)[0]).cast<float> ();
-  Eigen3::Vector3f nc = model->axis_.cross (nm);
+  //Eigen::Vector3f nm = Eigen::Vector3d::Map(&(*model_coefficients)[0]).cast<float> ();
+  Eigen::Vector3f nc = model->axis_.cross (nm);
 
   // Find minimum and maximum distances from origin along the three axes
   for (std::vector<int>::iterator it = inliers->begin (); it != inliers->end (); it++)
   //for (unsigned i = 0; i < inliers.size (); i++)
   {
     // @NOTE inliers is a list of indices of the indices_ array!
-    Eigen3::Vector3f point (cloud_->points[(*indices)[*it]].x, cloud_->points[(*indices)[*it]].y, cloud_->points[(*indices)[*it]].z);
-    //Eigen3::Vector3f point (cloud_->points[indices_[*it]].x - center.x, cloud_->points[indices_[*it]].y - center.y, cloud_->points[indices_[*it]].z - center.z);
-    //Eigen3::Vector3f point (cloud_->points[indices_[inliers[i]]].x, cloud_->points[indices_[inliers[i]]].y, cloud_->points[indices_[inliers[i]]].z);
+    Eigen::Vector3f point (cloud_->points[(*indices)[*it]].x, cloud_->points[(*indices)[*it]].y, cloud_->points[(*indices)[*it]].z);
+    //Eigen::Vector3f point (cloud_->points[indices_[*it]].x - center.x, cloud_->points[indices_[*it]].y - center.y, cloud_->points[indices_[*it]].z - center.z);
+    //Eigen::Vector3f point (cloud_->points[indices_[inliers[i]]].x, cloud_->points[indices_[inliers[i]]].y, cloud_->points[indices_[inliers[i]]].z);
     double dists[3];
     dists[0] = nm.dot(point);
     dists[1] = nc.dot(point);
@@ -137,7 +137,7 @@ bool RobustBoxEstimation::find_model(boost::shared_ptr<const pcl::PointCloud <pc
       model->axis_[0], model->axis_[1], model->axis_[2], eps_angle_);
 
   // Check probability of success and decide on method
-  Eigen3::VectorXf refined;
+  Eigen::VectorXf refined;
   vector<int> inliers;
   /// @NOTE: inliers are actually indexes in the indices_ array, but that is not set (by default it has all the points in the correct order)
   if (success_probability_ > 0 && success_probability_ < 1)
@@ -159,7 +159,7 @@ bool RobustBoxEstimation::find_model(boost::shared_ptr<const pcl::PointCloud <pc
     // Exhaustive search for best model
     std::vector<int> best_sample;
     std::vector<int> best_inliers;
-    Eigen3::VectorXf model_coefficients;
+    Eigen::VectorXf model_coefficients;
     for (unsigned i = 0; i < cloud->points.size (); i++)
     {
       std::vector<int> selection (1);
@@ -188,7 +188,7 @@ bool RobustBoxEstimation::find_model(boost::shared_ptr<const pcl::PointCloud <pc
     }
     /// @NOTE best_model_ contains actually the samples used to find the best model!
     //model->computeModelCoefficients(model->getBestModel ());
-    //Eigen3::VectorXf original;
+    //Eigen::VectorXf original;
     //model->getModelCoefficients (original);
     //if (verbosity_level_ > 1) cerr << "original direction: " << original[0] << " " << original[1] << " " << original[2] << ", found at point nr " << original[3] << endl;
     //sac->refineCoefficients(refined);
@@ -203,7 +203,7 @@ bool RobustBoxEstimation::find_model(boost::shared_ptr<const pcl::PointCloud <pc
     // Exhaustive search for best model
     std::vector<int> best_sample;
     std::vector<int> best_inliers;
-    Eigen3::VectorXf model_coefficients;
+    Eigen::VectorXf model_coefficients;
     for (unsigned i = 0; i < cloud->points.size (); i++)
     {
       std::vector<int> selection (1);
