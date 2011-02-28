@@ -1,0 +1,9 @@
+<!-- PCL Features library component -->
+<library path="lib/libPointCloudRegistration">
+  <class name="pointcloud_registration/PointCloudRegistration" type="pointcloud_registration::PointCloudRegistration" base_class_type="nodelet::Nodelet">
+    <description>
+	none
+    </description>
+  </class>
+
+</library>

@@ -34,13 +34,14 @@
  */
 
 #include <ros/ros.h>
+#include <pcl_ros/publisher.h>
+#include <pcl_ros/pcl_nodelet.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <pointcloud_registration/pointcloud_registration_point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <Eigen/SVD>
-
 #include "pcl/filters/statistical_outlier_removal.h" // to filter outliers
 
 #include "pcl/filters/voxel_grid.h" //for downsampling the point cloud
@@ -51,12 +52,14 @@
 
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/features/normal_3d_tbb.h>
+#include <pluginlib/class_list_macros.h>
 
 #include <pointcloud_registration/icp/icp_correspondences_check.h> //for icp
 #include <algorithm> //for the sort and unique functions
 
 #include <ctime>
-
+namespace pointcloud_registration
+{
 const float PI = 3.14159265;
 
 
@@ -79,20 +82,22 @@ bool pclUnique (pcl::PointXYZINormal i, pcl::PointXYZINormal j)
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class PointCloudRegistration
+class PointCloudRegistration:public pcl_ros::PCLNodelet
 {
   public:
     PointCloudRegistration();
     ~PointCloudRegistration();
+    void onInit();
     void pointcloudRegistrationCallBack(const sensor_msgs::PointCloud& msg);
     Eigen::Matrix4f getOverlapTransformation();
     void publishPointCloud(pcl::PointCloud<pcl::PointXYZINormal> &pointcloud);
     pcl::PointCloud<pcl::PointXYZINormal> convertFromMsgToPointCloud(const sensor_msgs::PointCloud& pointcloud_msg);
 
     void run();
-
+  protected:
+    using pcl_ros::PCLNodelet::pnh_;
   private:
-    ros::NodeHandle nh_;
+    //ros::NodeHandle nh_;
     std::string merged_pointcloud_topic_, subscribe_pointcloud_topic_, frame_id_;
     int max_number_of_iterations_icp_, max_nn_icp_, max_nn_overlap_;
     double downsample_leafsize_, epsilon_z_, epsilon_curvature_, epsilon_transformation_, radius_icp_, radius_overlap_;
@@ -306,23 +311,24 @@ pcl::PointCloud<pcl::PointXYZINormal> PointCloudRegistration::convertFromMsgToPo
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PointCloudRegistration::PointCloudRegistration(): nh_("~")
+void PointCloudRegistration::onInit()
 {
-  nh_.param("publish_merged_pointcloud_topic", merged_pointcloud_topic_, std::string("/merged_pointcloud"));
-  nh_.param("subscribe_pointcloud_topic", subscribe_pointcloud_topic_, std::string("/shoulder_cloud"));
-  nh_.param("max_number_of_iterations_icp", max_number_of_iterations_icp_, 50);
-  nh_.param("max_nn_icp", max_nn_icp_, 100);
-  nh_.param("max_nn_overlap", max_nn_overlap_, 10);
-  nh_.param("radius_icp", radius_icp_, 0.05);
-  nh_.param("radius_overlap", radius_overlap_, 0.05);
-  nh_.param("curvature_check", curvature_check_, true);
-  nh_.param("downsample_pointcloud_before", downsample_pointcloud_before_, false);
-  nh_.param("downsample_pointcloud_after", downsample_pointcloud_after_, false);
-  nh_.param("filter_outliers", filter_outliers_, true);
-  nh_.param("downsample_leafsize", downsample_leafsize_, 0.05);
-  nh_.param("epsilon_z", epsilon_z_, 0.001);
-  nh_.param("epsilon_curvature", epsilon_curvature_, 0.001);
-  nh_.param("epsilon_transformation", epsilon_transformation_, 1e-6);
+  pcl_ros::PCLNodelet::onInit ();
+  pnh_->param("publish_merged_pointcloud_topic", merged_pointcloud_topic_, std::string("/merged_pointcloud"));
+  pnh_->param("subscribe_pointcloud_topic", subscribe_pointcloud_topic_, std::string("/shoulder_cloud"));
+  pnh_->param("max_number_of_iterations_icp", max_number_of_iterations_icp_, 50);
+  pnh_->param("max_nn_icp", max_nn_icp_, 100);
+  pnh_->param("max_nn_overlap", max_nn_overlap_, 10);
+  pnh_->param("radius_icp", radius_icp_, 0.05);
+  pnh_->param("radius_overlap", radius_overlap_, 0.05);
+  pnh_->param("curvature_check", curvature_check_, true);
+  pnh_->param("downsample_pointcloud_before", downsample_pointcloud_before_, false);
+  pnh_->param("downsample_pointcloud_after", downsample_pointcloud_after_, false);
+  pnh_->param("filter_outliers", filter_outliers_, true);
+  pnh_->param("downsample_leafsize", downsample_leafsize_, 0.05);
+  pnh_->param("epsilon_z", epsilon_z_, 0.001);
+  pnh_->param("epsilon_curvature", epsilon_curvature_, 0.001);
+  pnh_->param("epsilon_transformation", epsilon_transformation_, 1e-6);
   firstCloudReceived_ = false;
   secondCloudReceived_ = false;
   scan_index_ = 0;
@@ -335,7 +341,10 @@ PointCloudRegistration::PointCloudRegistration(): nh_("~")
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+PointCloudRegistration::PointCloudRegistration()
+{
 
+}
 PointCloudRegistration::~PointCloudRegistration()
 {
   ROS_INFO("Shutting down pointcloud_registration node!.");
@@ -345,8 +354,8 @@ PointCloudRegistration::~PointCloudRegistration()
 
 void PointCloudRegistration::run()
 {
-  pointcloud_subscriber_ = nh_.subscribe(subscribe_pointcloud_topic_, 100, &PointCloudRegistration::pointcloudRegistrationCallBack, this);
-  pointcloud_merged_publisher_ = nh_.advertise<sensor_msgs::PointCloud2>(merged_pointcloud_topic_, 100);
+  pointcloud_subscriber_ = pnh_->subscribe(subscribe_pointcloud_topic_, 100, &PointCloudRegistration::pointcloudRegistrationCallBack, this);
+  pointcloud_merged_publisher_ = pnh_->advertise<sensor_msgs::PointCloud2>(merged_pointcloud_topic_, 100);
 
   ros::spin();
 }
@@ -397,11 +406,6 @@ void PointCloudRegistration::pointcloudRegistrationCallBack(const sensor_msgs::P
   ROS_INFO("Time taken: %d seconds", (int)(end - start));
 
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int main(int argc, char** argv)
-{
-    ros::init(argc, argv, "pointcloud_registration");
-    PointCloudRegistration pointcloud_registration;
-    return(0);
 }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ PLUGINLIB_DECLARE_CLASS(pointcloud_registration,PointCloudRegistration,pointcloud_registration::PointCloudRegistration,nodelet::Nodelet);
