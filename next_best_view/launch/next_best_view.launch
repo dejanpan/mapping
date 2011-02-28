@@ -19,7 +19,7 @@
     <remap from="/points_in" to="/autonomous_exploration/pointcloud"/>
   </node>
 
-  <node pkg="next_best_view" type="next_best_view" name="next_best_view" output="screen" respawn="false"> <!--launch-prefix="xterm -e gdb -args"-->
+  <node pkg="nodelet" type="nodelet" name="next_best_view" output="screen"  args="load autonomous_mapping/NextBestView next_best_view_pcl_manager" > <!--launch-prefix="xterm -e gdb -args"-->
     <param name="laser_frame" value="/laser_tilt_link"/>
     <param name="octree_resolution" value="0.2"/>
     <param name="octree_maxrange" value="-1"/>
