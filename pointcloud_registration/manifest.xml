@@ -19,9 +19,11 @@
  
    <!-- ROS DEPENDENCIES -->
    <depend package="pcl"/>
+   <depend package="pcl_ros"/>
    <depend package="roscpp"/>
    <depend package="actionlib"/>
    <depend package="bullet"/>
+    <depend package="nodelet"/>
 
    <!-- MSG DEPENDENCIES -->
    <depend package="sensor_msgs"/>
@@ -29,11 +31,11 @@
    <depend package="move_base_msgs"/>
    <depend package="pr2_controllers_msgs"/>
    <depend package="pr2_msgs"/>
-
+   
+   
    <export>
-     <cpp cflags="-I${prefix}/include -I${prefix}/src"/>
+      <nodelet plugin="${prefix}/nodelets.xml" />
    </export>
-
 </package>
 
 
