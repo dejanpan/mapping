@@ -1,0 +1,17 @@
+<package>
+  <description brief="as11">
+
+     as11
+
+  </description>
+  <author>lucian goron</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/as11</url>
+
+  <depend package="roscpp"/>
+  <depend package="pcl"/>
+
+</package>
+
+
