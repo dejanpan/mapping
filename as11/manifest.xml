@@ -8,10 +8,10 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/as11</url>
-
   <depend package="roscpp"/>
   <depend package="pcl"/>
-
+  <depend package="opencv2"/>
+  <depend package="features_2d"/>
 </package>
 
 
