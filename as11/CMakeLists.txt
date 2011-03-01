@@ -31,6 +31,8 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 # ---[ Data
 rosbuild_download_data (http://pr.willowgarage.com/data/pcl/table_scene_mug_stereo_textured.pcd data/table_scene_mug_stereo_textured.pcd 62c812409b10c8ae651d52c90b19771a)
+rosbuild_download_data (http://ias.cs.tum.edu/~pangerci/box.png data/box.png)
+rosbuild_download_data (http://ias.cs.tum.edu/~pangerci/box_in_scene.png data/box_in_scene.png)
 
 # ---[ Segmentation
 rosbuild_add_executable (tutorial_segmentation_cylinder src/segmentation_cylinder.cpp)
