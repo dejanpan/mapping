@@ -34,21 +34,6 @@
  * $Id: segmentation_cylinder.cpp 35522 2011-01-26 08:17:01Z rusu $
  *
  */
-
-/**
-
-\author Radu Bogdan Rusu
-
-@b segmentation_cylinder exemplifies how to run a Sample Consensus segmentation for cylindrical models.
-
-To make the example a bit more practical, the following operations are applied to the input dataset (in order):
-- data points further away than 1.5 meters are filtered
-- surface normals at each point are estimated
-- a planar model (describing the table in our demo dataset) is segmented and saved to disk
-- a cylindrical model (describing the mug in our demo dataset) is segmented and saved to disk
-
-**/
-
 #include <pcl/ModelCoefficients.h>
 
 #include <pcl/io/pcd_io.h>
@@ -70,6 +55,10 @@ int
   main (int argc, char** argv)
 {
   // All the objects needed
+  /*****************************************************
+   * TODO 1: What do these classes do - document next lines
+   * Documentation http://www.ros.org/doc/api/pcl/html/annotated.html
+   */
   pcl::PCDReader reader;
   pcl::PassThrough<PointT> pass;
   pcl::NormalEstimation<PointT, pcl::Normal> ne;
@@ -86,9 +75,11 @@ int
   pcl::ModelCoefficients::Ptr coefficients_plane (new pcl::ModelCoefficients ()), coefficients_cylinder (new pcl::ModelCoefficients ());
   pcl::PointIndices::Ptr inliers_plane (new pcl::PointIndices ()), inliers_cylinder (new pcl::PointIndices ());
 
-  // Read in the cloud data
-  reader.read ("data/table_scene_mug_stereo_textured.pcd", *cloud);
-  ROS_INFO ("PointCloud has: %zu data points.", cloud->points.size ());
+  /*****************************************************
+   * TODO 2: Read in the input pointcloud: data/table_scene_mug_stereo_textured.pcd
+   * Use "reader" object
+   */
+
 
   // Build a passthrough filter to remove spurious NaNs
   pass.setInputCloud (cloud);
@@ -97,67 +88,50 @@ int
   pass.filter (*cloud_filtered);
   ROS_INFO ("PointCloud after filtering has: %zu data points.", cloud_filtered->points.size ());
 
-  // Estimate point normals
-  ne.setSearchMethod (tree);
-  ne.setInputCloud (cloud_filtered);
-  ne.setKSearch (50);
-  ne.compute (*cloud_normals);
 
-  // Create the segmentation object for the planar model and set all the parameters
-  seg.setOptimizeCoefficients (true);
-  seg.setModelType (pcl::SACMODEL_NORMAL_PLANE);
-  seg.setNormalDistanceWeight (0.1);
-  seg.setMethodType (pcl::SAC_RANSAC);
-  seg.setMaxIterations (100);
-  seg.setDistanceThreshold (0.03);
-  seg.setInputCloud (cloud_filtered);
-  seg.setInputNormals (cloud_normals);
-  // Obtain the plane inliers and coefficients
-  seg.segment (*inliers_plane, *coefficients_plane);
-  std::cerr << "Plane coefficients: " << *coefficients_plane << std::endl;
+  /*****************************************************
+   * TODO 3: Estimate the normals
+   * Use "ne" object, methods to be called in order: setSearchMethod, setInputCloud, setKSearch, compute
+   */
+
+
+    /*****************************************************
+   * TODO 4: Create the segmentation object for the planar model and set all the parameters
+   * Use "seg" object, methods to be called in order: setOptimizeCoefficients, setNormalDistanceWeight, 
+   * setMethodType (use SAC_RANSAC), setMaxIterations, setDistanceThreshold, setInputCloud, segment 
+   */
+
+
+  /*****************************************************
+   * TODO 5: print out plane coefficients
+   */
+  std::cerr << "Plane coefficients: " << /*todo*/ << std::endl;
+
 
   // Extract the planar inliers from the input cloud
   extract.setInputCloud (cloud_filtered);
   extract.setIndices (inliers_plane);
   extract.setNegative (false);
 
-  // Write the planar inliers to disk
+
   pcl::PointCloud<PointT>::Ptr cloud_plane (new pcl::PointCloud<PointT> ());
   extract.filter (*cloud_plane);
   ROS_INFO ("PointCloud representing the planar component: %zu data points.", cloud_plane->points.size ());
-  writer.write ("table_scene_mug_stereo_textured_plane.pcd", *cloud_plane, false);
+  /*****************************************************
+   * TODO 6:  Write the planar inliers to disk
+   * Use "writer" object
+   */
 
-  // Remove the planar inliers, extract the rest
-  extract.setNegative (true);
-  extract.filter (*cloud_filtered);
-  extract_normals.setNegative (true);
-  extract_normals.setInputCloud (cloud_normals);
-  extract_normals.setIndices (inliers_plane);
-  extract_normals.filter (*cloud_normals);
 
-  // Create the segmentation object for cylinder segmentation and set all the parameters
-  seg.setOptimizeCoefficients (true);
-  seg.setModelType (pcl::SACMODEL_CYLINDER);
-  seg.setMethodType (pcl::SAC_RANSAC);
-  seg.setNormalDistanceWeight (0.1);
-  seg.setMaxIterations (10000);
-  seg.setDistanceThreshold (0.05);
-  seg.setRadiusLimits (0, 0.1);
-  seg.setInputCloud (cloud_filtered);
-  seg.setInputNormals (cloud_normals);
+    /*****************************************************
+   * TODO 7:  Remove the planar inliers, extract the cluster lying on a table
+   * Use "extract" object and use the following functions in order setNegative, filter
+   */
 
-  // Obtain the cylinder inliers and coefficients
-  seg.segment (*inliers_cylinder, *coefficients_cylinder);
-  std::cerr << "Cylinder coefficients: " << *coefficients_cylinder << std::endl;
 
-  // Write the cylinder inliers to disk
-  extract.setInputCloud (cloud_filtered);
-  extract.setIndices (inliers_cylinder);
-  extract.setNegative (false);
-  pcl::PointCloud<PointT>::Ptr cloud_cylinder (new pcl::PointCloud<PointT> ());
-  extract.filter (*cloud_cylinder);
-  ROS_INFO ("PointCloud representing the cylindrical component: %zu data points.", cloud_cylinder->points.size ());
-  writer.write ("table_scene_mug_stereo_textured_cylinder.pcd", *cloud_cylinder, false);
+  /*****************************************************
+   * TODO 8:  Write the cluster to disk
+   */
 
   return (0);
 }
