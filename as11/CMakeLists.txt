@@ -35,7 +35,7 @@ rosbuild_download_data (http://ias.cs.tum.edu/~pangerci/box.png data/box.png)
 rosbuild_download_data (http://ias.cs.tum.edu/~pangerci/box_in_scene.png data/box_in_scene.png)
 
 # ---[ Segmentation
-rosbuild_add_executable (tutorial_segmentation_cylinder src/segmentation_cylinder.cpp)
+#rosbuild_add_executable (tutorial_segmentation_cylinder src/segmentation_cylinder.cpp)
 
 # ---[ Descriptor Matching
-rosbuild_add_executable (tutorial_descriptor_matching src/desc_match.cpp)
+#rosbuild_add_executable (tutorial_descriptor_matching src/desc_match.cpp)
