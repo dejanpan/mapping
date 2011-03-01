@@ -35,3 +35,5 @@ rosbuild_download_data (http://pr.willowgarage.com/data/pcl/table_scene_mug_ster
 # ---[ Segmentation
 rosbuild_add_executable (tutorial_segmentation_cylinder src/segmentation_cylinder.cpp)
 
+# ---[ Descriptor Matching
+rosbuild_add_executable (tutorial_descriptor_matching src/desc_match.cpp)
