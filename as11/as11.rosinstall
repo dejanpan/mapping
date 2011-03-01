@@ -1,2 +1,2 @@
 - svn: {local-name: visual_feature_detectors, uri: 'https://code.ros.org/svn/wg-ros-pkg/branches/trunk_cturtle/stacks/visual_feature_detectors'}
-- git: {local-name: mapping, uri: 'git clone http://code.in.tum.de/git/mapping.git', version: master}
+- git: {local-name: mapping, uri: 'http://code.in.tum.de/git/mapping.git', version: master}
