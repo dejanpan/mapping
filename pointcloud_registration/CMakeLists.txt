@@ -22,14 +22,14 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
-rosbuild_add_library(PointCloudRegistration src/pointcloud_registration/pointcloud_registration.cpp)
+rosbuild_add_library(PointCloudRegistration src/pointcloud_registration/pointcloud_registration_nodelet.cpp)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-#rosbuild_add_executable(pointcloud_registration src/pointcloud_registration/pointcloud_registration.cpp)
+rosbuild_add_executable(pointcloud_registration src/pointcloud_registration/pointcloud_registration_node.cpp)
 
 rosbuild_add_executable(test_spin_image_local src/pointcloud_registration/test_spin_image_local.cpp)
 
