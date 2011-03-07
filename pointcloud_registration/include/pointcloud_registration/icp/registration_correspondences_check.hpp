@@ -133,6 +133,7 @@ template <typename PointSource, typename PointTarget> inline void
   // Perform the actual transformation computation
   converged_ = false;
   final_transformation_ = transformation_ = previous_transformation_ = Eigen::Matrix4f::Identity ();
+  ROS_INFO("[RegistrationCorrespondencesCheck:] computeTransformation");
   computeTransformation (output);
 
   deinitCompute ();

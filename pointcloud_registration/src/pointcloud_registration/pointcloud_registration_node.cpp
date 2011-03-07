@@ -97,7 +97,7 @@ class PointCloudRegistration
     int max_number_of_iterations_icp_, max_nn_icp_, max_nn_overlap_;
     double downsample_leafsize_, epsilon_z_, epsilon_curvature_, epsilon_transformation_, radius_icp_, radius_overlap_;
     bool downsample_pointcloud_before_, downsample_pointcloud_after_, filter_outliers_, curvature_check_;
-    int scan_index_;
+    int scan_index_, counter_;
     time_t start, end;
     Eigen::Matrix4f final_transformation_;
     ros::Subscriber pointcloud_subscriber_;
@@ -130,7 +130,8 @@ Eigen::Matrix4f PointCloudRegistration::getOverlapTransformation()
 
     pcl::PointCloud<pcl::PointXYZINormal> overlap_model, overlap_current;
     Eigen::Matrix4f transformation;
-
+    ROS_INFO("[PointCloudRegistration:] finding overlapping points");
+    start = time(NULL);
     std::vector<pcl:: PointXYZINormal, Eigen::aligned_allocator<pcl:: PointXYZINormal> >::iterator it;
     for(size_t idx = 0 ; idx < pointcloud2_current_.points.size(); idx++ )
     {
@@ -145,16 +146,25 @@ Eigen::Matrix4f PointCloudRegistration::getOverlapTransformation()
         }
       }
     }
+    end = time(NULL);
+    ROS_INFO("[PointCloudRegistration:] found overlapping points in %d seconds", (int)(end - start));
 
     //Getting rid of duplicate points in model
+    ROS_INFO("[PointCloudRegistration:] removing duplicate points");
+    start = time(NULL);
     std::sort(overlap_model.points.begin(), overlap_model.points.end(), pclSort);
     it = std::unique(overlap_model.points.begin(), overlap_model.points.end(), pclUnique);
     overlap_model.points.resize(it - overlap_model.points.begin());
+    end = time(NULL);
+    ROS_INFO("[PointCloudRegistration:] removed duplicate points %d seconds", (int)(end - start));
 
     icp_.setInputTarget(boost::make_shared< pcl::PointCloud < pcl::PointXYZINormal> > (overlap_model));
     icp_.setInputCloud(boost::make_shared< pcl::PointCloud < pcl::PointXYZINormal> > (overlap_current));
 
+    ROS_INFO("[PointCloudRegistration: ] aligning");
     icp_.align(pointcloud2_transformed_);
+
+    ROS_INFO("[PointCloudRegistration:] getting final transformation");
     transformation = icp_.getFinalTransformation();
     return (transformation);
   }
@@ -326,6 +336,7 @@ PointCloudRegistration::PointCloudRegistration(): nh_("~")
   firstCloudReceived_ = false;
   secondCloudReceived_ = false;
   scan_index_ = 0;
+  counter_ = 0;
   icp_.setMaximumIterations(max_number_of_iterations_icp_);
   icp_.setTransformationEpsilon(epsilon_transformation_);
   icp_.setParameters(radius_icp_, max_nn_icp_, epsilon_z_, epsilon_curvature_, curvature_check_ );
@@ -355,6 +366,7 @@ void PointCloudRegistration::run()
 
 void PointCloudRegistration::pointcloudRegistrationCallBack(const sensor_msgs::PointCloud& pointcloud_msg)
 {
+  counter_++;
   frame_id_ = pointcloud_msg.header.frame_id;
   start = time(NULL);
   if( firstCloudReceived_ == false)
@@ -381,7 +393,7 @@ void PointCloudRegistration::pointcloudRegistrationCallBack(const sensor_msgs::P
   }
   else
   {
-    ROS_INFO("Received point cloud.");
+    ROS_INFO("Received point cloud number: %d", counter_);
     pointcloud2_current_ = convertFromMsgToPointCloud(pointcloud_msg);
     kdtree_.setInputCloud(boost::make_shared< pcl::PointCloud < pcl::PointXYZINormal> > (pointcloud2_merged_));
 

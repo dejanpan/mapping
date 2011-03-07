@@ -70,6 +70,7 @@ namespace pcl
     double radius_, epsilon_z_, epsilon_curvature_;
     int max_nn_;
     bool curvature_check_;
+    time_t start, end;
 
     public:
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,17 +115,19 @@ namespace pcl
           model_corresp.points.reserve(this->indices_->size());
           // Save the previously estimated transformation
           this->previous_transformation_ = this->transformation_;
-
+	  ROS_INFO("[IterativeClosestPointCorrespondencesCheck:] finding correpondences for %ld points, %d, %lf", 
+		   this->indices_->size(), max_nn_, radius_);
+	  start = time(NULL);
           // Iterating over the entire index vector and  find all correspondences
-          for (size_t idx = 0; idx < this->indices_->size (); idx++)
+	  for (size_t idx = 0; idx < this->indices_->size (); idx++)
+	  //for( std::vector<int>::iterator it = this->indices_->begin(); it != this->indices_->end(); ++it)
           {
             // Use radius search to look for neighbors within a user specified radius
             if (!searchForNeighbors (output, idx, radius_, max_nn_, nn_indices, nn_dists))
             {
-//              ROS_INFO("No neigbor found for idx = %d", (int) idx);
+	      //ROS_INFO("No neigbor found for idx = %d", (int) idx);
               continue;
             }
-
             for(size_t i = 0 ; i < nn_indices.size(); i++)
             {
               // Check if the difference between the z coordinates is within user specified limits
@@ -145,6 +148,9 @@ namespace pcl
               }
             }
           }
+	  end = time(NULL);
+	  ROS_INFO("[IterativeClosestPointCorrespondencesCheck:] found correpondences in %d seconds", (int)(end - start));
+
 
           if(source_corresp.points.size() == 0)
           {
@@ -159,8 +165,11 @@ namespace pcl
             model_corresp.points[i].z = 0.0;
           }
 
+	  start = time(NULL);
           // Estimate the transform
           estimateRigidTransformationSVD (source_corresp, model_corresp, this->transformation_);
+	  end = time(NULL);
+	  ROS_INFO("[IterativeClosestPointCorrespondencesCheck:] estimateRigidTransformationSVD in %d seconds", (int)(end - start));
 
           // Tranform the data
           transformPointCloud (output, output, this->transformation_);
@@ -174,6 +183,7 @@ namespace pcl
           //ROS_INFO("Transformation change: %f", transformation_change);
 
           this->nr_iterations_++;
+	  ROS_INFO("[IterativeClosestPointCorrespondencesCheck] number of iterations: %d", this->nr_iterations_);
           // Check for convergence
           if (this->nr_iterations_ >= this->max_iterations_ ||
               transformation_change < this->transformation_epsilon_)
