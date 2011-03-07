@@ -7,7 +7,7 @@
     <param name="publish_merged_pointcloud_topic" value="/merged_pointcloud"/>
    
     <!-- Topic to subscribe to receive point clouds --> 
-    <param name="subscribe_pointcloud_topic" value="/shoulder_cloud"/>
+    <param name="subscribe_pointcloud_topic" value="/autonomous_exploration/pointcloud"/>
     
     <!-- Maximum number of iterations for the icp algorithm -->
     <param name="max_number_of_iterations_icp" value="100"/>
@@ -16,13 +16,13 @@
     <param name="max_nn_icp" value="10" />
     
     <!-- Maximum number of nearest neigbors to look for in the radius search to get the overlapping region of two point clouds -->
-    <param name="max_nn_overlap" value="20" />
+    <param name="max_nn_overlap" value="10" />
     
     <!-- Radius for the radius search for the icp algorithm -->
-    <param name="radius_icp" value="0.1" />
+    <param name="radius_icp" value="0.05" />
     
     <!-- Radius for the radius search to get the overlapping region of two point clouds -->
-    <param name="radius_overlap" value="0.1" />
+    <param name="radius_overlap" value="0.05" />
     
     <!-- Set true if wish to filter outliers, based on the Statistical Outlier Removal in pcl -->
     <param name="filter_outliers" value="true"/>
