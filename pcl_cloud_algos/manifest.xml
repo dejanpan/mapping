@@ -12,7 +12,7 @@
   <depend package="geometry_msgs" />
   <depend package="sensor_msgs" />
   <depend package="triangle_mesh_msgs" />
-  <depend package="eigen3"/>
+  <depend package="eigen"/>
   <depend package="pcl"/>
   <depend package="pcl_ros"/>
   <depend package="visualization_msgs"/>
