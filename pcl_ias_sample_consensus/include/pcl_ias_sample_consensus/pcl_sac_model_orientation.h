@@ -126,7 +126,8 @@ namespace pcl
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Return an unique id for each type of model employed. */
-      inline int getModelType () { return 1001; }
+      //@TODO: fix return to return SCMODEL_ORIENTATION
+      inline pcl::SacModel getModelType () const { return pcl::SacModel(1001);}
 
       inline void optimizeModelCoefficients(   const std::vector<int> &inliers, const Eigen::VectorXf &model_coefficients,
                                         Eigen::VectorXf &optimized_coefficients){}
