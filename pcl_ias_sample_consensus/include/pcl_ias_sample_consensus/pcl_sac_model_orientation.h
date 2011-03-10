@@ -132,6 +132,8 @@ namespace pcl
       inline void optimizeModelCoefficients(   const std::vector<int> &inliers, const Eigen::VectorXf &model_coefficients,
                                         Eigen::VectorXf &optimized_coefficients){}
 
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     protected:
 
        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
