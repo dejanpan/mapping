@@ -509,12 +509,12 @@ void BoxEstimation::computeMarker (boost::shared_ptr<const pcl::PointCloud<pcl::
   std::cerr << "BOX MARKER COMPUTED, WITH FRAME " << marker_.header.frame_id << std::endl;
 }
 
-//#ifndef NO_BOXFIT_NODE
-//#ifdef CREATE_NODE
-//int main (int argc, char* argv[])
-//{
-//  return standalone_node <BoxEstimation> (argc, argv);
-//}
-//#endif
-//#endif
+#ifndef NO_BOXFIT_NODE
+#ifdef CREATE_NODE
+int main (int argc, char* argv[])
+{
+  return standalone_node <BoxEstimation> (argc, argv);
+}
+#endif
+#endif
 
