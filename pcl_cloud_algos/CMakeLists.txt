@@ -30,23 +30,22 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #target_link_libraries(example ${PROJECT_NAME})
 
 rosbuild_add_library (pcl_cloud_algos
-  #src/pcl_cloud_algos/box_fit_algo.cpp
-  #src/pcl_cloud_algos/box_fit2_algo.cpp
+  src/pcl_cloud_algos/box_fit_algo.cpp
+  src/pcl_cloud_algos/box_fit2_algo.cpp
   #src/pcl_cloud_algos/segment_differences.cpp
   #src/pcl_cloud_algos/global_rsd.cpp
   src/pcl_cloud_algos/depth_image_triangulation.cpp
-#  src/pcl_cloud_algos/svm_classification.cpp
-  )
-
+  #src/pcl_cloud_algos/svm_classification.cpp
+)
 target_link_libraries (pcl_cloud_algos pcl_ias_sample_consensus)
 
-#rosbuild_add_executable (box_fit2_node  src/pcl_cloud_algos/box_fit_algo.cpp src/pcl_cloud_algos/box_fit2_algo.cpp)
-#get_target_property(prev_props box_fit2_node COMPILE_FLAGS)
-#set_target_properties (box_fit2_node PROPERTIES COMPILE_FLAGS "${prev_props} -DCREATE_NODE")
+rosbuild_add_executable (box_fit_node  src/pcl_cloud_algos/box_fit_algo.cpp)
+get_target_property(prev_props box_fit_node COMPILE_FLAGS)
+set_target_properties (box_fit_node PROPERTIES COMPILE_FLAGS "${prev_props} -DCREATE_NODE")
 
-#rosbuild_add_executable (box_fit2_node  src/pcl_cloud_algos/box_fit_algo.cpp src/pcl_cloud_algos/box_fit2_algo.cpp)
-#get_target_property(prev_props box_fit2_node COMPILE_FLAGS)
-#set_target_properties (box_fit2_node PROPERTIES COMPILE_FLAGS "${prev_props} -DCREATE_NODE -DNO_BOXFIT_NODE")
+rosbuild_add_executable (box_fit2_node  src/pcl_cloud_algos/box_fit_algo.cpp src/pcl_cloud_algos/box_fit2_algo.cpp)
+get_target_property(prev_props box_fit2_node COMPILE_FLAGS)
+set_target_properties (box_fit2_node PROPERTIES COMPILE_FLAGS "${prev_props} -DCREATE_NODE -DNO_BOXFIT_NODE")
 
 #rosbuild_add_executable (segment_differences_node  src/pcl_cloud_algos/segment_differences.cpp)
 
