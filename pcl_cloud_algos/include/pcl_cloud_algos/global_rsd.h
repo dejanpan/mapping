@@ -1,6 +1,8 @@
 #ifndef CLOUD_ALGOS_GRSD_H
 #define CLOUD_ALGOS_GRSD_H
 
+#include <float.h>
+
 // Eigen
 //#include <Eigen/StdVector>
 //#include <Eigen/Array>
@@ -26,7 +28,6 @@
 // Kd Tree
 #include "pcl/kdtree/tree_types.h"
 #include "pcl/kdtree/kdtree.h"
-#include "pcl/kdtree/kdtree_ann.h"
 #include "pcl/kdtree/kdtree_flann.h"
 #include "pcl/kdtree/organized_data.h"
 #include "pcl/features/feature.h"
