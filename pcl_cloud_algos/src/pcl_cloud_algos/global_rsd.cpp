@@ -90,7 +90,7 @@ std::string GlobalRSD::process (const boost::shared_ptr<const GlobalRSD::InputTy
   double radius = max_dist/2;
 
   // Make sure that we provide enough points for radius computation:
-  KdTreePtr tree = boost::make_shared<pcl::KdTreeANN<pcl::PointNormal> > ();
+  KdTreePtr tree = boost::make_shared<pcl::KdTreeFLANN<pcl::PointNormal> > ();
 
   if (step_ == 0)
   {
