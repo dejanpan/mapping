@@ -80,6 +80,17 @@ namespace pcl
     return (os);
   }
 
+  struct GRSDSignature325
+  {
+    float histogram[325];
+  };
+  inline std::ostream& operator << (std::ostream& os, const GRSDSignature325& p)
+  {
+    for (int i = 0; i < 325; ++i) 
+      os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 325 ? ", " : ")");
+    return (os);
+  }
+
 
 struct PointNormalRADII
 {

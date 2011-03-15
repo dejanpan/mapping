@@ -44,6 +44,7 @@ struct ColorCHLACSignature981;
 struct ColorCHLACSignature117;
 /** \brief A point structure representing the Global Radius-based Surface Descriptor (GRSD). */
 struct GRSDSignature21;
+struct GRSDSignature325;
 }
 
 #include <pcl_cloud_algos/pcl_cloud_algos_point_types.hpp>  // Include struct definitions
@@ -76,6 +77,10 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::ColorCHLACSignature117,
 
 POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::GRSDSignature21,
                                    (float[21], histogram, grsd)
+);
+
+POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::GRSDSignature325,
+                                   (float[325], histogram, grsd)
 );
 
 POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PointNormalRADII,
