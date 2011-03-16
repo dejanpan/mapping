@@ -53,8 +53,8 @@ namespace pcl
   };
   inline std::ostream& operator << (std::ostream& os, const ColorCHLACSignature981& p)
   {
-    for (int i = 0; i < 981; ++i) 
-      os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 981 ? ", " : ")");
+    for (int i = 0; i < 981; ++i)
+      os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 980 ? ", " : ")");
     return (os);
   }
 
@@ -64,8 +64,8 @@ namespace pcl
   };
   inline std::ostream& operator << (std::ostream& os, const ColorCHLACSignature117& p)
   {
-    for (int i = 0; i < 117; ++i) 
-      os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 117 ? ", " : ")");
+    for (int i = 0; i < 117; ++i)
+      os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 116 ? ", " : ")");
     return (os);
   }
 
@@ -75,8 +75,8 @@ namespace pcl
   };
   inline std::ostream& operator << (std::ostream& os, const GRSDSignature21& p)
   {
-    for (int i = 0; i < 21; ++i) 
-      os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 21 ? ", " : ")");
+    for (int i = 0; i < 21; ++i)
+      os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 20 ? ", " : ")");
     return (os);
   }
 
@@ -86,8 +86,19 @@ namespace pcl
   };
   inline std::ostream& operator << (std::ostream& os, const GRSDSignature325& p)
   {
-    for (int i = 0; i < 325; ++i) 
-      os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 325 ? ", " : ")");
+    for (int i = 0; i < 325; ++i)
+      os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 324 ? ", " : ")");
+    return (os);
+  }
+
+  struct PlusGRSDSignature110
+  {
+    float histogram[110];
+  };
+  inline std::ostream& operator << (std::ostream& os, const PlusGRSDSignature110& p)
+  {
+    for (int i = 0; i < 110; ++i)
+      os << (i == 0 ? "(" : "") << p.histogram[i] << (i < 109 ? ", " : ")");
     return (os);
   }
 
