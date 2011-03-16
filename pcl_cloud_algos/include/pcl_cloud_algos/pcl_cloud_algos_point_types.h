@@ -83,6 +83,10 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::GRSDSignature325,
                                    (float[325], histogram, grsd)
 );
 
+POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PlusGRSDSignature110,
+                                   (float[110], histogram, grsd)
+);
+
 POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PointNormalRADII,
                                    (float, x, x)
                                    (float, y, y)
