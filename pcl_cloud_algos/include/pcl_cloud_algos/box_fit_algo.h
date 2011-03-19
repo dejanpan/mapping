@@ -140,6 +140,16 @@ class BoxEstimation : public CloudAlgo
     ros::Publisher p = nh.advertise<OutputType> (default_output_topic (), 5);
     return p;
   }
+  
+   /**
+   * \brief Sets an input cloud if you are using BoxEstimation class outside cloud_algos framework
+   * \param cloud input point cloud
+   */
+  void setInputCloud(boost::shared_ptr<const pcl::PointCloud <pcl::PointXYZINormal> > cloud)
+  {
+    cloud_ = boost::make_shared<pcl::PointCloud<pcl::PointXYZINormal> > (*cloud);
+  }
+
  protected:
   boost::shared_ptr<OutputType> mesh_;
   std::vector<int> inliers_;
