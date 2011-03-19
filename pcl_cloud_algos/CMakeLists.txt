@@ -61,3 +61,6 @@ set_target_properties (depth_image_triangulation_node PROPERTIES COMPILE_FLAGS "
 #get_target_property(prev_props svm_classification_node COMPILE_FLAGS)
 #set_target_properties (svm_classification_node PROPERTIES COMPILE_FLAGS "${prev_props} -DCREATE_NODE")
 
+#for Quentin
+rosbuild_add_executable (sigIllDemo  test/sigIllDemo.cpp)
+target_link_libraries(sigIllDemo pcl_cloud_algos)
