@@ -502,7 +502,7 @@ void BoxEstimation::computeMarker (boost::shared_ptr<const pcl::PointCloud<pcl::
   marker_.scale.x = coeff[3];
   marker_.scale.y = coeff[4];
   marker_.scale.z = coeff[5];
-  marker_.color.a = 0.1;
+  marker_.color.a = 0.75;
   marker_.color.r = 0.0;
   marker_.color.g = 1.0;
   marker_.color.b = 0.0;
