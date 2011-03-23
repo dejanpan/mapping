@@ -34,13 +34,14 @@
  */
 
 #include <ros/ros.h>
+#include <pcl_ros/publisher.h>
+#include <pcl_ros/pcl_nodelet.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <pointcloud_registration/pointcloud_registration_point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <Eigen/SVD>
-
 #include "pcl/filters/statistical_outlier_removal.h" // to filter outliers
 
 #include "pcl/filters/voxel_grid.h" //for downsampling the point cloud
@@ -51,12 +52,14 @@
 
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/features/normal_3d_tbb.h>
+#include <pluginlib/class_list_macros.h>
 
 #include <pointcloud_registration/icp/icp_correspondences_check.h> //for icp
 #include <algorithm> //for the sort and unique functions
 
 #include <ctime>
-
+namespace pointcloud_registration
+{
 const float PI = 3.14159265;
 
 
@@ -79,20 +82,21 @@ bool pclUnique (pcl::PointXYZINormal i, pcl::PointXYZINormal j)
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class PointCloudRegistration
+class PointCloudRegistration:public pcl_ros::PCLNodelet
 {
   public:
     PointCloudRegistration();
     ~PointCloudRegistration();
+    void onInit();
     void pointcloudRegistrationCallBack(const sensor_msgs::PointCloud& msg);
     Eigen::Matrix4f getOverlapTransformation();
     void publishPointCloud(pcl::PointCloud<pcl::PointXYZINormal> &pointcloud);
     pcl::PointCloud<pcl::PointXYZINormal> convertFromMsgToPointCloud(const sensor_msgs::PointCloud& pointcloud_msg);
 
-    void run();
-
+  protected:
+    using pcl_ros::PCLNodelet::pnh_;
   private:
-    ros::NodeHandle nh_;
+    //ros::NodeHandle nh_;
     std::string merged_pointcloud_topic_, subscribe_pointcloud_topic_, frame_id_;
     int max_number_of_iterations_icp_, max_nn_icp_, max_nn_overlap_;
     double downsample_leafsize_, epsilon_z_, epsilon_curvature_, epsilon_transformation_, radius_icp_, radius_overlap_;
@@ -128,7 +132,10 @@ Eigen::Matrix4f PointCloudRegistration::getOverlapTransformation()
     std::vector<int> nn_indices (max_nn_overlap_);
     std::vector<float> nn_dists (max_nn_overlap_);
 
-    pcl::PointCloud<pcl::PointXYZINormal> overlap_model, overlap_current;
+    boost::shared_ptr <pcl::PointCloud<pcl::PointXYZINormal> > overlap_model (new pcl::PointCloud<pcl::PointXYZINormal>());
+    boost::shared_ptr <pcl::PointCloud<pcl::PointXYZINormal> > overlap_current (new pcl::PointCloud<pcl::PointXYZINormal>());
+
+    //pcl::PointCloud<pcl::PointXYZINormal> overlap_model, overlap_current;
     Eigen::Matrix4f transformation;
 
     std::vector<pcl:: PointXYZINormal, Eigen::aligned_allocator<pcl:: PointXYZINormal> >::iterator it;
@@ -138,23 +145,27 @@ Eigen::Matrix4f PointCloudRegistration::getOverlapTransformation()
 
       if(nn_indices.size() > 0 )
       {
-        overlap_current.points.push_back(pointcloud2_current_.points[idx]);
+        overlap_current->points.push_back(pointcloud2_current_.points[idx]);
 	      for(size_t i = 0 ; i < nn_indices.size(); i++)
         {
-          overlap_model.points.push_back (kdtree_.getInputCloud()->points[nn_indices[i]]);
+          overlap_model->points.push_back (kdtree_.getInputCloud()->points[nn_indices[i]]);
         }
       }
     }
+    ROS_INFO("performed search for overlapping points");
 
     //Getting rid of duplicate points in model
-    std::sort(overlap_model.points.begin(), overlap_model.points.end(), pclSort);
-    it = std::unique(overlap_model.points.begin(), overlap_model.points.end(), pclUnique);
-    overlap_model.points.resize(it - overlap_model.points.begin());
+    std::sort(overlap_model->points.begin(), overlap_model->points.end(), pclSort);
+    it = std::unique(overlap_model->points.begin(), overlap_model->points.end(), pclUnique);
+    overlap_model->points.resize(it - overlap_model->points.begin());
 
-    icp_.setInputTarget(boost::make_shared< pcl::PointCloud < pcl::PointXYZINormal> > (overlap_model));
-    icp_.setInputCloud(boost::make_shared< pcl::PointCloud < pcl::PointXYZINormal> > (overlap_current));
+    ROS_INFO("setting ICP clouds");
 
-    icp_.align(pointcloud2_transformed_);
+    icp_.setInputTarget (overlap_model);
+    icp_.setInputCloud (overlap_current);
+
+    ROS_INFO ("performing ICP");
+    icp_.align (pointcloud2_transformed_);
     transformation = icp_.getFinalTransformation();
     return (transformation);
   }
@@ -306,49 +317,48 @@ pcl::PointCloud<pcl::PointXYZINormal> PointCloudRegistration::convertFromMsgToPo
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PointCloudRegistration::PointCloudRegistration(): nh_("~")
+void PointCloudRegistration::onInit()
 {
-  nh_.param("publish_merged_pointcloud_topic", merged_pointcloud_topic_, std::string("/merged_pointcloud"));
-  nh_.param("subscribe_pointcloud_topic", subscribe_pointcloud_topic_, std::string("/shoulder_cloud"));
-  nh_.param("max_number_of_iterations_icp", max_number_of_iterations_icp_, 50);
-  nh_.param("max_nn_icp", max_nn_icp_, 100);
-  nh_.param("max_nn_overlap", max_nn_overlap_, 10);
-  nh_.param("radius_icp", radius_icp_, 0.05);
-  nh_.param("radius_overlap", radius_overlap_, 0.05);
-  nh_.param("curvature_check", curvature_check_, true);
-  nh_.param("downsample_pointcloud_before", downsample_pointcloud_before_, false);
-  nh_.param("downsample_pointcloud_after", downsample_pointcloud_after_, false);
-  nh_.param("filter_outliers", filter_outliers_, true);
-  nh_.param("downsample_leafsize", downsample_leafsize_, 0.05);
-  nh_.param("epsilon_z", epsilon_z_, 0.001);
-  nh_.param("epsilon_curvature", epsilon_curvature_, 0.001);
-  nh_.param("epsilon_transformation", epsilon_transformation_, 1e-6);
+  pcl_ros::PCLNodelet::onInit ();
+  pnh_->param("publish_merged_pointcloud_topic", merged_pointcloud_topic_, std::string("/merged_pointcloud"));
+  pnh_->param("subscribe_pointcloud_topic", subscribe_pointcloud_topic_, std::string("/shoulder_cloud"));
+  pnh_->param("max_number_of_iterations_icp", max_number_of_iterations_icp_, 50);
+  pnh_->param("max_nn_icp", max_nn_icp_, 100);
+  pnh_->param("max_nn_overlap", max_nn_overlap_, 10);
+  pnh_->param("radius_icp", radius_icp_, 0.05);
+  pnh_->param("radius_overlap", radius_overlap_, 0.05);
+  pnh_->param("curvature_check", curvature_check_, true);
+  pnh_->param("downsample_pointcloud_before", downsample_pointcloud_before_, false);
+  pnh_->param("downsample_pointcloud_after", downsample_pointcloud_after_, false);
+  pnh_->param("filter_outliers", filter_outliers_, true);
+  pnh_->param("downsample_leafsize", downsample_leafsize_, 0.05);
+  pnh_->param("epsilon_z", epsilon_z_, 0.001);
+  pnh_->param("epsilon_curvature", epsilon_curvature_, 0.001);
+  pnh_->param("epsilon_transformation", epsilon_transformation_, 1e-6);
+
   firstCloudReceived_ = false;
   secondCloudReceived_ = false;
+
+  pointcloud_subscriber_ = pnh_->subscribe(subscribe_pointcloud_topic_, 100, &PointCloudRegistration::pointcloudRegistrationCallBack, this);
+  pointcloud_merged_publisher_ = pnh_->advertise<sensor_msgs::PointCloud2>(merged_pointcloud_topic_, 100);
+
   scan_index_ = 0;
   icp_.setMaximumIterations(max_number_of_iterations_icp_);
   icp_.setTransformationEpsilon(epsilon_transformation_);
   icp_.setParameters(radius_icp_, max_nn_icp_, epsilon_z_, epsilon_curvature_, curvature_check_ );
   ROS_INFO("pointcloud_registration node is up and running.");
 
-  run();
+  ros::spin();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+PointCloudRegistration::PointCloudRegistration()
+{
 
+}
 PointCloudRegistration::~PointCloudRegistration()
 {
   ROS_INFO("Shutting down pointcloud_registration node!.");
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void PointCloudRegistration::run()
-{
-  pointcloud_subscriber_ = nh_.subscribe(subscribe_pointcloud_topic_, 100, &PointCloudRegistration::pointcloudRegistrationCallBack, this);
-  pointcloud_merged_publisher_ = nh_.advertise<sensor_msgs::PointCloud2>(merged_pointcloud_topic_, 100);
-
-  ros::spin();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -372,9 +382,12 @@ void PointCloudRegistration::pointcloudRegistrationCallBack(const sensor_msgs::P
     ROS_INFO("Received second point cloud.");
     secondCloudReceived_ = true;
     pointcloud2_current_ = convertFromMsgToPointCloud(pointcloud_msg);
+    ROS_INFO("converted point cloud from message.. computing overlap transform");
 
     //Now we get the transformation from the overlapped regions of the 2 point clouds
     final_transformation_= getOverlapTransformation();
+    ROS_INFO("overlap tranform found, transforming now");
+
     pcl::transformPointCloud(pointcloud2_current_, pointcloud2_transformed_, final_transformation_);
     pointcloud2_merged_ += pointcloud2_transformed_;
 
@@ -397,11 +410,6 @@ void PointCloudRegistration::pointcloudRegistrationCallBack(const sensor_msgs::P
   ROS_INFO("Time taken: %d seconds", (int)(end - start));
 
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int main(int argc, char** argv)
-{
-    ros::init(argc, argv, "pointcloud_registration");
-    PointCloudRegistration pointcloud_registration;
-    return(0);
 }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ PLUGINLIB_DECLARE_CLASS(pointcloud_registration,PointCloudRegistration,pointcloud_registration::PointCloudRegistration,nodelet::Nodelet);
