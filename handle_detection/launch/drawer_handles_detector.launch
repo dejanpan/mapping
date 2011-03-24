@@ -3,10 +3,10 @@
   <group ns="/handle_detector">
 
     <!-- PCL Manager -->
-    <node pkg="nodelet" type="nodelet" name="handle_detector_pcl_manager" args="manager" output="screen" machine="c2"/>
+    <node pkg="nodelet" type="nodelet" name="handle_detector_pcl_manager" args="manager" output="screen"/>
 
     <!-- RAW PointCloud to PointCloud2 converter -->
-    <node pkg="point_cloud_converter" type="point_cloud_converter" name="convert_cloud" output="screen" machine="c2">
+    <node pkg="point_cloud_converter" type="point_cloud_converter" name="convert_cloud" output="screen">
       <remap from="/points_in" to="/shoulder_cloud" />
       <remap from="/points2_out" to="/cloud_pcd" />
     </node>
@@ -105,7 +105,7 @@
     <!-- Project the planar inliers -->
     <node pkg="nodelet" type="nodelet" name="furniture_face_projected_inliers" args="load pcl/ProjectInliers handle_detector_pcl_manager" output="screen">
       <remap from="~input" to="psz/output" />
-      <remap from="~inliers" to="planar_segmentation/inliers" />
+      <remap from="~indices" to="planar_segmentation/inliers" />
       <remap from="~model" to="planar_segmentation/model" />
       <rosparam>
         model_type: 13
@@ -140,16 +140,16 @@
     </node>
 
     <!-- Cluster the handles -->
-    <node pkg="nodelet" type="nodelet" name="handle_candidates_clusters" args="load pcl/EuclideanClusterExtraction handle_detector_pcl_manager" output="screen"> 
-      <remap from="~input" to="handle_candidates_protrude/output" /> 
-      <rosparam> 
-        max_queue_size: 10 
-        cluster_tolerance: 0.02 
-        spatial_locator: 0 
-        cluster_min_size: 40 
-        max_clusters: 6 
-      </rosparam> 
-    </node> 
+    <node pkg="nodelet" type="nodelet" name="handle_candidates_clusters" args="load pcl/EuclideanClusterExtraction handle_detector_pcl_manager" output="screen">
+      <remap from="~input" to="handle_candidates_protrude/output" />
+      <rosparam>
+        max_queue_size: 10
+        cluster_tolerance: 0.02
+        spatial_locator: 0
+        cluster_min_size: 40
+        max_clusters: 6
+      </rosparam>
+    </node>
 
     <!-- Fit lines to the handles -->
     <node pkg="nodelet" type="nodelet" name="handle_segmentation" args="load pcl/SACSegmentation handle_detector_pcl_manager" output="screen">
@@ -179,7 +179,7 @@
       </rosparam>
     </node>
     
-    <node pkg="pcl_cloud_tools" type="pointcloud_line_pose_node" name="pointcloud_line_pose_node" output="screen" machine="c2">
+    <node pkg="pcl_cloud_tools" type="pointcloud_line_pose_node" name="pointcloud_line_pose_node" output="screen">
       <param  name="sleep" value="true"/>
       <remap from="pointcloud_line_pose_node/model" to="handle_segmentation/model"/>
     </node>
