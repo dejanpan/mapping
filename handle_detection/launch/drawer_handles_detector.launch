@@ -169,7 +169,7 @@
     <!-- Project the handle inliers -->
     <node pkg="nodelet" type="nodelet" name="handle_projected_inliers" args="load pcl/ProjectInliers handle_detector_pcl_manager" output="screen">
       <remap from="~input" to="handle_candidates_clusters/output" />
-      <remap from="~inliers" to="handle_segmentation/inliers" />
+      <remap from="~indices" to="handle_segmentation/inliers" />
       <remap from="~model" to="handle_segmentation/model" />
       <rosparam>
         max_queue_size: 10
