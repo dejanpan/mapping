@@ -7,7 +7,7 @@
     <param name="publish_merged_pointcloud_topic" value="/merged_pointcloud"/>
    
     <!-- Topic to subscribe to receive point clouds --> 
-    <param name="subscribe_pointcloud_topic" value="/autonomous_exploration/pointcloud"/>
+    <param name="subscribe_pointcloud_topic" value="/autonomous_exploration/incremental_pointcloud"/>
     
     <!-- Maximum number of iterations for the icp algorithm -->
     <param name="max_number_of_iterations_icp" value="100"/>
