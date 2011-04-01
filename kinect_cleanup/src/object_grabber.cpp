@@ -454,7 +454,7 @@ class ObjectGrabber
     pcl::SACSegmentationFromNormals<Point, pcl::Normal> seg_;               // Planar segmentation object
     pcl::ProjectInliers<Point> proj_;               // Inlier projection object
     pcl::ExtractIndices<Point> extract_;            // Extract (too) big tables
-    pcl::ConvexHull2D<Point> chull_;
+    pcl::ConvexHull<Point> chull_;
     pcl::ExtractPolygonalPrismData<Point> prism_;
     pcl::PointCloud<Point> cloud_objects_;
     pcl::EuclideanClusterExtraction<Point> cluster_;
