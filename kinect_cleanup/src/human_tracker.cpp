@@ -69,7 +69,7 @@ public:
   ////////////////////////////////////////////////////////////////////////////////
   HumanTracker  (ros::NodeHandle &n) : nh_(n)
   {
-    nh_.param("world", world_, std::string("openni_depth_optical_frame"));
+    nh_.param("world", world_, std::string("openni_rgb_optical_frame"));
     nh_.param("neck_frame", neck_frame_, std::string("neck"));
     nh_.param("gesture_arm", gesture_arm_, std::string("left"));
     nh_.param("pointing_arm", pointing_arm_, std::string("right"));
