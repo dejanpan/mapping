@@ -6,12 +6,12 @@
 </node>
 
 <node pkg="kinect_cleanup" type="object_grabber" name="object_grabber" output="screen" respawn="true" >
-      <remap from="~input" to="/camera/depth/points2"/>
+      <remap from="~input" to="/camera/rgb/points"/>
       <param name="base_link_head_tilt_link_angle" value="0.277" />
 </node>
 
 <node pkg="kinect_cleanup" type="object_filter" name="object_filter" output="screen" respawn="true" >
-      <remap from="~input" to="/camera/depth/points2"/>
+      <remap from="~input" to="/camera/rgb/points"/>
 </node>
 
 <node pkg="kinect_cleanup" type="object_releaser_node" name="object_releaser_node" output="screen" respawn="true" >
