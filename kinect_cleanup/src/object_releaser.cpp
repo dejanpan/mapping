@@ -57,6 +57,9 @@ c)publishes object continously in world frame
 //for transformPointCloud
 #include <pcl_ros/transforms.h>
 
+//for connection to knowrob
+#include <vision_msgs/cop_answer.h>
+
 using namespace std;
 
 class ObjectReleaser
@@ -66,13 +69,14 @@ protected:
   
 public:
   tf::TransformListener tf_;
-  std::string world_, output_cloud_topic_, object_frame_;
+  std::string world_, output_cloud_topic_, object_frame_, template_topic_;
   double tf_buffer_time_;
   bool got_object_;
   sensor_msgs::PointCloud2 output_cloud_;
-  ros::Publisher pub_;
+  ros::Publisher pub_, template_publisher_;
   ros::ServiceClient client_get_released_object;
   ros::ServiceServer service;
+  int object_id_;
   ////////////////////////////////////////////////////////////////////////////////
   ObjectReleaser  (ros::NodeHandle &n) : nh_(n)
   {
@@ -80,9 +84,13 @@ public:
     nh_.param("object_frame", object_frame_, std::string("right_hand"));
     nh_.param("output_cloud_topic_", output_cloud_topic_, std::string("/moved_object"));
     nh_.param("tf_buffer_time", tf_buffer_time_, 0.05);
+    //700000 needed by www.ros.org/wiki/cop
+    nh_.param ("object_id", object_id_, 700000);
+    nh_.param ("template_topic", template_topic_, std::string("object"));
     service = nh_.advertiseService("/release_object", &ObjectReleaser::calculate_transform, this);
     pub_ = nh_.advertise<sensor_msgs::PointCloud2>(output_cloud_topic_, 1);
     client_get_released_object = nh_.serviceClient<kinect_cleanup::GetReleasedObject>("/get_released_object");
+    template_publisher_ = nh_.advertise<vision_msgs::cop_answer>(template_topic_, 1);
     got_object_ = false;
   }
 
@@ -140,6 +148,20 @@ public:
           output_cloud_.header.stamp = ros::Time::now();
           pub_.publish (output_cloud_);
           ROS_INFO("[ObjectReleaser:] Point cloud published in frame %s", output_cloud_.header.frame_id.c_str());
+	  
+	  //publish cop_answer (www.ros.org/wiki/cop)
+	  vision_msgs::cop_answer msg;
+	  vision_msgs::cop_descriptor cop_descriptor;
+	  vision_msgs::aposteriori_position aposteriori_position;
+	  msg.found_poses.push_back(aposteriori_position);
+	  msg.found_poses[0].models.push_back(cop_descriptor);
+	  //TODO: only one needed probably, ask Moritz
+	  msg.found_poses[0].models[0].type = "ODUFinder";
+	  //	msg.found_poses[0].models[0].sem_class = "rahadayamchj";
+	  msg.found_poses[0].models[0].sem_class = "mopfte20pmi";
+	  msg.found_poses[0].models[0].object_id = ++object_id_;
+	  msg.found_poses[0].position = 0;
+	  template_publisher_.publish(msg);
         }
         ros::spinOnce();
         loop_rate.sleep();
