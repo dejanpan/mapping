@@ -165,15 +165,14 @@ class ObjectGrabber
       //      std::cerr << "to_select_" << std::endl;
       // If there is no TF data available
       ros::Time time = ros::Time::now();
-      tf::TransformListener tf_listener;
-      bool found_transform = tf_listener.waitForTransform("right_hand", "openni_rgb_optical_frame", time, ros::Duration(1));
+      bool found_transform = tf_listener_.waitForTransform("right_hand", "openni_rgb_optical_frame", time, ros::Duration(1));
       if (!found_transform)
       {
         std::cerr << "no transform found" << std::endl;
         return;
       }
       tf::StampedTransform c2h_transform;
-      tf_listener.lookupTransform("right_hand", "openni_rgb_optical_frame", time, c2h_transform);
+      tf_listener_.lookupTransform("right_hand", "openni_rgb_optical_frame", time, c2h_transform);
       to_select_ = false;
 
       ROS_INFO_STREAM ("[" << getName ().c_str () << "] Received cloud: cloud time " << cloud_in->header.stamp);
