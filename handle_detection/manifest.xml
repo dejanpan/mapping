@@ -12,7 +12,7 @@
   <depend package="nodelet" />
   <depend package="pcl" />
   <depend package="pcl_ros" />
-
+  <depend package="visualization_msgs" />
 </package>
 
 
