@@ -60,7 +60,7 @@
       <rosparam>
         model_type: 13
         method_type: 0
-        model_threshold: 0.02
+        <!-- model_threshold: 0.02 -->
         distance_threshold: 0.02
         normal_distance_weight: 0.1
         optimize_coefficients : true
