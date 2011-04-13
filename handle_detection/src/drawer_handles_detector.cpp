@@ -128,7 +128,25 @@ public:
 
     nh_.param("nr_cluster", nr_cluster_, 1);
 
-    proj_.setModelType (pcl::SACMODEL_PARALLEL_PLANE);
+    nh_.param("cluster_min_height", cluster_min_height_, 0.03);
+    nh_.param("cluster_max_height", cluster_max_height_, 0.2);
+
+    nh_.param("handle_cluster_tolerance", handle_cluster_tolerance_, 0.02);
+    nh_.param("handle_cluster_min_size", handle_cluster_min_size_, 40);
+    handle_cluster_.setClusterTolerance (handle_cluster_tolerance_);
+    handle_cluster_.setSpatialLocator(0);
+    handle_cluster_.setMinClusterSize (handle_cluster_min_size_);
+    //    cluster_.setMaxClusterSize (object_cluster_max_size_);
+    cluster_.setSearchMethod (clusters_tree_);
+    
+    seg_line_.setModelType (pcl::SACMODEL_LINE);
+    seg_line_.setMethodType (pcl::SAC_RANSAC);
+    seg_line_.setDistanceThreshold (0.05);
+//    seg_line_.setNormalDistanceWeight (0.0);
+    seg_line_.setOptimizeCoefficients (true);
+    seg_line_.setMaxIterations (max_iter_);
+    seg_line_.setProbability (seg_prob_);
+
     // nh_.param("normal_search_radius", normal_search_radius_, 0.05);
     //what area size of the table are we looking for?
     nh_.param("rot_table_frame", rot_table_frame_, std::string("rotating_table"));
@@ -138,8 +156,6 @@ public:
 
     nh_.param("base_link_head_tilt_link_angle", base_link_head_tilt_link_angle_, 0.8);
     nh_.param("min_table_inliers", min_table_inliers_, 100);
-    nh_.param("cluster_min_height", cluster_min_height_, 0.02);
-    nh_.param("cluster_max_height", cluster_max_height_, 0.4);
     nh_.param("downsample", downsample_, true);
     nh_.param("voxel_size", voxel_size_, 0.01);
     nh_.param("save_to_files", save_to_files_, false);
@@ -148,7 +164,7 @@ public:
 
     cloud_pub_.advertise (nh_, "debug_cloud", 1);
     //cloud_extracted_pub_.advertise (nh_, "cloud_extracted", 1);
-    //cloud_objects_pub_.advertise (nh_, "cloud_objects", 10);
+    cloud_handle_pub_.advertise (nh_, "handle_projected", 10);
 
 
 
@@ -253,174 +269,72 @@ private:
       //return;
 
       //Project Points into the Perfect plane
-      PointCloud cloud_projected;
+      PointCloudPtr cloud_projected (new PointCloud());
       proj_.setInputCloud (biggest_face);
-//      proj_.setIndices (table_inliers);
       proj_.setModelCoefficients (table_coeff);
-      proj_.filter (cloud_projected);
+      proj_.setModelType (pcl::SACMODEL_PARALLEL_PLANE);
+      proj_.filter (*cloud_projected);
       //For Debug
-      cloud_pub_.publish(cloud_projected);
+      //cloud_pub_.publish(*cloud_projected);
       //return;
 
-
-//       // Project the table inliers using the planar model coefficients    
-//       proj_.setInputCloud (boost::make_shared<PointCloud> (cloud));
-//       proj_.setIndices (boost::make_shared<pcl::PointIndices> (table_inliers));
-//       proj_.setModelCoefficients (boost::make_shared<pcl::ModelCoefficients> (table_coeff));
-//       proj_.filter (cloud_projected);
-//       //cloud_pub_.publish (cloud_projected);
-      
-//       // Create a Convex Hull representation of the projected inliers
-//       chull_.setInputCloud (boost::make_shared<PointCloud> (cloud_projected));
-//       chull_.reconstruct (cloud_hull);
-//       //ROS_INFO ("Convex hull has: %d data points.", (int)cloud_hull.points.size ());
-//       //cloud_pub_.publish (cloud_hull);
-      
-//       // //Compute the area of the plane
-//       // std::vector<double> plane_normal(3);
-//       // plane_normal[0] = table_coeff.values[0];
-//       // plane_normal[1] = table_coeff.values[1];
-//       // plane_normal[2] = table_coeff.values[2];
-//       // area_ = compute2DPolygonalArea (cloud_hull, plane_normal);
-//       // //ROS_INFO("[%s] Plane area: %f", getName ().c_str (), area_);
-//       // if (area_ > (expected_table_area_ + 0.01))
-//       // {
-//       //   extract_.setInputCloud (boost::make_shared<PointCloud> (cloud));
-//       //   extract_.setIndices (boost::make_shared<pcl::PointIndices> (table_inliers));
-//       //   extract_.setNegative (true);
-//       //   pcl::PointCloud<Point> cloud_extracted;
-//       //   extract_.filter (cloud_extracted);
-//       //   //cloud_extracted_pub_.publish (cloud_extracted);
-//       //   cloud = cloud_extracted;
-//       // } 
-//       //end while
-//       //ROS_INFO ("[%s] Publishing convex hull with: %d data points and area %lf.", getName ().c_str (), (int)cloud_hull.points.size (), area_);
-//       cloud_pub_.publish (cloud_hull);
-      
-//       // pcl::PointXYZRGB point_min;
-//       // pcl::PointXYZRGB point_max;
-//       // pcl::PointXYZ point_center;
-//       // pcl::getMinMax3D (cloud_hull, point_min, point_max);
-//       // //Calculate the centroid of the hull
-//       // point_center.x = (point_max.x + point_min.x)/2;
-//       // point_center.y = (point_max.y + point_min.y)/2;
-//       // point_center.z = (point_max.z + point_min.z)/2;
-      
-//       // tf::Transform transform;
-//       // transform.setOrigin( tf::Vector3(point_center.x, point_center.y, point_center.z));
-//       // transform.setRotation( tf::Quaternion(0, 0, 0) );
-//       // transform_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), 
-//       //                                                           cloud_raw.header.frame_id, rot_table_frame_));
-      
-//       // ---[ Get the objects on top of the table
-//       pcl::PointIndices cloud_object_indices;
-//       prism_.setHeightLimits (cluster_min_height_, cluster_max_height_);
-//       prism_.setInputCloud (boost::make_shared<PointCloud> (cloud));
-//       prism_.setInputPlanarHull (boost::make_shared<PointCloud>(cloud_hull));
-//       prism_.segment (cloud_object_indices);
-//       //ROS_INFO ("[%s] Number of object point indices: %d.", getName ().c_str (), (int)cloud_object_indices.indices.size ());
-      
-//       pcl::PointCloud<Point> cloud_object;
-//       pcl::ExtractIndices<Point> extract_object_indices;
-//       //extract_object_indices.setInputCloud (cloud_all_minus_table_ptr);
-//       extract_object_indices.setInputCloud (boost::make_shared<PointCloud> (cloud));
-// //      extract_object_indices.setInputCloud (cloud_downsampled_);
-//       extract_object_indices.setIndices (boost::make_shared<const pcl::PointIndices> (cloud_object_indices));
-//       extract_object_indices.filter (cloud_object);
-//       //ROS_INFO ("[%s ] Publishing number of object point candidates: %d.", getName ().c_str (), 
-//       //        (int)cloud_objects.points.size ());
-      
-      
-      
-//       pcl::PointCloud<Point> cloud_object_clustered;
-//       if (int(clusters.size()) >= nr_cluster_)
-//       {
-//         for (int i = 0; i < nr_cluster_; i++)
-//         {
-//           pcl::copyPointCloud (cloud_object, clusters[i], cloud_object_clustered);
-//           char object_name_angle[100];
-//           if (save_to_files_)
-//           {
-//             sprintf (object_name_angle, "%04d",  i);
-//             ROS_INFO("Saving cluster to: %s_%s.pcd", object_name_.c_str(), object_name_angle);
-//             pcd_writer_.write (object_name_ + "_" +  object_name_angle + ".pcd", cloud_object_clustered, true);
-//           }
-//           cloud_objects_pub_.publish (cloud_object_clustered);
-//         }
-
-//         ROS_INFO("Published %ld clusters.", clusters.size());
-// 	//cloud_object_clustered.width = 1;
-// 	//cloud_object_clustered.height = 1;
-// 	// cloud_object_clustered.points.resize(1);
-// 	// cloud_objects_pub_.publish (cloud_object_clustered);
-// 	pcl::PointCloud<Point> token;
-// 	Point p0;
-// 	p0.x = p0.y = p0.z = p0.rgb = 100.0;
-// 	token.width = 1;
-// 	token.height = 1;
-// 	token.is_dense = false;
-// 	token.points.resize(token.width * token.height);
-// 	token.points[0] = p0;
-// 	token.header.frame_id = cloud_object_clustered.header.frame_id;
-// 	token.header.stamp = ros::Time::now();
-// 	ROS_INFO("bla");
-// 	if (publish_token_)
-// 	  cloud_objects_pub_.publish (token);
-// 	//token_pub_.publish(cloud_object_clustered);
-
-// 	ROS_INFO("Published token cluster with size %ld.", token.width * token.height);
-//       }
-//       else
-//       {
-//         ROS_ERROR("Only %ld clusters found with size > %d points", clusters.size(), object_cluster_min_size_);
-//       }
-//       //std::stringstream ss;
-//       //ss << (pan_angle_ + 180);
-//       //    char object_name_angle[100];
-// //      sprintf (object_name_angle, "%04d",  );
-//       //ROS_INFO("Saving cluster to: %s.pcd", object_name_.c_str());
-// //      pcd_writer_.write (object_name_ + ".pcd", cloud_object_clustered, true);
-      
-//       //want to save only once
-//       if (save_to_files_)
-//         exit(2);
-//       sleep(1);
-    }
-
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  /** \brief Compute the area of a 2D planar polygon patch - using a given normal
-   * \param points the point cloud (planar)
-   * \param normal the plane normal
-   */
-  double
-  compute2DPolygonalArea (PointCloud &points, const std::vector<double> &normal)
-  {
-    int k0, k1, k2;
-    
-    // Find axis with largest normal component and project onto perpendicular plane
-    k0 = (fabs (normal.at (0) ) > fabs (normal.at (1))) ? 0  : 1;
-    k0 = (fabs (normal.at (k0)) > fabs (normal.at (2))) ? k0 : 2;
-    k1 = (k0 + 1) % 3;
-    k2 = (k0 + 2) % 3;
- 
-    // cos(theta), where theta is the angle between the polygon and the projected plane
-    double ct = fabs ( normal.at (k0) );
- 
-    double area = 0;
-    float p_i[3], p_j[3];
-
-    for (unsigned int i = 0; i < points.points.size (); i++)
+      PointCloudPtr cloud_hull (new PointCloud());
+      // Create a Convex Hull representation of the projected inliers
+      chull_.setInputCloud (cloud_projected);
+      chull_.reconstruct (*cloud_hull);
+      ROS_INFO ("Convex hull has: %d data points.", (int)cloud_hull->points.size ());
+      if ((int)cloud_hull->points.size () == 0)
       {
-        p_i[0] = points.points[i].x; p_i[1] = points.points[i].y; p_i[2] = points.points[i].z;
-        int j = (i + 1) % points.points.size ();
-        p_j[0] = points.points[j].x; p_j[1] = points.points[j].y; p_j[2] = points.points[j].z;
-
-        area += p_i[k1] * p_j[k2] - p_i[k2] * p_j[k1];
+        ROS_WARN("Convex hull has: %d data points. Returning.", (int)cloud_hull->points.size ());
+        return;
       }
-    area = fabs (area) / (2 * ct);
+      //For Debug
+      //cloud_pub_.publish(*cloud_hull);
+      //return;
 
-    return (area);
-  }
+      // Extract the handle clusters using a polygonal prism 
+      pcl::PointIndices::Ptr handles_indices (new pcl::PointIndices ());
+      prism_.setHeightLimits (cluster_min_height_, cluster_max_height_);
+      prism_.setInputCloud (cloud_z_ptr);
+      prism_.setInputPlanarHull (cloud_hull);
+      prism_.segment (*handles_indices);
+      ROS_INFO ("[%s] Number of handle point indices: %d.", getName ().c_str (), (int)handles_indices->indices.size ());
+
+      //Cluster handles
+      PointCloudPtr handles (new PointCloud());
+      pcl::copyPointCloud (*cloud_z_ptr, *handles_indices, *handles);
+      //For Debug
+      //cloud_pub_.publish(*handles);
+      //return;
+
+      std::vector<pcl::PointIndices> handle_clusters;
+      handle_cluster_.setInputCloud (handles);
+//      cluster_.setIndices(table_inliers);
+      handle_cluster_.extract (handle_clusters);
+      ROS_INFO ("[%s] Found handle clusters: %d.", getName ().c_str (), (int)handle_clusters.size ());
+
+      PointCloudPtr handle_final (new PointCloud());
+      pcl::ModelCoefficients::Ptr line_coeff (new pcl::ModelCoefficients ());
+      pcl::PointIndices::Ptr line_inliers (new pcl::PointIndices ());
+      //fit lines, project points into perfect lines
+      for (uint i = 0; i < handle_clusters.size(); i++)
+      {
+        pcl::copyPointCloud (*handles, handle_clusters[i], *handle_final);
+        seg_line_.setInputCloud (handle_final);
+        seg_line_.segment (*line_inliers, *line_coeff);
+        ROS_INFO("line_inliers %ld", line_inliers->indices.size());
+        //Project Points into the Perfect plane
+        PointCloudPtr line_projected (new PointCloud());
+        proj_.setInputCloud (handle_final);
+        proj_.setModelCoefficients (line_coeff);
+        proj_.setModelType (pcl::SACMODEL_LINE);
+        proj_.filter (*line_projected);
+        //For Debug
+        cloud_handle_pub_.publish(*line_projected);
+        //sleep(2);
+        //return;
+      }
+    }
 
   ros::NodeHandle nh_;  // Do we need to keep it?
   tf::TransformBroadcaster transform_broadcaster_;
@@ -431,8 +345,8 @@ private:
   double voxel_size_;
 
   std::string rot_table_frame_, object_name_, point_cloud_topic;
-  double object_cluster_tolerance_,  cluster_min_height_, cluster_max_height_;
-  int object_cluster_min_size_, object_cluster_max_size_;
+  double object_cluster_tolerance_, handle_cluster_tolerance_, cluster_min_height_, cluster_max_height_;
+  int object_cluster_min_size_, object_cluster_max_size_, handle_cluster_min_size_, handle_cluster_max_size_;
 
   pcl::PCDWriter pcd_writer_;
   double sac_distance_, normal_distance_weight_, z_min_limit_, z_max_limit_;
@@ -446,7 +360,7 @@ private:
 
   pcl_ros::Publisher<Point> cloud_pub_;
   pcl_ros::Publisher<Point> cloud_extracted_pub_;
-  pcl_ros::Publisher<Point> cloud_objects_pub_;
+  pcl_ros::Publisher<Point> cloud_handle_pub_;
   pcl_ros::Publisher<Point> token_pub_;
 
   // PCL objects
@@ -456,12 +370,13 @@ private:
   // The resultant estimated point cloud normals for \a cloud_filtered_
   pcl::PointCloud<pcl::Normal>::ConstPtr cloud_normals_;
   pcl::SACSegmentationFromNormals<Point, pcl::Normal> seg_;               // Planar segmentation object
+  pcl::SACSegmentation<Point> seg_line_;               // Planar segmentation object
   pcl::ProjectInliers<Point> proj_;               // Inlier projection object
   pcl::ExtractIndices<Point> extract_;            // Extract (too) big tables
   pcl::ConvexHull<Point> chull_;  
   pcl::ExtractPolygonalPrismData<Point> prism_;
   pcl::PointCloud<Point> cloud_objects_;
-  pcl::EuclideanClusterExtraction<Point> cluster_;
+  pcl::EuclideanClusterExtraction<Point> cluster_, handle_cluster_;
   KdTreePtr clusters_tree_, normals_tree_;
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
