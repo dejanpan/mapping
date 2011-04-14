@@ -151,7 +151,6 @@ public:
     for (size_t i = 0; i < table_coeffs_.size (); ++i) 
       delete table_coeffs_[i];
   }
-
     
   void 
   init (double tolerance, std::string object_name)  // tolerance: how close to (0,0) is good enough?
@@ -217,45 +216,9 @@ private:
       // Create a Convex Hull representation of the projected inliers
       chull_.setInputCloud (boost::make_shared<PointCloud> (cloud_projected));
       chull_.reconstruct (cloud_hull);
-      //ROS_INFO ("Convex hull has: %d data points.", (int)cloud_hull.points.size ());
-      //cloud_pub_.publish (cloud_hull);
-      
-      // //Compute the area of the plane
-      // std::vector<double> plane_normal(3);
-      // plane_normal[0] = table_coeff.values[0];
-      // plane_normal[1] = table_coeff.values[1];
-      // plane_normal[2] = table_coeff.values[2];
-      // area_ = compute2DPolygonalArea (cloud_hull, plane_normal);
-      // //ROS_INFO("[%s] Plane area: %f", getName ().c_str (), area_);
-      // if (area_ > (expected_table_area_ + 0.01))
-      // {
-      //   extract_.setInputCloud (boost::make_shared<PointCloud> (cloud));
-      //   extract_.setIndices (boost::make_shared<pcl::PointIndices> (table_inliers));
-      //   extract_.setNegative (true);
-      //   pcl::PointCloud<Point> cloud_extracted;
-      //   extract_.filter (cloud_extracted);
-      //   //cloud_extracted_pub_.publish (cloud_extracted);
-      //   cloud = cloud_extracted;
-      // } 
-      //end while
-      //ROS_INFO ("[%s] Publishing convex hull with: %d data points and area %lf.", getName ().c_str (), (int)cloud_hull.points.size (), area_);
+      ROS_INFO ("Convex hull has: %d data points.", (int)cloud_hull.points.size ());
       cloud_pub_.publish (cloud_hull);
-      
-      // pcl::PointXYZRGB point_min;
-      // pcl::PointXYZRGB point_max;
-      // pcl::PointXYZ point_center;
-      // pcl::getMinMax3D (cloud_hull, point_min, point_max);
-      // //Calculate the centroid of the hull
-      // point_center.x = (point_max.x + point_min.x)/2;
-      // point_center.y = (point_max.y + point_min.y)/2;
-      // point_center.z = (point_max.z + point_min.z)/2;
-      
-      // tf::Transform transform;
-      // transform.setOrigin( tf::Vector3(point_center.x, point_center.y, point_center.z));
-      // transform.setRotation( tf::Quaternion(0, 0, 0) );
-      // transform_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), 
-      //                                                           cloud_raw.header.frame_id, rot_table_frame_));
-      
+       
       // ---[ Get the objects on top of the table
       pcl::PointIndices cloud_object_indices;
       prism_.setHeightLimits (cluster_min_height_, cluster_max_height_);
@@ -266,9 +229,7 @@ private:
       
       pcl::PointCloud<Point> cloud_object;
       pcl::ExtractIndices<Point> extract_object_indices;
-      //extract_object_indices.setInputCloud (cloud_all_minus_table_ptr);
       extract_object_indices.setInputCloud (boost::make_shared<PointCloud> (cloud));
-//      extract_object_indices.setInputCloud (cloud_downsampled_);
       extract_object_indices.setIndices (boost::make_shared<const pcl::PointIndices> (cloud_object_indices));
       extract_object_indices.filter (cloud_object);
       //ROS_INFO ("[%s ] Publishing number of object point candidates: %d.", getName ().c_str (), 
@@ -279,7 +240,6 @@ private:
       cluster_.setInputCloud (boost::make_shared<PointCloud>(cloud_object));
       cluster_.setClusterTolerance (object_cluster_tolerance_);
       cluster_.setMinClusterSize (object_cluster_min_size_);
-      //    cluster_.setMaxClusterSize (object_cluster_max_size_);
       cluster_.setSearchMethod (clusters_tree_);
       cluster_.extract (clusters);
       
@@ -300,10 +260,6 @@ private:
         }
 
         ROS_INFO("Published %d clusters.", nr_cluster_);
-	//cloud_object_clustered.width = 1;
-	//cloud_object_clustered.height = 1;
-	// cloud_object_clustered.points.resize(1);
-	// cloud_objects_pub_.publish (cloud_object_clustered);
 	pcl::PointCloud<Point> token;
 	Point p0;
 	p0.x = p0.y = p0.z = p0.rgb = 100.0;
@@ -324,12 +280,6 @@ private:
       {
         ROS_ERROR("Only %ld clusters found with size > %d points", clusters.size(), object_cluster_min_size_);
       }
-      //std::stringstream ss;
-      //ss << (pan_angle_ + 180);
-      //    char object_name_angle[100];
-//      sprintf (object_name_angle, "%04d",  );
-      //ROS_INFO("Saving cluster to: %s.pcd", object_name_.c_str());
-//      pcd_writer_.write (object_name_ + ".pcd", cloud_object_clustered, true);
       
       //want to save only once
       if (save_to_files_)
