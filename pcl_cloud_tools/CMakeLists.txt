@@ -29,3 +29,4 @@ rosbuild_add_executable(pcl_normal_visualization src/pcl_normal_visualization.cp
 rosbuild_add_executable(pointcloud_line_pose_node src/pointcloud_line_pose.cpp)
 rosbuild_add_executable(detect_circle_3D_node src/detect_circle_3d.cpp)
 rosbuild_add_executable(create_xyzinormal_type src/create_xyzinormal_type.cpp)
+rosbuild_add_executable(extract_clusters_on_table src/extract_clusters_on_table.cpp)
