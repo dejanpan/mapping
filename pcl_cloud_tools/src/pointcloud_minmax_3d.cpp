@@ -101,7 +101,7 @@ public:
     nh_.param("visualize", visualize_, false);
     nh_.param("number_clusters", number_clusters_, 1);
     //5 cm between cluster
-    nh_.param("object_cluster_tolerance", object_cluster_tolerance_, 0.05);
+    nh_.param("object_cluster_tolerance", object_cluster_tolerance_, 0.03);
     //min 100 points
     nh_.param("object_cluster_min_size", object_cluster_min_size_, 50);
     //nh_.param("object_cluster_max_size", object_cluster_max_size_, 500);
