@@ -1,110 +1,20 @@
 <launch>
   <node pkg="topic_tools" type="throttle" name="swissranger_throttle" respawn="false" args="messages /narrow_stereo_textured/points2 1" machine="c2"/>
-
+  
   <group ns="stereo_table_cluster_detector">
     
-    <node pkg="pcl_cloud_tools" type="transform_pointcloud_node" name="transform_pointcloud_node" output="screen" machine="c2">
-      <remap from="~cloud_pcd" to="/narrow_stereo_textured/points2_throttle" />
-    </node>
-
-    <node pkg="pcl_cloud_tools" type="hull_contract_node" name="hull_contract_node" output="screen" machine="c2">
-      <param name="padding" value="0.85"/>
-      <remap from="~cloud_pcd" to="table_convex_hull/output" />
-    </node>
-
-    <!-- PCL Manager -->
-    <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" machine="c2"/>
-    
-    <!-- Run a voxel_grid filter to clean NaNs -->
-    <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
-      <remap from="voxel_grid/input" to="transform_pointcloud_node/cloud_pcd_transformed" />
-      <rosparam>
-        leaf_size: 0.01
-      </rosparam>
-    </node>
-
-    <!-- Segment the table plane -->
-    <node pkg="nodelet" type="nodelet" name="planar_segmentation_stereo" args="load pcl/SACSegmentation pcl_manager" output="screen">
-      <remap from="planar_segmentation_stereo/input" to="voxel_grid/output" />
-      <rosparam>
-        model_type: 9
-        max_iterations: 1000
-        method_type: 0
-        model_threshold: 0.01
-        distance_threshold: 0.01
-        optimize_coefficients : true
-        axis: [0.0, 0.0, 1.0]
-        eps_angle: 0.08
-      </rosparam>
-    </node>
-
-    <!-- Cluster the remaining points (all-plane) -->
-    <node pkg="nodelet" type="nodelet" name="biggest_plane" args="load pcl/EuclideanClusterExtraction pcl_manager" output="screen">
-      <remap from="~input" to="voxel_grid/output" />
-      <remap from="~indices" to="planar_segmentation_stereo/inliers" />
-      <rosparam>
-        use_indices: true
-        max_queue_size: 10
-        cluster_tolerance: 0.05
-        spatial_locator: 0
-        cluster_min_size: 50
-        max_clusters: 1
-        publish_indices: false
-      </rosparam>
+    <node pkg="pcl_cloud_tools" type="extract_clusters_on_table" name=" extract_clusters_on_table" args="object" output="screen">
+      <param name="point_cloud_topic" value="/narrow_stereo_textured/points2_throttle"/>
+      <param name="nr_clusters" value="1"/>
+      <param name="base_link_head_tilt_link_angle" value="0.6"/>
     </node>
     
-    <!-- Project the planar inliers -->
-    <node pkg="nodelet" type="nodelet" name="project_planar_inliers" args="load pcl/ProjectInliers pcl_manager" output="screen">
-      <remap from="~input" to="voxel_grid/output" />
-      <remap from="~inliers" to="planar_segmentation_stereo/inliers" />
-      <remap from="~model" to="planar_segmentation_stereo/model" />
-      <rosparam>
-        model_type: 9
-        copy_all_data: false
-        copy_all_fields: false
-      </rosparam>
-    </node>
-
-    <!-- Compute the convex hull -->
-    <node pkg="nodelet" type="nodelet" name="table_convex_hull" args="load pcl/ConvexHull2D pcl_manager" output="screen">
-      <!-- <remap from="~input" to="project_planar_inliers/output" /> -->
-      <remap from="~input" to="biggest_plane/output" />
-    </node>
-
-    <!-- Extract the remaining of all-plane (XYZ) -->
-    <node pkg="nodelet" type="nodelet" name="extract_remaining_indices" args="load pcl/ExtractIndices pcl_manager" output="screen">
-      <remap from="extract_remaining_indices/input"   to="voxel_grid/output" />
-      <remap from="extract_remaining_indices/indices" to="planar_segmentation_stereo/inliers" />
-      <rosparam>
-        negative: true
-      </rosparam>
-    </node>
-
-    <!-- Extract the object clusters using a polygonal prism -->
-    <node pkg="nodelet" type="nodelet" name="table_object_candidates" args="load pcl/ExtractPolygonalPrismData pcl_manager" output="screen">
-      <remap from="~input" to="extract_remaining_indices/output" />
-      <remap from="~planar_hull"   to="hull_contract_node/cloud_pcd_padded" />
-      <rosparam>
-        height_min: -0.2
-        height_max: -0.01
-        vpz: 1.3
-      </rosparam>
-    </node>
-
-    <node pkg="nodelet" type="nodelet" name="extract_table_object_candidates" args="load pcl/ExtractIndices pcl_manager" output="screen">
-      <remap from="~input"   to="extract_remaining_indices/output" />
-      <remap from="~indices" to="table_object_candidates/output" />
-      <rosparam>
-        negative: false
-      </rosparam>
-    </node>
-
     <node pkg="pcl_cloud_tools" type="pointcloud_minmax_3d_node" name="pointcloud_minmax_3d_node" output="screen" respawn="true" machine="c2">
       <param name="visualize" value="true"/>
       <param name="number_clusters" value="1"/>
       <param name="object_clusters_min_size" value="80"/>	
-      <remap from="~cloud_pcd" to="extract_table_object_candidates/output" />
+      <remap from="~cloud_pcd" to="extract_clusters_on_table/cloud_objects" />
     </node>
-
+    
   </group>
 </launch>
