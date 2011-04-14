@@ -1,15 +1,15 @@
 <launch>
-  <node pkg="topic_tools" type="throttle" name="swissranger_throttle" respawn="false" args="messages /narrow_stereo_textured/points2 1" machine="c2"/>
+  <!-- <node pkg="topic_tools" type="throttle" name="swissranger_throttle" respawn="false" args="messages /narrow_stereo_textured/points2 1"/> -->
   
   <group ns="stereo_table_cluster_detector">
     
-    <node pkg="pcl_cloud_tools" type="extract_clusters_on_table" name=" extract_clusters_on_table" args="object" output="screen">
-      <param name="point_cloud_topic" value="/narrow_stereo_textured/points2_throttle"/>
+    <node pkg="pcl_cloud_tools" type="extract_clusters_on_table" name="extract_clusters_on_table" args="object" output="screen">
+      <!-- <param name="point_cloud_topic" value="/narrow_stereo_textured/points2_throttled"/> -->
       <param name="nr_clusters" value="1"/>
       <param name="base_link_head_tilt_link_angle" value="0.6"/>
     </node>
     
-    <node pkg="pcl_cloud_tools" type="pointcloud_minmax_3d_node" name="pointcloud_minmax_3d_node" output="screen" respawn="true" machine="c2">
+    <node pkg="pcl_cloud_tools" type="pointcloud_minmax_3d_node" name="pointcloud_minmax_3d_node" output="screen" respawn="true">
       <param name="visualize" value="true"/>
       <param name="number_clusters" value="1"/>
       <param name="object_clusters_min_size" value="80"/>	
