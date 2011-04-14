@@ -1,0 +1,20 @@
+<package>
+  <description brief="vosch">
+
+     vosch
+
+  </description>
+  <author>Kanezaki Asako</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/vosch</url>
+  <depend package="roscpp"/>
+  <depend package="pcl_cloud_algos"/>
+  <depend package="c3_hlac"/>
+  <export>
+    <cpp cflags="-I${prefix}/include/"/>
+  </export>
+
+</package>
+
+
