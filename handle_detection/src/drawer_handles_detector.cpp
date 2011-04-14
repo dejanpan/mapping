@@ -147,42 +147,26 @@ public:
     seg_line_.setMaxIterations (max_iter_);
     seg_line_.setProbability (seg_prob_);
 
-    // nh_.param("normal_search_radius", normal_search_radius_, 0.05);
-    //what area size of the table are we looking for?
-    nh_.param("rot_table_frame", rot_table_frame_, std::string("rotating_table"));
-
-    //min 100 points
-
-
-    nh_.param("base_link_head_tilt_link_angle", base_link_head_tilt_link_angle_, 0.8);
     nh_.param("min_table_inliers", min_table_inliers_, 100);
-    nh_.param("downsample", downsample_, true);
     nh_.param("voxel_size", voxel_size_, 0.01);
-    nh_.param("save_to_files", save_to_files_, false);
-    nh_.param("point_cloud_topic", point_cloud_topic, std::string("/drawer_handles"));
-    nh_.param("publish_token", publish_token_, false);
-
+    nh_.param("point_cloud_topic", point_cloud_topic_, std::string("/shoulder_cloud2"));
+    nh_.param("output_handle_topic", output_handle_topic_, std::string("handle_projected_inliers/output"));
     cloud_pub_.advertise (nh_, "debug_cloud", 1);
     //cloud_extracted_pub_.advertise (nh_, "cloud_extracted", 1);
-    cloud_handle_pub_.advertise (nh_, "handle_projected", 10);
-
-
-
+    cloud_handle_pub_.advertise (nh_, output_handle_topic_, 10);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   virtual ~DrawerHandlesDetector () 
   {
-    for (size_t i = 0; i < table_coeffs_.size (); ++i) 
-      delete table_coeffs_[i];
   }
 
     
   void 
   init ()  // tolerance: how close to (0,0) is good enough?
   {
-    ROS_INFO ("DrawerHandlesDetector:] Listening for incoming data on topic %s", nh_.resolveName (point_cloud_topic).c_str ());
-    point_cloud_sub_ = nh_.subscribe (point_cloud_topic, 1,  &DrawerHandlesDetector::ptuFinderCallback, this);
+    ROS_INFO ("[DrawerHandlesDetector:] Listening for incoming data on topic %s", nh_.resolveName (point_cloud_topic_).c_str ());
+    point_cloud_sub_ = nh_.subscribe (point_cloud_topic_, 1,  &DrawerHandlesDetector::ptuFinderCallback, this);
     //object_name_ = object_name;
   }
     
@@ -336,32 +320,21 @@ private:
       }
     }
 
-  ros::NodeHandle nh_;  // Do we need to keep it?
-  tf::TransformBroadcaster transform_broadcaster_;
-  tf::TransformListener tf_listener_;
-  bool save_to_files_, downsample_, publish_token_;
-
-  double normal_search_radius_;
+  ros::NodeHandle nh_;
   double voxel_size_;
 
-  std::string rot_table_frame_, object_name_, point_cloud_topic;
+  std::string point_cloud_topic_, output_handle_topic_;
   double object_cluster_tolerance_, handle_cluster_tolerance_, cluster_min_height_, cluster_max_height_;
   int object_cluster_min_size_, object_cluster_max_size_, handle_cluster_min_size_, handle_cluster_max_size_;
 
-  pcl::PCDWriter pcd_writer_;
   double sac_distance_, normal_distance_weight_, z_min_limit_, z_max_limit_;
   double y_min_limit_, y_max_limit_, x_min_limit_, x_max_limit_;
-  double eps_angle_, seg_prob_, base_link_head_tilt_link_angle_;
+  double eps_angle_, seg_prob_;
   int k_, max_iter_, min_table_inliers_, nr_cluster_;
   
   ros::Subscriber point_cloud_sub_;
-
-  std::vector<Eigen::Vector4d *> table_coeffs_;
-
   pcl_ros::Publisher<Point> cloud_pub_;
-  pcl_ros::Publisher<Point> cloud_extracted_pub_;
   pcl_ros::Publisher<Point> cloud_handle_pub_;
-  pcl_ros::Publisher<Point> token_pub_;
 
   // PCL objects
   //pcl::PassThrough<Point> vgrid_;                   // Filtering + downsampling object
