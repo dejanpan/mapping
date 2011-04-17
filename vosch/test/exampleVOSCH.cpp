@@ -1,6 +1,5 @@
 #include "vosch/vosch_tools.h"
 
-using namespace pcl;
 #define VERBOSE 1
 //#define DIVID_TEST
 
@@ -15,18 +14,18 @@ int main( int argc, char** argv ){
   const double voxel_size = 0.01;
 
   //* read
-  pcl::PointCloud<PointXYZRGB> input_cloud;
+  pcl::PointCloud<pcl::PointXYZRGB> input_cloud;
   readPoints( argv[1], input_cloud );
   double t1 = my_clock();
 
   //* compute normals
-  pcl::PointCloud<PointXYZRGBNormal> cloud;
+  pcl::PointCloud<pcl::PointXYZRGBNormal> cloud;
   computeNormal( input_cloud, cloud );
   ROS_INFO("Normal compute done in %f seconds.", my_clock()-t1);
 
   //* voxelize
-  pcl::VoxelGrid<PointXYZRGBNormal> grid;
-  pcl::PointCloud<PointXYZRGBNormal> cloud_downsampled;
+  pcl::VoxelGrid<pcl::PointXYZRGBNormal> grid;
+  pcl::PointCloud<pcl::PointXYZRGBNormal> cloud_downsampled;
   getVoxelGrid( grid, cloud, cloud_downsampled, voxel_size );
 
   //* extract - VOSCH -

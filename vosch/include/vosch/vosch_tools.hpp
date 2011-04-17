@@ -41,7 +41,7 @@ void computeNormal( pcl::PointCloud<T1> input_cloud, pcl::PointCloud<T2>& output
 
 //--------------------
 //* function for GRSD 
-int get_type (float min_radius, float max_radius)
+int getType (float min_radius, float max_radius)
 {
   if (min_radius > 0.100)
     return PLANE;
@@ -68,7 +68,7 @@ int get_type (float min_radius, float max_radius)
 //--------------------
 //* extract - GRSD -
 template <typename T>
-Eigen::Vector3i extract_GRSD_Signature21(pcl::VoxelGrid<T> grid, pcl::PointCloud<T> cloud, pcl::PointCloud<T> cloud_downsampled, std::vector< std::vector<float> > &feature, const float voxel_size, const int subdivision_size = 0, const int offset_x = 0, const int offset_y = 0, const int offset_z = 0, const bool is_normalize  ){
+Eigen::Vector3i extractGRSDSignature21(pcl::VoxelGrid<T> grid, pcl::PointCloud<T> cloud, pcl::PointCloud<T> cloud_downsampled, std::vector< std::vector<float> > &feature, const float voxel_size, const int subdivision_size = 0, const int offset_x = 0, const int offset_y = 0, const int offset_z = 0, const bool is_normalize  ){
 #ifndef QUIET
   ROS_INFO("rsd %f, normals %f, leaf %f", rsd_radius_search, normals_radius_search, voxel_size);
 #endif
@@ -88,7 +88,7 @@ Eigen::Vector3i extract_GRSD_Signature21(pcl::VoxelGrid<T> grid, pcl::PointCloud
     div_b_ = grid.getNrDivisions();
     min_b_ = grid.getMinBoxCoordinates();
     if( ( div_b_[0] <= offset_x ) || ( div_b_[1] <= offset_y ) || ( div_b_[2] <= offset_z ) ){
-      std::cerr << "(In extract_GRSD_Signature21) offset values (" << offset_x << "," << offset_y << "," << offset_z << ") exceed voxel grid size (" << div_b_[0] << "," << div_b_[1] << "," << div_b_[2] << ")."<< std::endl;
+      std::cerr << "(In extractGRSDSignature21) offset values (" << offset_x << "," << offset_y << "," << offset_z << ") exceed voxel grid size (" << div_b_[0] << "," << div_b_[1] << "," << div_b_[2] << ")."<< std::endl;
       return Eigen::Vector3i::Zero();
     }
     subdiv_b_ = Eigen::Vector3i ( ceil( ( div_b_[0] - offset_x )*inverse_subdivision_size ), ceil( ( div_b_[1] - offset_y )*inverse_subdivision_size ), ceil( ( div_b_[2] - offset_z )*inverse_subdivision_size ) );
@@ -96,7 +96,7 @@ Eigen::Vector3i extract_GRSD_Signature21(pcl::VoxelGrid<T> grid, pcl::PointCloud
     hist_num = subdiv_b_[0] * subdiv_b_[1] * subdiv_b_[2];
   }
   else if( subdivision_size < 0 ){
-    std::cerr << "(In extract_GRSD_Signature21) Invalid subdivision size: " << subdivision_size << std::endl;
+    std::cerr << "(In extractGRSDSignature21) Invalid subdivision size: " << subdivision_size << std::endl;
     return Eigen::Vector3i::Zero();
   }
 
@@ -165,7 +165,7 @@ Eigen::Vector3i extract_GRSD_Signature21(pcl::VoxelGrid<T> grid, pcl::PointCloud
   std::vector<int> types (radii.points.size());
  
   for (size_t idx = 0; idx < radii.points.size (); ++idx)
-    types[idx] = get_type(radii.points[idx].r_min, radii.points[idx].r_max);
+    types[idx] = getType(radii.points[idx].r_min, radii.points[idx].r_max);
   
   for (size_t idx = 0; idx < cloud_downsampled_ptr->points.size (); ++idx)
   {
@@ -234,16 +234,16 @@ Eigen::Vector3i extract_GRSD_Signature21(pcl::VoxelGrid<T> grid, pcl::PointCloud
 }
 
 template <typename T>
-void extract_GRSD_Signature21(pcl::VoxelGrid<T> grid, pcl::PointCloud<T> cloud, pcl::PointCloud<T> cloud_downsampled, std::vector<float> &feature, const float voxel_size, const bool is_normalize  ){
+void extractGRSDSignature21(pcl::VoxelGrid<T> grid, pcl::PointCloud<T> cloud, pcl::PointCloud<T> cloud_downsampled, std::vector<float> &feature, const float voxel_size, const bool is_normalize  ){
   std::vector< std::vector<float> > tmp( 1 );
-  extract_GRSD_Signature21( grid, cloud, cloud_downsampled, tmp, voxel_size, 0, 0, 0, 0, is_normalize ); // for one signature
+  extractGRSDSignature21( grid, cloud, cloud_downsampled, tmp, voxel_size, 0, 0, 0, 0, is_normalize ); // for one signature
   feature = tmp[ 0 ];
 }
 
 //-----------------------------------
 //* extract - rotation-variant GRSD -
 template <typename T>
-Eigen::Vector3i extract_GRSD_Signature325(pcl::VoxelGrid<T> grid, pcl::PointCloud<T> cloud, pcl::PointCloud<T> cloud_downsampled, std::vector< std::vector<float> > &feature, const float voxel_size, const int subdivision_size = 0, const int offset_x = 0, const int offset_y = 0, const int offset_z = 0, const bool is_normalize  ){
+Eigen::Vector3i extractGRSDSignature325(pcl::VoxelGrid<T> grid, pcl::PointCloud<T> cloud, pcl::PointCloud<T> cloud_downsampled, std::vector< std::vector<float> > &feature, const float voxel_size, const int subdivision_size = 0, const int offset_x = 0, const int offset_y = 0, const int offset_z = 0, const bool is_normalize  ){
 #ifndef QUIET
   ROS_INFO("rsd %f, normals %f, leaf %f", rsd_radius_search, normals_radius_search, voxel_size);
 #endif
@@ -264,7 +264,7 @@ Eigen::Vector3i extract_GRSD_Signature325(pcl::VoxelGrid<T> grid, pcl::PointClou
     div_b_ = grid.getNrDivisions();
     min_b_ = grid.getMinBoxCoordinates();
     if( ( div_b_[0] <= offset_x ) || ( div_b_[1] <= offset_y ) || ( div_b_[2] <= offset_z ) ){
-      std::cerr << "(In extract_GRSD_Signature325) offset values (" << offset_x << "," << offset_y << "," << offset_z << ") exceed voxel grid size (" << div_b_[0] << "," << div_b_[1] << "," << div_b_[2] << ")."<< std::endl;
+      std::cerr << "(In extractGRSDSignature325) offset values (" << offset_x << "," << offset_y << "," << offset_z << ") exceed voxel grid size (" << div_b_[0] << "," << div_b_[1] << "," << div_b_[2] << ")."<< std::endl;
       return Eigen::Vector3i::Zero();
     }
     subdiv_b_ = Eigen::Vector3i ( ceil( ( div_b_[0] - offset_x )*inverse_subdivision_size ), ceil( ( div_b_[1] - offset_y )*inverse_subdivision_size ), ceil( ( div_b_[2] - offset_z )*inverse_subdivision_size ) );
@@ -272,7 +272,7 @@ Eigen::Vector3i extract_GRSD_Signature325(pcl::VoxelGrid<T> grid, pcl::PointClou
     hist_num = subdiv_b_[0] * subdiv_b_[1] * subdiv_b_[2];
   }
   else if( subdivision_size < 0 ){
-    std::cerr << "(In extract_GRSD_Signature325) Invalid subdivision size: " << subdivision_size << std::endl;
+    std::cerr << "(In extractGRSDSignature325) Invalid subdivision size: " << subdivision_size << std::endl;
     return Eigen::Vector3i::Zero();
   }
   cloud_grsd.points.resize(hist_num);
@@ -333,7 +333,7 @@ Eigen::Vector3i extract_GRSD_Signature325(pcl::VoxelGrid<T> grid, pcl::PointClou
   std::vector<int> types (radii.points.size());
  
   for (size_t idx = 0; idx < radii.points.size (); ++idx)
-    types[idx] = get_type(radii.points[idx].r_min, radii.points[idx].r_max);
+    types[idx] = getType(radii.points[idx].r_min, radii.points[idx].r_max);
   
   for (size_t idx = 0; idx < cloud_downsampled_ptr->points.size (); ++idx)
   {
@@ -391,16 +391,16 @@ Eigen::Vector3i extract_GRSD_Signature325(pcl::VoxelGrid<T> grid, pcl::PointClou
 }
 
 template <typename T>
-void extract_GRSD_Signature325(pcl::VoxelGrid<T> grid, pcl::PointCloud<T> cloud, pcl::PointCloud<T> cloud_downsampled, std::vector<float> &feature, const float voxel_size, const bool is_normalize  ){
+void extractGRSDSignature325(pcl::VoxelGrid<T> grid, pcl::PointCloud<T> cloud, pcl::PointCloud<T> cloud_downsampled, std::vector<float> &feature, const float voxel_size, const bool is_normalize  ){
   std::vector< std::vector<float> > tmp( 1 );
-  extract_GRSD_Signature325( grid, cloud, cloud_downsampled, tmp, voxel_size, 0, 0, 0, 0, is_normalize ); // for one signature
+  extractGRSDSignature325( grid, cloud, cloud_downsampled, tmp, voxel_size, 0, 0, 0, 0, is_normalize ); // for one signature
   feature = tmp[ 0 ];
 }
 
 //-----------------------------------
 //* extract - PlusGRSD -
 template <typename T>
-Eigen::Vector3i extract_PlusGRSD_Signature110(pcl::VoxelGrid<T> grid, pcl::PointCloud<T> cloud, pcl::PointCloud<T> cloud_downsampled, std::vector< std::vector<float> > &feature, const float voxel_size, const int subdivision_size = 0, const int offset_x = 0, const int offset_y = 0, const int offset_z = 0, const bool is_normalize  ){
+Eigen::Vector3i extractPlusGRSDSignature110(pcl::VoxelGrid<T> grid, pcl::PointCloud<T> cloud, pcl::PointCloud<T> cloud_downsampled, std::vector< std::vector<float> > &feature, const float voxel_size, const int subdivision_size = 0, const int offset_x = 0, const int offset_y = 0, const int offset_z = 0, const bool is_normalize  ){
 #ifndef QUIET
   ROS_INFO("rsd %f, normals %f, leaf %f", rsd_radius_search, normals_radius_search, voxel_size);
 #endif
@@ -493,7 +493,7 @@ Eigen::Vector3i extract_PlusGRSD_Signature110(pcl::VoxelGrid<T> grid, pcl::Point
   std::vector<int> types (radii.points.size());
  
   for (size_t idx = 0; idx < radii.points.size (); ++idx)
-    types[idx] = get_type(radii.points[idx].r_min, radii.points[idx].r_max);
+    types[idx] = getType(radii.points[idx].r_min, radii.points[idx].r_max);
   
   // TODO voxelization does not re-normalize the normals!
   for (size_t idx = 0; idx < cloud_downsampled_ptr->points.size (); ++idx)
@@ -608,15 +608,15 @@ Eigen::Vector3i extract_PlusGRSD_Signature110(pcl::VoxelGrid<T> grid, pcl::Point
 }
 
 template <typename T>
-void extract_PlusGRSD_Signature110(pcl::VoxelGrid<T> grid, pcl::PointCloud<T> cloud, pcl::PointCloud<T> cloud_downsampled, std::vector<float> &feature, const float voxel_size, const bool is_normalize  ){
+void extractPlusGRSDSignature110(pcl::VoxelGrid<T> grid, pcl::PointCloud<T> cloud, pcl::PointCloud<T> cloud_downsampled, std::vector<float> &feature, const float voxel_size, const bool is_normalize  ){
   std::vector< std::vector<float> > tmp( 1 );
-  extract_PlusGRSD_Signature110( grid, cloud, cloud_downsampled, tmp, voxel_size, 0, 0, 0, 0, is_normalize ); // for one signature
+  extractPlusGRSDSignature110( grid, cloud, cloud_downsampled, tmp, voxel_size, 0, 0, 0, 0, is_normalize ); // for one signature
   feature = tmp[ 0 ];
 }
 
 //--------------
 //* concatenate
-const std::vector<float> conc_vector( const std::vector<float> v1, const std::vector<float> v2 ){
+const std::vector<float> concVector( const std::vector<float> v1, const std::vector<float> v2 ){
   std::vector<float> vec = v1;
   vec.insert(vec.end(), v2.begin(), v2.end());
   return vec;
@@ -625,21 +625,21 @@ const std::vector<float> conc_vector( const std::vector<float> v1, const std::ve
 //--------------
 //* VOSCH
 template <typename PointT>
-Eigen::Vector3i extractVOSCH(pcl::VoxelGrid<PointT> grid, pcl::PointCloud<PointT> cloud, pcl::PointCloud<PointT> cloud_downsampled, std::vector< std::vector<float> > &feature, int thR, int thG, int thB, const float voxel_size, const int subdivision_size = 0, const int offset_x = 0, const int offset_y = 0, const int offset_z = 0, const bool is_normalize  ){
+Eigen::Vector3i extractVOSCH(pcl::VoxelGrid<PointT> grid, pcl::PointCloud<PointT> cloud, pcl::PointCloud<PointT> cloud_downsampled, std::vector< std::vector<float> > &feature, int color_threshold_r, int color_threshold_g, int color_threshold_b, const float voxel_size, const int subdivision_size = 0, const int offset_x = 0, const int offset_y = 0, const int offset_z = 0, const bool is_normalize  ){
   std::vector< std::vector<float> > grsd;
-  Eigen::Vector3i subdiv_b_ = extract_GRSD_Signature21( grid, cloud, cloud_downsampled, grsd, voxel_size, subdivision_size, offset_x, offset_y, offset_z, is_normalize );
+  Eigen::Vector3i subdiv_b_ = extractGRSDSignature21( grid, cloud, cloud_downsampled, grsd, voxel_size, subdivision_size, offset_x, offset_y, offset_z, is_normalize );
   std::vector< std::vector<float> > c3_hlac;
-  extract_C3_HLAC_Signature117( grid, cloud_downsampled, c3_hlac, thR, thG, thB, voxel_size, subdivision_size, offset_x, offset_y, offset_z );
+  extractC3HLACSignature117( grid, cloud_downsampled, c3_hlac, color_threshold_r, color_threshold_g, color_threshold_b, voxel_size, subdivision_size, offset_x, offset_y, offset_z );
 
   const int hist_num = grsd.size();
   for( int h=0; h<hist_num; h++ )
-    feature.push_back ( conc_vector( grsd[ h ], c3_hlac[ h ] ) );
+    feature.push_back ( concVector( grsd[ h ], c3_hlac[ h ] ) );
   return subdiv_b_;
 }
 
 template <typename PointT>
-void extractVOSCH(pcl::VoxelGrid<PointT> grid, pcl::PointCloud<PointT> cloud, pcl::PointCloud<PointT> cloud_downsampled, std::vector<float> &feature, int thR, int thG, int thB, const float voxel_size, const int subdivision_size = 0, const int offset_x = 0, const int offset_y = 0, const int offset_z = 0 ){
+void extractVOSCH(pcl::VoxelGrid<PointT> grid, pcl::PointCloud<PointT> cloud, pcl::PointCloud<PointT> cloud_downsampled, std::vector<float> &feature, int color_threshold_r, int color_threshold_g, int color_threshold_b, const float voxel_size, const int subdivision_size = 0, const int offset_x = 0, const int offset_y = 0, const int offset_z = 0 ){
   std::vector< std::vector<float> > tmp;
-  extractVOSCH( grid, cloud, cloud_downsampled, tmp, thR, thG, thB, voxel_size ); // for one signature
+  extractVOSCH( grid, cloud, cloud_downsampled, tmp, color_threshold_r, color_threshold_g, color_threshold_b, voxel_size ); // for one signature
   feature = tmp[ 0 ];
 }
