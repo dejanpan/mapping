@@ -27,7 +27,7 @@ void computeNormal( pcl::PointCloud<T1> input_cloud, pcl::PointCloud<T2>& output
   //n3d_.setKSearch (k_);
   n3d_.setRadiusSearch (normals_radius_search);
   n3d_.setSearchMethod ( boost::make_shared<pcl::KdTreeFLANN<T1> > () );
-  n3d_.setInputCloud ( boost::make_shared<const pcl::PointCloud<T1> > (input_cloud) );
+  n3d_.setInputCloud ( input_cloud.makeShared() );
   n3d_.compute (output_cloud);
 
   //* TODO: move the following lines to NormalEstimation class ?
@@ -103,17 +103,15 @@ Eigen::Vector3i extractGRSDSignature21(pcl::VoxelGrid<T> grid, pcl::PointCloud<T
   // Compute RSD
   pcl::RSDEstimation <T, T, pcl::PrincipalRadiiRSD> rsd;
   rsd.setInputCloud( cloud_downsampled_ptr );
-  boost::shared_ptr< const pcl::PointCloud<T> > cloud_ptr = boost::make_shared<const pcl::PointCloud<T> > (cloud);
+  boost::shared_ptr< const pcl::PointCloud<T> > cloud_ptr = cloud.makeShared();
   rsd.setSearchSurface( cloud_ptr );
   rsd.setInputNormals( cloud_ptr );
 #ifndef QUIET
   ROS_INFO("radius search: %f", std::max(rsd_radius_search, voxel_size/2 * sqrt(3)));
 #endif
   rsd.setRadiusSearch(std::max(rsd_radius_search, voxel_size/2 * sqrt(3)));
-  //( boost::make_shared<pcl::KdTreeFLANN<T> > () )->setInputCloud ( boost::make_shared<const pcl::PointCloud<T> > (cloud) );
-  //rsd.setSearchMethod( boost::make_shared<pcl::KdTreeFLANN<T> > () );
   boost::shared_ptr< pcl::KdTree<T> > tree2 = boost::make_shared<pcl::KdTreeFLANN<T> > ();
-  tree2->setInputCloud (boost::make_shared<const pcl::PointCloud<T> > (cloud));
+  tree2->setInputCloud (cloud.makeShared());
   rsd.setSearchMethod(tree2);
   pcl::PointCloud<pcl::PrincipalRadiiRSD> radii;
   t1 = my_clock();
@@ -280,17 +278,15 @@ Eigen::Vector3i extractGRSDSignature325(pcl::VoxelGrid<T> grid, pcl::PointCloud<
   // Compute RSD
   pcl::RSDEstimation <T, T, pcl::PrincipalRadiiRSD> rsd;
   rsd.setInputCloud( cloud_downsampled_ptr );
-  boost::shared_ptr< const pcl::PointCloud<T> > cloud_ptr = boost::make_shared<const pcl::PointCloud<T> > (cloud);
+  boost::shared_ptr< const pcl::PointCloud<T> > cloud_ptr = cloud.makeShared();
   rsd.setSearchSurface( cloud_ptr );
   rsd.setInputNormals( cloud_ptr );
 #ifndef QUIET
   ROS_INFO("radius search: %f", std::max(rsd_radius_search, voxel_size/2 * sqrt(3)));
 #endif
   rsd.setRadiusSearch(std::max(rsd_radius_search, voxel_size/2 * sqrt(3)));
-  //( boost::make_shared<pcl::KdTreeFLANN<T> > () )->setInputCloud ( boost::make_shared<const pcl::PointCloud<T> > (cloud) );
-  //rsd.setSearchMethod( boost::make_shared<pcl::KdTreeFLANN<T> > () );
   boost::shared_ptr< pcl::KdTree<T> > tree2 = boost::make_shared<pcl::KdTreeFLANN<T> > ();
-  tree2->setInputCloud (boost::make_shared<const pcl::PointCloud<T> > (cloud));
+  tree2->setInputCloud (cloud.makeShared());
   rsd.setSearchMethod(tree2);
   pcl::PointCloud<pcl::PrincipalRadiiRSD> radii;
   t1 = my_clock();
@@ -435,17 +431,15 @@ Eigen::Vector3i extractPlusGRSDSignature110(pcl::VoxelGrid<T> grid, pcl::PointCl
   // Compute RSD
   pcl::RSDEstimation <T, T, pcl::PrincipalRadiiRSD> rsd;
   rsd.setInputCloud( cloud_downsampled_ptr );
-  boost::shared_ptr< const pcl::PointCloud<T> > cloud_ptr = boost::make_shared<const pcl::PointCloud<T> > (cloud);
+  boost::shared_ptr< const pcl::PointCloud<T> > cloud_ptr = cloud.makeShared();
   rsd.setSearchSurface( cloud_ptr );
   rsd.setInputNormals( cloud_ptr );
 #ifndef QUIET
   ROS_INFO("radius search: %f", std::max(rsd_radius_search, voxel_size/2 * sqrt(3)));
 #endif
   rsd.setRadiusSearch(std::max(rsd_radius_search, voxel_size/2 * sqrt(3)));
-  //( boost::make_shared<pcl::KdTreeFLANN<T> > () )->setInputCloud ( boost::make_shared<const pcl::PointCloud<T> > (cloud) );
-  //rsd.setSearchMethod( boost::make_shared<pcl::KdTreeFLANN<T> > () );
   boost::shared_ptr< pcl::KdTree<T> > tree2 = boost::make_shared<pcl::KdTreeFLANN<T> > ();
-  tree2->setInputCloud (boost::make_shared<const pcl::PointCloud<T> > (cloud));
+  tree2->setInputCloud (cloud.makeShared());
   rsd.setSearchMethod(tree2);
   pcl::PointCloud<pcl::PrincipalRadiiRSD> radii;
   t1 = my_clock();
