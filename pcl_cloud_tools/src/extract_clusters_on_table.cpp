@@ -80,11 +80,6 @@ typedef PointCloud::Ptr PointCloudPtr;
 typedef PointCloud::ConstPtr PointCloudConstPtr;
 typedef pcl::KdTree<Point>::Ptr KdTreePtr;
 
-// TODO: in the future we should auto-detect the wall, or detect the location of the only
-//       moving object, the table
-// Equation of a boundary between the table and the wall, in base_link frame
-// 'wp' stands for 'wall protection'
-// Points on the plane satisfy wp_normal.dot(x) + wp_offset == 0
 const tf::Vector3 wp_normal(1, 0, 0);
 const double wp_offset = -1.45;
 
@@ -145,7 +140,9 @@ public:
 
       n3d_.setKSearch (k_);
       n3d_.setSearchMethod (normals_tree_);
+      //action server
       as_.start();
+      //needed for the synchronization of callbacks
       got_cluster_ = action_called_ = false;
     }
 
@@ -167,6 +164,11 @@ public:
   void executeCB(const pcl_cloud_tools::GetClusterGoalConstPtr &goal)
     {
       action_called_ = true;
+      while (!got_cluster_)
+      {
+        ROS_INFO("[%s: ] Waiting to get cluster", getName().c_str ());
+        sleep(1);    
+      }
       bool success = true;
       // publish info to the console for the user
       ROS_INFO("[%s: ] Getting the cluster through action", getName().c_str ());
@@ -183,38 +185,40 @@ public:
       
       pcl::PointXYZRGB point_min;
       pcl::PointXYZRGB point_max;
-      while (!got_cluster_)
-        sleep(1);
-      pcl::getMinMax3D (cloud_object_clustered_, point_min, point_max);
-      got_cluster_ = false;
-      
-      //get the cluster
-      result_.cluster.header.stamp = ros::Time::now();
-      result_.cluster.header.frame_id = "base_link";
-      result_.cluster.header.seq = 0;
+      ias_table_msgs::TableCluster table_cluster;
+      result_.clusters.clear();
+      for (uint i = 0; i < cloud_object_clustered_array_.size(); i++)
+      {
+        pcl::getMinMax3D (cloud_object_clustered_array_[i], point_min, point_max);
+        
+        //get the cluster
+        table_cluster.header.stamp = ros::Time::now();
+        table_cluster.header.frame_id = cloud_object_clustered_array_[i].header.frame_id;
+        table_cluster.header.seq = 0;
 
-      result_.cluster.center.x = (point_max.x + point_min.x)/2;;
-      result_.cluster.center.y = (point_max.y + point_min.y)/2;;
-      result_.cluster.center.y = (point_max.z + point_min.z)/2;;
-
-      result_.cluster.min_bound.x = point_min.x;
-      result_.cluster.min_bound.y = point_min.y;
-      result_.cluster.min_bound.z = point_min.z;
-      
-      result_.cluster.max_bound.x = point_max.x;
-      result_.cluster.max_bound.y = point_max.y;
-      result_.cluster.max_bound.z = point_max.z;
-
+        table_cluster.center.x = (point_max.x + point_min.x)/2;
+        table_cluster.center.y = (point_max.y + point_min.y)/2;
+        table_cluster.center.y = (point_max.z + point_min.z)/2;
+        
+        table_cluster.min_bound.x = point_min.x;
+        table_cluster.min_bound.y = point_min.y;
+        table_cluster.min_bound.z = point_min.z;
+        
+        table_cluster.max_bound.x = point_max.x;
+        table_cluster.max_bound.y = point_max.y;
+        table_cluster.max_bound.z = point_max.z;
+        result_.clusters.push_back(table_cluster);
       // publish the feedback
       //as_.publishFeedback(feedback_);
-
+      }
       if(success)
       {
 
-        ROS_INFO("%s: Succeeded", getName().c_str ());
+        ROS_INFO("%s: Action Succeeded", getName().c_str ());
       // set the action state to succeeded
         as_.setSucceeded(result_);
       }
+      got_cluster_ = false;
       action_called_ = false;
     }
 
@@ -225,123 +229,125 @@ private:
     {
       if (!got_cluster_ || !action_called_)
       {
-      ROS_INFO_STREAM ("[" << getName ().c_str () << "] Received cloud: cloud time " << cloud_in->header.stamp);
+        ROS_INFO_STREAM ("[" << getName ().c_str () << "] Received cloud: cloud time " << cloud_in->header.stamp);
       
-      // Downsample + filter the input dataser
-      PointCloud cloud_raw, cloud;
-      pcl::fromROSMsg (*cloud_in, cloud_raw);
-      vgrid_.setInputCloud (boost::make_shared<PointCloud> (cloud_raw));
-      vgrid_.filter (cloud);
-      //cloud_pub_.publish(cloud);
-      //return;
+        // Downsample + filter the input dataser
+        PointCloud cloud_raw, cloud;
+        pcl::fromROSMsg (*cloud_in, cloud_raw);
+        vgrid_.setInputCloud (boost::make_shared<PointCloud> (cloud_raw));
+        vgrid_.filter (cloud);
+        //cloud_pub_.publish(cloud);
+        //return;
       
-      // Fit a plane (the table)
-      pcl::ModelCoefficients table_coeff;
-      pcl::PointIndices table_inliers;
-      PointCloud cloud_projected;
-      pcl::PointCloud<Point> cloud_hull;
-      // ---[ Estimate the point normals
-      pcl::PointCloud<pcl::Normal> cloud_normals;
-      n3d_.setInputCloud (boost::make_shared<PointCloud> (cloud));
-      n3d_.compute (cloud_normals);
-      //cloud_pub_.publish(cloud_normals);
-      //return;
-      cloud_normals_.reset (new pcl::PointCloud<pcl::Normal> (cloud_normals));
+        // Fit a plane (the table)
+        pcl::ModelCoefficients table_coeff;
+        pcl::PointIndices table_inliers;
+        PointCloud cloud_projected;
+        pcl::PointCloud<Point> cloud_hull;
+        // ---[ Estimate the point normals
+        pcl::PointCloud<pcl::Normal> cloud_normals;
+        n3d_.setInputCloud (boost::make_shared<PointCloud> (cloud));
+        n3d_.compute (cloud_normals);
+        //cloud_pub_.publish(cloud_normals);
+        //return;
+        cloud_normals_.reset (new pcl::PointCloud<pcl::Normal> (cloud_normals));
       
-      seg_.setInputCloud (boost::make_shared<PointCloud> (cloud));
-      seg_.setInputNormals (cloud_normals_);
-      //z axis in Kinect frame
-      btVector3 axis(0.0, 0.0, 1.0);
-      //rotate axis around x in Kinect frame for an angle between base_link and head_tilt_link + 90deg
-      //todo: get angle automatically
-      btVector3 axis2 = axis.rotate(btVector3(1.0, 0.0, 0.0), btScalar(base_link_head_tilt_link_angle_ + pcl::deg2rad(90.0)));
-      //std::cerr << "axis: " << fabs(axis2.getX()) << " " << fabs(axis2.getY()) << " " << fabs(axis2.getZ()) << std::endl;
-      seg_.setAxis (Eigen::Vector3f(fabs(axis2.getX()), fabs(axis2.getY()), fabs(axis2.getZ())));
-      // seg_.setIndices (boost::make_shared<pcl::PointIndices> (selection));
-      seg_.segment (table_inliers, table_coeff);
-      ROS_INFO ("[%s] Table model: [%f, %f, %f, %f] with %d inliers.", getName ().c_str (), 
-                table_coeff.values[0], table_coeff.values[1], table_coeff.values[2], table_coeff.values[3], (int)table_inliers.indices.size ());
-      if ((int)table_inliers.indices.size () <= min_table_inliers_)
-      {
-        ROS_ERROR ("table has to few inliers");
-        return;
-      }
-      // Project the table inliers using the planar model coefficients    
-      proj_.setInputCloud (boost::make_shared<PointCloud> (cloud));
-      proj_.setIndices (boost::make_shared<pcl::PointIndices> (table_inliers));
-      proj_.setModelCoefficients (boost::make_shared<pcl::ModelCoefficients> (table_coeff));
-      proj_.filter (cloud_projected);
-      //cloud_pub_.publish (cloud_projected);
+        seg_.setInputCloud (boost::make_shared<PointCloud> (cloud));
+        seg_.setInputNormals (cloud_normals_);
+        //z axis in Kinect frame
+        btVector3 axis(0.0, 0.0, 1.0);
+        //rotate axis around x in Kinect frame for an angle between base_link and head_tilt_link + 90deg
+        //todo: get angle automatically
+        btVector3 axis2 = axis.rotate(btVector3(1.0, 0.0, 0.0), btScalar(base_link_head_tilt_link_angle_ + pcl::deg2rad(90.0)));
+        //std::cerr << "axis: " << fabs(axis2.getX()) << " " << fabs(axis2.getY()) << " " << fabs(axis2.getZ()) << std::endl;
+        seg_.setAxis (Eigen::Vector3f(fabs(axis2.getX()), fabs(axis2.getY()), fabs(axis2.getZ())));
+        // seg_.setIndices (boost::make_shared<pcl::PointIndices> (selection));
+        seg_.segment (table_inliers, table_coeff);
+        ROS_INFO ("[%s] Table model: [%f, %f, %f, %f] with %d inliers.", getName ().c_str (), 
+                  table_coeff.values[0], table_coeff.values[1], table_coeff.values[2], table_coeff.values[3], (int)table_inliers.indices.size ());
+        if ((int)table_inliers.indices.size () <= min_table_inliers_)
+        {
+          ROS_ERROR ("table has to few inliers");
+          return;
+        }
+        // Project the table inliers using the planar model coefficients    
+        proj_.setInputCloud (boost::make_shared<PointCloud> (cloud));
+        proj_.setIndices (boost::make_shared<pcl::PointIndices> (table_inliers));
+        proj_.setModelCoefficients (boost::make_shared<pcl::ModelCoefficients> (table_coeff));
+        proj_.filter (cloud_projected);
+        //cloud_pub_.publish (cloud_projected);
       
-      // Create a Convex Hull representation of the projected inliers
-      chull_.setInputCloud (boost::make_shared<PointCloud> (cloud_projected));
-      chull_.reconstruct (cloud_hull);
-      ROS_INFO ("Convex hull has: %d data points.", (int)cloud_hull.points.size ());
-      cloud_pub_.publish (cloud_hull);
+        // Create a Convex Hull representation of the projected inliers
+        chull_.setInputCloud (boost::make_shared<PointCloud> (cloud_projected));
+        chull_.reconstruct (cloud_hull);
+        ROS_INFO ("Convex hull has: %d data points.", (int)cloud_hull.points.size ());
+        cloud_pub_.publish (cloud_hull);
        
-      // ---[ Get the objects on top of the table
-      pcl::PointIndices cloud_object_indices;
-      prism_.setHeightLimits (cluster_min_height_, cluster_max_height_);
-      prism_.setInputCloud (boost::make_shared<PointCloud> (cloud));
-      prism_.setInputPlanarHull (boost::make_shared<PointCloud>(cloud_hull));
-      prism_.segment (cloud_object_indices);
-      //ROS_INFO ("[%s] Number of object point indices: %d.", getName ().c_str (), (int)cloud_object_indices.indices.size ());
+        // ---[ Get the objects on top of the table
+        pcl::PointIndices cloud_object_indices;
+        prism_.setHeightLimits (cluster_min_height_, cluster_max_height_);
+        prism_.setInputCloud (boost::make_shared<PointCloud> (cloud));
+        prism_.setInputPlanarHull (boost::make_shared<PointCloud>(cloud_hull));
+        prism_.segment (cloud_object_indices);
+        //ROS_INFO ("[%s] Number of object point indices: %d.", getName ().c_str (), (int)cloud_object_indices.indices.size ());
       
-      pcl::PointCloud<Point> cloud_object;
-      pcl::ExtractIndices<Point> extract_object_indices;
-      extract_object_indices.setInputCloud (boost::make_shared<PointCloud> (cloud));
-      extract_object_indices.setIndices (boost::make_shared<const pcl::PointIndices> (cloud_object_indices));
-      extract_object_indices.filter (cloud_object);
-      //ROS_INFO ("[%s ] Publishing number of object point candidates: %d.", getName ().c_str (), 
-      //        (int)cloud_objects.points.size ());
+        pcl::PointCloud<Point> cloud_object;
+        pcl::ExtractIndices<Point> extract_object_indices;
+        extract_object_indices.setInputCloud (boost::make_shared<PointCloud> (cloud));
+        extract_object_indices.setIndices (boost::make_shared<const pcl::PointIndices> (cloud_object_indices));
+        extract_object_indices.filter (cloud_object);
+        //ROS_INFO ("[%s ] Publishing number of object point candidates: %d.", getName ().c_str (), 
+        //        (int)cloud_objects.points.size ());
       
       
-      std::vector<pcl::PointIndices> clusters;
-      cluster_.setInputCloud (boost::make_shared<PointCloud>(cloud_object));
-      cluster_.setClusterTolerance (object_cluster_tolerance_);
-      cluster_.setMinClusterSize (object_cluster_min_size_);
-      cluster_.setSearchMethod (clusters_tree_);
-      cluster_.extract (clusters);
-      
-      if (int(clusters.size()) >= nr_cluster_)
-      {
-        for (int i = 0; i < nr_cluster_; i++)
+        std::vector<pcl::PointIndices> clusters;
+        cluster_.setInputCloud (boost::make_shared<PointCloud>(cloud_object));
+        cluster_.setClusterTolerance (object_cluster_tolerance_);
+        cluster_.setMinClusterSize (object_cluster_min_size_);
+        cluster_.setSearchMethod (clusters_tree_);
+        cluster_.extract (clusters);
+        cloud_object_clustered_array_.clear();
+        pcl::PointCloud<Point> cloud_object_clustered;
+        if (int(clusters.size()) >= nr_cluster_)
         {
-          pcl::copyPointCloud (cloud_object, clusters[i], cloud_object_clustered_);
-          char object_name_angle[100];
-          if (save_to_files_)
+          for (int i = 0; i < nr_cluster_; i++)
           {
-            sprintf (object_name_angle, "%04d",  i);
-            ROS_INFO("Saving cluster to: %s_%s.pcd", object_name_.c_str(), object_name_angle);
-            pcd_writer_.write (object_name_ + "_" +  object_name_angle + ".pcd", cloud_object_clustered_, true);
+            pcl::copyPointCloud (cloud_object, clusters[i], cloud_object_clustered);
+            char object_name_angle[100];
+            if (save_to_files_)
+            {
+              sprintf (object_name_angle, "%04d",  i);
+              ROS_INFO("Saving cluster to: %s_%s.pcd", object_name_.c_str(), object_name_angle);
+              pcd_writer_.write (object_name_ + "_" +  object_name_angle + ".pcd", cloud_object_clustered, true);
+            }
+            cloud_objects_pub_.publish (cloud_object_clustered);
+            cloud_object_clustered_array_.push_back(cloud_object_clustered);
           }
-          cloud_objects_pub_.publish (cloud_object_clustered_);
+        
+        
+          ROS_INFO("Published %d clusters.", nr_cluster_);
+          // cloud_objects_pub_.publish (cloud_object_clustered);
+          pcl::PointCloud<Point> token;
+          Point p0;
+          p0.x = p0.y = p0.z = p0.rgb = 100.0;
+          token.width = 1;
+          token.height = 1;
+          token.is_dense = false;
+          token.points.resize(token.width * token.height);
+          token.points[0] = p0;
+          token.header.frame_id = cloud_object_clustered.header.frame_id;
+          token.header.stamp = ros::Time::now();
+          if (publish_token_)
+          {
+            cloud_objects_pub_.publish (token);
+            ROS_INFO("Published token cluster with size %d.", token.width * token.height);
+          }
         }
-        
-        
-        ROS_INFO("Published %d clusters.", nr_cluster_);
-        // cloud_objects_pub_.publish (cloud_object_clustered_);
-        pcl::PointCloud<Point> token;
-        Point p0;
-        p0.x = p0.y = p0.z = p0.rgb = 100.0;
-        token.width = 1;
-        token.height = 1;
-        token.is_dense = false;
-        token.points.resize(token.width * token.height);
-        token.points[0] = p0;
-        token.header.frame_id = cloud_object_clustered_.header.frame_id;
-        token.header.stamp = ros::Time::now();
-        if (publish_token_)
+        else
         {
-          cloud_objects_pub_.publish (token);
-          ROS_INFO("Published token cluster with size %d.", token.width * token.height);
+          ROS_ERROR("Only %ld clusters found with size > %d points", clusters.size(), object_cluster_min_size_);
         }
-      }
-      else
-      {
-        ROS_ERROR("Only %ld clusters found with size > %d points", clusters.size(), object_cluster_min_size_);
-      }
-      got_cluster_ = true;
+        got_cluster_ = true;
       }
     }
 
@@ -420,7 +426,7 @@ private:
   pcl::PointCloud<Point> cloud_objects_;
   pcl::EuclideanClusterExtraction<Point> cluster_;
   KdTreePtr clusters_tree_, normals_tree_;
-  pcl::PointCloud<Point> cloud_object_clustered_;
+  std::vector<pcl::PointCloud<Point> >cloud_object_clustered_array_;
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   /** \brief Get a string representation of the name of this class. */
