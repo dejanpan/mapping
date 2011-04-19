@@ -151,7 +151,7 @@ public:
   void 
   init (double tolerance, std::string object_name)  // tolerance: how close to (0,0) is good enough?
     {
-      ROS_INFO ("ExtractCluster:] Listening for incoming data on topic %s", nh_.resolveName (point_cloud_topic).c_str ());
+      ROS_INFO ("[ExtractCluster:] Listening for incoming data on topic %s", nh_.resolveName (point_cloud_topic).c_str ());
       point_cloud_sub_ = nh_.subscribe (point_cloud_topic, 1,  &ExtractClusters::clustersCallback, this);
       object_name_ = object_name;
     }
