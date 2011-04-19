@@ -69,7 +69,11 @@
 #include <tf/transform_listener.h>
 #include <tf/message_filter.h>
 
+//for actionlib
+#include <actionlib/server/simple_action_server.h>
+#include <pcl_cloud_tools/GetClusterAction.h>
 
+#include "pcl/common/common.h"
 typedef pcl::PointXYZRGB Point;
 typedef pcl::PointCloud<Point> PointCloud;
 typedef PointCloud::Ptr PointCloudPtr;
@@ -88,7 +92,8 @@ class ExtractClusters
 {
 public:
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  ExtractClusters (const ros::NodeHandle &nh) : nh_ (nh)
+  ExtractClusters (const ros::NodeHandle &nh) : nh_ (nh), 
+                                                as_(nh_, "get_cluster", boost::bind(&ExtractClusters::executeCB, this, _1), false)
     {
       nh_.param("sac_distance", sac_distance_, 0.03);
       nh_.param("z_min_limit", z_min_limit_, 0.3);
@@ -140,6 +145,8 @@ public:
 
       n3d_.setKSearch (k_);
       n3d_.setSearchMethod (normals_tree_);
+      as_.start();
+      got_cluster_ = action_called_ = false;
     }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -148,6 +155,7 @@ public:
     for (size_t i = 0; i < table_coeffs_.size (); ++i) 
       delete table_coeffs_[i];
   }    
+
   void 
   init (double tolerance, std::string object_name)  // tolerance: how close to (0,0) is good enough?
     {
@@ -156,11 +164,67 @@ public:
       object_name_ = object_name;
     }
     
+  void executeCB(const pcl_cloud_tools::GetClusterGoalConstPtr &goal)
+    {
+      action_called_ = true;
+      bool success = true;
+      // publish info to the console for the user
+      ROS_INFO("[%s: ] Getting the cluster through action", getName().c_str ());
+
+      // start executing the action
+      // check that preempt has not been requested by the client
+      if (as_.isPreemptRequested() || !ros::ok())
+      {
+        ROS_INFO("%s: Preempted", getName().c_str ());
+        // set the action state to preempted
+        as_.setPreempted();
+        success = false;
+      }
+      
+      pcl::PointXYZRGB point_min;
+      pcl::PointXYZRGB point_max;
+      while (!got_cluster_)
+        sleep(1);
+      pcl::getMinMax3D (cloud_object_clustered_, point_min, point_max);
+      got_cluster_ = false;
+      
+      //get the cluster
+      result_.cluster.header.stamp = ros::Time::now();
+      result_.cluster.header.frame_id = "base_link";
+      result_.cluster.header.seq = 0;
+
+      result_.cluster.center.x = (point_max.x + point_min.x)/2;;
+      result_.cluster.center.y = (point_max.y + point_min.y)/2;;
+      result_.cluster.center.y = (point_max.z + point_min.z)/2;;
+
+      result_.cluster.min_bound.x = point_min.x;
+      result_.cluster.min_bound.y = point_min.y;
+      result_.cluster.min_bound.z = point_min.z;
+      
+      result_.cluster.max_bound.x = point_max.x;
+      result_.cluster.max_bound.y = point_max.y;
+      result_.cluster.max_bound.z = point_max.z;
+
+      // publish the feedback
+      //as_.publishFeedback(feedback_);
+
+      if(success)
+      {
+
+        ROS_INFO("%s: Succeeded", getName().c_str ());
+      // set the action state to succeeded
+        as_.setSucceeded(result_);
+      }
+      action_called_ = false;
+    }
+
 private:
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void 
   clustersCallback (const sensor_msgs::PointCloud2ConstPtr &cloud_in)
     {
+      if (!got_cluster_ || !action_called_)
+      {
       ROS_INFO_STREAM ("[" << getName ().c_str () << "] Received cloud: cloud time " << cloud_in->header.stamp);
       
       // Downsample + filter the input dataser
@@ -239,24 +303,24 @@ private:
       cluster_.setSearchMethod (clusters_tree_);
       cluster_.extract (clusters);
       
-      pcl::PointCloud<Point> cloud_object_clustered;
       if (int(clusters.size()) >= nr_cluster_)
       {
         for (int i = 0; i < nr_cluster_; i++)
         {
-          pcl::copyPointCloud (cloud_object, clusters[i], cloud_object_clustered);
+          pcl::copyPointCloud (cloud_object, clusters[i], cloud_object_clustered_);
           char object_name_angle[100];
           if (save_to_files_)
           {
             sprintf (object_name_angle, "%04d",  i);
             ROS_INFO("Saving cluster to: %s_%s.pcd", object_name_.c_str(), object_name_angle);
-            pcd_writer_.write (object_name_ + "_" +  object_name_angle + ".pcd", cloud_object_clustered, true);
+            pcd_writer_.write (object_name_ + "_" +  object_name_angle + ".pcd", cloud_object_clustered_, true);
           }
-          cloud_objects_pub_.publish (cloud_object_clustered);
+          cloud_objects_pub_.publish (cloud_object_clustered_);
         }
-
+        
+        
         ROS_INFO("Published %d clusters.", nr_cluster_);
-        // cloud_objects_pub_.publish (cloud_object_clustered);
+        // cloud_objects_pub_.publish (cloud_object_clustered_);
         pcl::PointCloud<Point> token;
         Point p0;
         p0.x = p0.y = p0.z = p0.rgb = 100.0;
@@ -265,7 +329,7 @@ private:
         token.is_dense = false;
         token.points.resize(token.width * token.height);
         token.points[0] = p0;
-        token.header.frame_id = cloud_object_clustered.header.frame_id;
+        token.header.frame_id = cloud_object_clustered_.header.frame_id;
         token.header.stamp = ros::Time::now();
         if (publish_token_)
         {
@@ -277,11 +341,8 @@ private:
       {
         ROS_ERROR("Only %ld clusters found with size > %d points", clusters.size(), object_cluster_min_size_);
       }
-      
-      //want to save only once
-      if (save_to_files_)
-        exit(2);
-      sleep(1);
+      got_cluster_ = true;
+      }
     }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -322,7 +383,7 @@ private:
   ros::NodeHandle nh_;  // Do we need to keep it?
   tf::TransformBroadcaster transform_broadcaster_;
   tf::TransformListener tf_listener_;
-  bool save_to_files_, downsample_, publish_token_;
+  bool save_to_files_, downsample_, publish_token_, got_cluster_, action_called_;
 
   double normal_search_radius_;
   double voxel_size_;
@@ -359,10 +420,18 @@ private:
   pcl::PointCloud<Point> cloud_objects_;
   pcl::EuclideanClusterExtraction<Point> cluster_;
   KdTreePtr clusters_tree_, normals_tree_;
+  pcl::PointCloud<Point> cloud_object_clustered_;
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   /** \brief Get a string representation of the name of this class. */
   std::string getName () const { return ("ExtractClusters"); }
+
+  //action related objects
+  actionlib::SimpleActionServer<pcl_cloud_tools::GetClusterAction> as_;
+  std::string action_name_;
+  // create messages that are used to published feedback/result
+  pcl_cloud_tools::GetClusterFeedback feedback_;
+  pcl_cloud_tools::GetClusterResult result_;
 };
 
 /* ---[ */
