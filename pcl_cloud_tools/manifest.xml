@@ -22,6 +22,8 @@
   <depend package="ias_table_msgs" />
   <depend package="pcl_visualization" />
   <depend package="pcl_vtk_tools" />
+  <depend package="actionlib"/>
+  <depend package="actionlib_msgs"/>
   <export>
     <cpp cflags="-I${prefix}/include/" />
   </export>
