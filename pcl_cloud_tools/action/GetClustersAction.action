@@ -1,0 +1,8 @@
+#goal definition
+int32 ec_goal
+---
+#result definition
+ias_table_msgs/TableCluster cluster
+---
+#feedback
+int32[] ec_feedback
