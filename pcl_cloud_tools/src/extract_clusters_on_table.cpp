@@ -34,12 +34,12 @@
  */
 
 /**
-  * \author Romain Thibaux, Radu Bogdan Rusu
-  * \author modified: Dejan Pangercic
-  *
-  * @b ptu_calibrate attempts to estimate pan-tilt calibration values as ROS
-  * parameters based on point cloud planar segmentation.
-  */
+ * \author Romain Thibaux, Radu Bogdan Rusu
+ * \author modified: Dejan Pangercic
+ *
+ * @b ptu_calibrate attempts to estimate pan-tilt calibration values as ROS
+ * parameters based on point cloud planar segmentation.
+ */
 // ROS core
 #include <ros/ros.h>
 // Messages
@@ -92,73 +92,72 @@ class ExtractClusters
 public:
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ExtractClusters (const ros::NodeHandle &nh) : nh_ (nh)
-  {
-    nh_.param("sac_distance", sac_distance_, 0.03);
-    nh_.param("z_min_limit", z_min_limit_, 0.3);
-    nh_.param("z_max_limit", z_max_limit_, 1.5);
-    nh_.param("max_iter", max_iter_, 500);
-    nh_.param("normal_distance_weight", normal_distance_weight_, 0.1);
-    nh_.param("eps_angle", eps_angle_, 20.0);
-    nh_.param("seg_prob", seg_prob_, 0.99);
-    nh_.param("normal_search_radius", normal_search_radius_, 0.05);
-    //what area size of the table are we looking for?
-    nh_.param("rot_table_frame", rot_table_frame_, std::string("rotating_table"));
-    nh_.param("object_cluster_tolerance", object_cluster_tolerance_, 0.03);
-    //min 100 points
-    nh_.param("object_cluster_min_size", object_cluster_min_size_, 100);
-    nh_.param("k", k_, 10);
-    nh_.param("base_link_head_tilt_link_angle", base_link_head_tilt_link_angle_, 0.8);
-    nh_.param("min_table_inliers", min_table_inliers_, 100);
-    nh_.param("cluster_min_height", cluster_min_height_, 0.02);
-    nh_.param("cluster_max_height", cluster_max_height_, 0.4);
-    nh_.param("nr_cluster", nr_cluster_, 1);
-    nh_.param("downsample", downsample_, true);
-    nh_.param("voxel_size", voxel_size_, 0.01);
-    nh_.param("save_to_files", save_to_files_, false);
-    nh_.param("point_cloud_topic", point_cloud_topic, std::string("/narrow_stereo_textured/points2"));
-    nh_.param("publish_token", publish_token_, false);
+    {
+      nh_.param("sac_distance", sac_distance_, 0.03);
+      nh_.param("z_min_limit", z_min_limit_, 0.3);
+      nh_.param("z_max_limit", z_max_limit_, 1.5);
+      nh_.param("max_iter", max_iter_, 500);
+      nh_.param("normal_distance_weight", normal_distance_weight_, 0.1);
+      nh_.param("eps_angle", eps_angle_, 20.0);
+      nh_.param("seg_prob", seg_prob_, 0.99);
+      nh_.param("normal_search_radius", normal_search_radius_, 0.05);
+      //what area size of the table are we looking for?
+      nh_.param("rot_table_frame", rot_table_frame_, std::string("rotating_table"));
+      nh_.param("object_cluster_tolerance", object_cluster_tolerance_, 0.03);
+      //min 100 points
+      nh_.param("object_cluster_min_size", object_cluster_min_size_, 100);
+      nh_.param("k", k_, 10);
+      nh_.param("base_link_head_tilt_link_angle", base_link_head_tilt_link_angle_, 0.8);
+      nh_.param("min_table_inliers", min_table_inliers_, 100);
+      nh_.param("cluster_min_height", cluster_min_height_, 0.02);
+      nh_.param("cluster_max_height", cluster_max_height_, 0.4);
+      nh_.param("nr_cluster", nr_cluster_, 1);
+      nh_.param("downsample", downsample_, true);
+      nh_.param("voxel_size", voxel_size_, 0.01);
+      nh_.param("save_to_files", save_to_files_, false);
+      nh_.param("point_cloud_topic", point_cloud_topic, std::string("/narrow_stereo_textured/points2"));
+      nh_.param("publish_token", publish_token_, false);
 
-    cloud_pub_.advertise (nh_, "table_inliers", 1);
-    cloud_extracted_pub_.advertise (nh_, "cloud_extracted", 1);
-    cloud_objects_pub_.advertise (nh_, "cloud_objects", 10);
+      cloud_pub_.advertise (nh_, "table_inliers", 1);
+      cloud_extracted_pub_.advertise (nh_, "cloud_extracted", 1);
+      cloud_objects_pub_.advertise (nh_, "cloud_objects", 10);
 
-    vgrid_.setFilterFieldName ("z");
-    vgrid_.setFilterLimits (z_min_limit_, z_max_limit_);
-    if (downsample_)
-      vgrid_.setLeafSize (voxel_size_, voxel_size_, voxel_size_);
+      vgrid_.setFilterFieldName ("z");
+      vgrid_.setFilterLimits (z_min_limit_, z_max_limit_);
+      if (downsample_)
+        vgrid_.setLeafSize (voxel_size_, voxel_size_, voxel_size_);
 
-    seg_.setDistanceThreshold (sac_distance_);
-    seg_.setMaxIterations (max_iter_);
-    seg_.setNormalDistanceWeight (normal_distance_weight_);
-    seg_.setOptimizeCoefficients (true);
-    seg_.setModelType (pcl::SACMODEL_NORMAL_PLANE);
-    seg_.setEpsAngle(pcl::deg2rad(eps_angle_));
-    seg_.setMethodType (pcl::SAC_RANSAC);
-    seg_.setProbability (seg_prob_);
+      seg_.setDistanceThreshold (sac_distance_);
+      seg_.setMaxIterations (max_iter_);
+      seg_.setNormalDistanceWeight (normal_distance_weight_);
+      seg_.setOptimizeCoefficients (true);
+      seg_.setModelType (pcl::SACMODEL_NORMAL_PLANE);
+      seg_.setEpsAngle(pcl::deg2rad(eps_angle_));
+      seg_.setMethodType (pcl::SAC_RANSAC);
+      seg_.setProbability (seg_prob_);
 
-    proj_.setModelType (pcl::SACMODEL_NORMAL_PLANE);
-    clusters_tree_ = boost::make_shared<pcl::KdTreeFLANN<Point> > ();
-    clusters_tree_->setEpsilon (1);
-    normals_tree_ = boost::make_shared<pcl::KdTreeFLANN<Point> > ();
+      proj_.setModelType (pcl::SACMODEL_NORMAL_PLANE);
+      clusters_tree_ = boost::make_shared<pcl::KdTreeFLANN<Point> > ();
+      clusters_tree_->setEpsilon (1);
+      normals_tree_ = boost::make_shared<pcl::KdTreeFLANN<Point> > ();
 
-    n3d_.setKSearch (k_);
-    n3d_.setSearchMethod (normals_tree_);
-  }
+      n3d_.setKSearch (k_);
+      n3d_.setSearchMethod (normals_tree_);
+    }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   virtual ~ExtractClusters () 
   {
     for (size_t i = 0; i < table_coeffs_.size (); ++i) 
       delete table_coeffs_[i];
-  }
-    
+  }    
   void 
   init (double tolerance, std::string object_name)  // tolerance: how close to (0,0) is good enough?
-  {
-    ROS_INFO ("ExtractCluster:] Listening for incoming data on topic %s", nh_.resolveName (point_cloud_topic).c_str ());
-    point_cloud_sub_ = nh_.subscribe (point_cloud_topic, 1,  &ExtractClusters::ptuFinderCallback, this);
-    object_name_ = object_name;
-  }
+    {
+      ROS_INFO ("ExtractCluster:] Listening for incoming data on topic %s", nh_.resolveName (point_cloud_topic).c_str ());
+      point_cloud_sub_ = nh_.subscribe (point_cloud_topic, 1,  &ExtractClusters::ptuFinderCallback, this);
+      object_name_ = object_name;
+    }
     
 private:
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -260,21 +259,25 @@ private:
         }
 
         ROS_INFO("Published %d clusters.", nr_cluster_);
-	pcl::PointCloud<Point> token;
-	Point p0;
-	p0.x = p0.y = p0.z = p0.rgb = 100.0;
-	token.width = 1;
-	token.height = 1;
-	token.is_dense = false;
-	token.points.resize(token.width * token.height);
-	token.points[0] = p0;
-	token.header.frame_id = cloud_object_clustered.header.frame_id;
-	token.header.stamp = ros::Time::now();
-	if (publish_token_)
-	  {
-	    cloud_objects_pub_.publish (token);
-	    ROS_INFO("Published token cluster with size %d.", token.width * token.height);
-	  }
+        //cloud_object_clustered.width = 1;
+        //cloud_object_clustered.height = 1;
+        // cloud_object_clustered.points.resize(1);
+        // cloud_objects_pub_.publish (cloud_object_clustered);
+        pcl::PointCloud<Point> token;
+        Point p0;
+        p0.x = p0.y = p0.z = p0.rgb = 100.0;
+        token.width = 1;
+        token.height = 1;
+        token.is_dense = false;
+        token.points.resize(token.width * token.height);
+        token.points[0] = p0;
+        token.header.frame_id = cloud_object_clustered.header.frame_id;
+        token.header.stamp = ros::Time::now();
+        if (publish_token_)
+        {
+          cloud_objects_pub_.publish (token);
+          ROS_INFO("Published token cluster with size %d.", token.width * token.height);
+        }
       }
       else
       {
@@ -294,22 +297,22 @@ private:
    */
   double
   compute2DPolygonalArea (PointCloud &points, const std::vector<double> &normal)
-  {
-    int k0, k1, k2;
+    {
+      int k0, k1, k2;
     
-    // Find axis with largest normal component and project onto perpendicular plane
-    k0 = (fabs (normal.at (0) ) > fabs (normal.at (1))) ? 0  : 1;
-    k0 = (fabs (normal.at (k0)) > fabs (normal.at (2))) ? k0 : 2;
-    k1 = (k0 + 1) % 3;
-    k2 = (k0 + 2) % 3;
+      // Find axis with largest normal component and project onto perpendicular plane
+      k0 = (fabs (normal.at (0) ) > fabs (normal.at (1))) ? 0  : 1;
+      k0 = (fabs (normal.at (k0)) > fabs (normal.at (2))) ? k0 : 2;
+      k1 = (k0 + 1) % 3;
+      k2 = (k0 + 2) % 3;
  
-    // cos(theta), where theta is the angle between the polygon and the projected plane
-    double ct = fabs ( normal.at (k0) );
+      // cos(theta), where theta is the angle between the polygon and the projected plane
+      double ct = fabs ( normal.at (k0) );
  
-    double area = 0;
-    float p_i[3], p_j[3];
+      double area = 0;
+      float p_i[3], p_j[3];
 
-    for (unsigned int i = 0; i < points.points.size (); i++)
+      for (unsigned int i = 0; i < points.points.size (); i++)
       {
         p_i[0] = points.points[i].x; p_i[1] = points.points[i].y; p_i[2] = points.points[i].z;
         int j = (i + 1) % points.points.size ();
@@ -317,10 +320,10 @@ private:
 
         area += p_i[k1] * p_j[k2] - p_i[k2] * p_j[k1];
       }
-    area = fabs (area) / (2 * ct);
+      area = fabs (area) / (2 * ct);
 
-    return (area);
-  }
+      return (area);
+    }
 
   ros::NodeHandle nh_;  // Do we need to keep it?
   tf::TransformBroadcaster transform_broadcaster_;
