@@ -256,9 +256,6 @@ private:
         }
 
         ROS_INFO("Published %d clusters.", nr_cluster_);
-        //cloud_object_clustered.width = 1;
-        //cloud_object_clustered.height = 1;
-        // cloud_object_clustered.points.resize(1);
         // cloud_objects_pub_.publish (cloud_object_clustered);
         pcl::PointCloud<Point> token;
         Point p0;
