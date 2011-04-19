@@ -34,11 +34,10 @@
  */
 
 /**
- * \author Romain Thibaux, Radu Bogdan Rusu
- * \author modified: Dejan Pangercic
+ * \author Dejan Pangercic
  *
- * @b ptu_calibrate attempts to estimate pan-tilt calibration values as ROS
- * parameters based on point cloud planar segmentation.
+ * @b extract_cluster_on_table extracts euclidean clusters from pointclouds
+ * of tabletop scenes
  */
 // ROS core
 #include <ros/ros.h>
@@ -85,8 +84,6 @@ typedef pcl::KdTree<Point>::Ptr KdTreePtr;
 const tf::Vector3 wp_normal(1, 0, 0);
 const double wp_offset = -1.45;
 
-// Waits for a point cloud with pan-tilt close to (0,0) and deduces the position of ptu_base
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class ExtractClusters 
 {
 public:
@@ -155,14 +152,14 @@ public:
   init (double tolerance, std::string object_name)  // tolerance: how close to (0,0) is good enough?
     {
       ROS_INFO ("ExtractCluster:] Listening for incoming data on topic %s", nh_.resolveName (point_cloud_topic).c_str ());
-      point_cloud_sub_ = nh_.subscribe (point_cloud_topic, 1,  &ExtractClusters::ptuFinderCallback, this);
+      point_cloud_sub_ = nh_.subscribe (point_cloud_topic, 1,  &ExtractClusters::clustersCallback, this);
       object_name_ = object_name;
     }
     
 private:
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void 
-  ptuFinderCallback (const sensor_msgs::PointCloud2ConstPtr &cloud_in)
+  clustersCallback (const sensor_msgs::PointCloud2ConstPtr &cloud_in)
     {
       ROS_INFO_STREAM ("[" << getName ().c_str () << "] Received cloud: cloud time " << cloud_in->header.stamp);
       
@@ -383,8 +380,8 @@ main (int argc, char** argv)
     exit(2);
   }
   std::string object_name = argv[1];
-  ExtractClusters ptu_calibrator (nh);
-  ptu_calibrator.init (5, object_name);  // 5 degrees tolerance
+  ExtractClusters clusters (nh);
+  clusters.init (5, object_name);  // 5 degrees tolerance
   ros::spin ();
 }
 /* ]--- */
