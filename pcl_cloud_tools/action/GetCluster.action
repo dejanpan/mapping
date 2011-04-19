@@ -2,7 +2,7 @@
 int32 ec_goal
 ---
 #result definition
-ias_table_msgs/TableCluster cluster
+ias_table_msgs/TableCluster[] clusters
 ---
 #feedback
 int32[] ec_feedback
