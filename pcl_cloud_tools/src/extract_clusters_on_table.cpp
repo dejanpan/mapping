@@ -71,7 +71,7 @@
 
 //for actionlib
 #include <actionlib/server/simple_action_server.h>
-#include <pcl_cloud_tools/GetClusterAction.h>
+#include <pcl_cloud_tools/GetClustersAction.h>
 
 #include "pcl/common/common.h"
 typedef pcl::PointXYZRGB Point;
@@ -161,7 +161,7 @@ public:
       object_name_ = object_name;
     }
     
-  void executeCB(const pcl_cloud_tools::GetClusterGoalConstPtr &goal)
+  void executeCB(const pcl_cloud_tools::GetClustersGoalConstPtr &goal)
     {
       action_called_ = true;
       while (!got_cluster_)
@@ -433,11 +433,11 @@ private:
   std::string getName () const { return ("ExtractClusters"); }
 
   //action related objects
-  actionlib::SimpleActionServer<pcl_cloud_tools::GetClusterAction> as_;
+  actionlib::SimpleActionServer<pcl_cloud_tools::GetClustersAction> as_;
   std::string action_name_;
   // create messages that are used to published feedback/result
-  pcl_cloud_tools::GetClusterFeedback feedback_;
-  pcl_cloud_tools::GetClusterResult result_;
+  pcl_cloud_tools::GetClustersFeedback feedback_;
+  pcl_cloud_tools::GetClustersResult result_;
 };
 
 /* ---[ */
