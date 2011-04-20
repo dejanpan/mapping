@@ -306,19 +306,19 @@ private:
         chull_.setInputCloud (boost::make_shared<PointCloud> (cloud_projected));
         chull_.reconstruct (cloud_hull);
         ROS_INFO ("Convex hull has: %d data points.", (int)cloud_hull.points.size ());
-        //cloud_pub_.publish (cloud_hull);
+        cloud_pub_.publish (cloud_hull);
        
-        pcl::PointCloud<Point> cloud_hull_padded;
-        add_remove_padding_hull(cloud_hull, cloud_hull_padded, padding_);
-	ROS_INFO ("New Convex hull has: %d data points.", (int)cloud_hull_padded.points.size ());
+        //pcl::PointCloud<Point> cloud_hull_padded;
+        //add_remove_padding_hull(cloud_hull, cloud_hull_padded, padding_);
+	//ROS_INFO ("New Convex hull has: %d data points.", (int)cloud_hull_padded.points.size ());
 	//sleep(2);
-        cloud_pub_.publish (cloud_hull_padded);
+        //cloud_pub_.publish (cloud_hull_padded);
 
         // ---[ Get the objects on top of the table
         pcl::PointIndices cloud_object_indices;
         prism_.setHeightLimits (cluster_min_height_, cluster_max_height_);
         prism_.setInputCloud (boost::make_shared<PointCloud> (cloud));
-        prism_.setInputPlanarHull (boost::make_shared<PointCloud>(cloud_hull_padded));
+        prism_.setInputPlanarHull (boost::make_shared<PointCloud>(cloud_hull));
         prism_.segment (cloud_object_indices);
         //ROS_INFO ("[%s] Number of object point indices: %d.", getName ().c_str (), (int)cloud_object_indices.indices.size ());
       
