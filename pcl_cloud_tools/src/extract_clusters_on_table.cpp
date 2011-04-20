@@ -198,7 +198,7 @@ public:
 
         table_cluster.center.x = (point_max.x + point_min.x)/2;
         table_cluster.center.y = (point_max.y + point_min.y)/2;
-        table_cluster.center.y = (point_max.z + point_min.z)/2;
+        table_cluster.center.z = (point_max.z + point_min.z)/2;
         
         table_cluster.min_bound.x = point_min.x;
         table_cluster.min_bound.y = point_min.y;
