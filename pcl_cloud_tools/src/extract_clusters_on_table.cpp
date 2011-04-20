@@ -114,6 +114,7 @@ public:
       nh_.param("save_to_files", save_to_files_, false);
       nh_.param("point_cloud_topic", point_cloud_topic, std::string("/narrow_stereo_textured/points2"));
       nh_.param("publish_token", publish_token_, false);
+      nh_.param("padding", padding_, 0.85);
 
       cloud_pub_.advertise (nh_, "table_inliers", 1);
       cloud_extracted_pub_.advertise (nh_, "cloud_extracted", 1);
@@ -161,9 +162,10 @@ public:
       object_name_ = object_name;
     }
   
-  void add_remove_padding_hull (pcl::PointCloud<Point> hull_in, pcl::PointCloud<Point> hull_out, double padding)
+  void add_remove_padding_hull (pcl::PointCloud<Point> &hull_in, pcl::PointCloud<Point> &hull_out, double padding)
     {
-      hull_out.points.resize(hull_in.points.size());
+      //      hull_out.points.resize(hull_in.points.size());
+      hull_out = hull_in;
       Point point_max, point_min, point_center;
       getMinMax3D (hull_in, point_min, point_max);
       //Calculate the centroid of the hull
@@ -175,7 +177,7 @@ public:
       {
         double dist_to_center = sqrt((point_center.x - hull_in.points[i].x) * (point_center.x - hull_in.points[i].x) +
                                      (point_center.y - hull_in.points[i].y) * (point_center.y - hull_in.points[i].y));
-        ROS_DEBUG("[%s] Dist to center: %lf", getName().c_str (), dist_to_center);
+        ROS_INFO("[%s] Dist to center: %lf", getName().c_str (), dist_to_center);
         double angle;
         angle= atan2((hull_in.points[i].y - point_center.y), (hull_in.points[i].x - point_center.x));
         double new_dist_to_center = padding * dist_to_center;
@@ -304,10 +306,12 @@ private:
         chull_.setInputCloud (boost::make_shared<PointCloud> (cloud_projected));
         chull_.reconstruct (cloud_hull);
         ROS_INFO ("Convex hull has: %d data points.", (int)cloud_hull.points.size ());
-        cloud_pub_.publish (cloud_hull);
+        //cloud_pub_.publish (cloud_hull);
        
         pcl::PointCloud<Point> cloud_hull_padded;
-        add_remove_padding_hull(cloud_hull, cloud_hull_padded, 0.95);
+        add_remove_padding_hull(cloud_hull, cloud_hull_padded, padding_);
+	ROS_INFO ("New Convex hull has: %d data points.", (int)cloud_hull_padded.points.size ());
+	//sleep(2);
         cloud_pub_.publish (cloud_hull_padded);
 
         // ---[ Get the objects on top of the table
@@ -420,6 +424,7 @@ private:
 
   double normal_search_radius_;
   double voxel_size_;
+  double padding_;
 
   std::string rot_table_frame_, object_name_, point_cloud_topic;
   double object_cluster_tolerance_,  cluster_min_height_, cluster_max_height_;
