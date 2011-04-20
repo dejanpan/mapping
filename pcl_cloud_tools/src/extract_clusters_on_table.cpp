@@ -88,7 +88,7 @@ class ExtractClusters
 public:
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ExtractClusters (const ros::NodeHandle &nh) : nh_ (nh), 
-                                                as_(nh_, "get_cluster", boost::bind(&ExtractClusters::executeCB, this, _1), false)
+                                                as_(nh_, "get_clusters", boost::bind(&ExtractClusters::executeCB, this, _1), false)
     {
       nh_.param("sac_distance", sac_distance_, 0.03);
       nh_.param("z_min_limit", z_min_limit_, 0.3);
