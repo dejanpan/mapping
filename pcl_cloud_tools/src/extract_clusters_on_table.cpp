@@ -325,7 +325,7 @@ private:
           }
         
         
-          ROS_INFO("Published %d clusters.", nr_cluster_);
+          ROS_INFO("Published %d clusters in frame: %s", nr_cluster_, cloud_object_clustered.header.frame_id.c_str());
           // cloud_objects_pub_.publish (cloud_object_clustered);
           pcl::PointCloud<Point> token;
           Point p0;
