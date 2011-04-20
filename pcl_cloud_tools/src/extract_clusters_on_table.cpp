@@ -117,7 +117,7 @@ public:
       nh_.param("padding", padding_, 0.85);
 
       cloud_pub_.advertise (nh_, "table_inliers", 1);
-      cloud_extracted_pub_.advertise (nh_, "cloud_extracted", 1);
+      //      cloud_extracted_pub_.advertise (nh_, "cloud_extracted", 1);
       cloud_objects_pub_.advertise (nh_, "cloud_objects", 10);
 
       vgrid_.setFilterFieldName ("z");
@@ -440,7 +440,7 @@ private:
   std::vector<Eigen::Vector4d *> table_coeffs_;
 
   pcl_ros::Publisher<Point> cloud_pub_;
-  pcl_ros::Publisher<Point> cloud_extracted_pub_;
+  //  pcl_ros::Publisher<Point> cloud_extracted_pub_;
   pcl_ros::Publisher<Point> cloud_objects_pub_;
   pcl_ros::Publisher<Point> token_pub_;
 
