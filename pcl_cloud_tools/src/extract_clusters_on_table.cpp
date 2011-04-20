@@ -160,6 +160,29 @@ public:
       point_cloud_sub_ = nh_.subscribe (point_cloud_topic, 1,  &ExtractClusters::clustersCallback, this);
       object_name_ = object_name;
     }
+  
+  void add_remove_padding_hull (pcl::PointCloud<Point> hull_in, pcl::PointCloud<Point> hull_out, double padding)
+    {
+      hull_out.points.resize(hull_in.points.size());
+      Point point_max, point_min, point_center;
+      getMinMax3D (hull_in, point_min, point_max);
+      //Calculate the centroid of the hull
+      point_center.x = (point_max.x + point_min.x)/2;
+      point_center.y = (point_max.y + point_min.y)/2;
+      point_center.z = (point_max.z + point_min.z)/2;
+
+      for (unsigned long i = 0; i < hull_in.points.size(); i++)
+      {
+        double dist_to_center = sqrt((point_center.x - hull_in.points[i].x) * (point_center.x - hull_in.points[i].x) +
+                                     (point_center.y - hull_in.points[i].y) * (point_center.y - hull_in.points[i].y));
+        ROS_DEBUG("[%s] Dist to center: %lf", getName().c_str (), dist_to_center);
+        double angle;
+        angle= atan2((hull_in.points[i].y - point_center.y), (hull_in.points[i].x - point_center.x));
+        double new_dist_to_center = padding * dist_to_center;
+        hull_out.points[i].y = point_center.y + sin(angle) * new_dist_to_center;
+        hull_out.points[i].x = point_center.x + cos(angle) * new_dist_to_center;
+      }
+    }
     
   void executeCB(const pcl_cloud_tools::GetClustersGoalConstPtr &goal)
     {
@@ -283,11 +306,15 @@ private:
         ROS_INFO ("Convex hull has: %d data points.", (int)cloud_hull.points.size ());
         cloud_pub_.publish (cloud_hull);
        
+        pcl::PointCloud<Point> cloud_hull_padded;
+        add_remove_padding_hull(cloud_hull, cloud_hull_padded, 0.95);
+        cloud_pub_.publish (cloud_hull_padded);
+
         // ---[ Get the objects on top of the table
         pcl::PointIndices cloud_object_indices;
         prism_.setHeightLimits (cluster_min_height_, cluster_max_height_);
         prism_.setInputCloud (boost::make_shared<PointCloud> (cloud));
-        prism_.setInputPlanarHull (boost::make_shared<PointCloud>(cloud_hull));
+        prism_.setInputPlanarHull (boost::make_shared<PointCloud>(cloud_hull_padded));
         prism_.segment (cloud_object_indices);
         //ROS_INFO ("[%s] Number of object point indices: %d.", getName ().c_str (), (int)cloud_object_indices.indices.size ());
       
