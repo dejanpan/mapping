@@ -74,7 +74,7 @@
 #include <pcl_cloud_tools/GetClustersAction.h>
 
 #include "pcl/common/common.h"
-typedef pcl::PointXYZRGB Point;
+typedef pcl::PointXYZ Point;
 typedef pcl::PointCloud<Point> PointCloud;
 typedef PointCloud::Ptr PointCloudPtr;
 typedef PointCloud::ConstPtr PointCloudConstPtr;
@@ -208,8 +208,8 @@ public:
         success = false;
       }
       
-      pcl::PointXYZRGB point_min;
-      pcl::PointXYZRGB point_max;
+      pcl::PointXYZ point_min;
+      pcl::PointXYZ point_max;
       ias_table_msgs::TableCluster table_cluster;
       result_.clusters.clear();
       for (uint i = 0; i < cloud_object_clustered_array_.size(); i++)
@@ -360,7 +360,7 @@ private:
           // cloud_objects_pub_.publish (cloud_object_clustered);
           pcl::PointCloud<Point> token;
           Point p0;
-          p0.x = p0.y = p0.z = p0.rgb = 100.0;
+          p0.x = p0.y = p0.z  = 100.0;
           token.width = 1;
           token.height = 1;
           token.is_dense = false;
