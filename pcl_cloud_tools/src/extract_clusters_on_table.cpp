@@ -189,6 +189,7 @@ public:
   void executeCB(const pcl_cloud_tools::GetClustersGoalConstPtr &goal)
     {
       action_called_ = true;
+      got_cluster_ = false;
       while (!got_cluster_)
       {
         ROS_INFO("[%s: ] Waiting to get cluster", getName().c_str ());
@@ -245,6 +246,7 @@ public:
       }
       got_cluster_ = false;
       action_called_ = false;
+      cloud_object_clustered_array_.clear();
     }
 
 private:
