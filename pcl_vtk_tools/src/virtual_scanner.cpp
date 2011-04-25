@@ -53,6 +53,7 @@
 #include <pcl/ros/register_point_struct.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/point_types.h>
 
 // ITPP dependencies (will go away after CVPR when we merge with trunk)
 #include <itpp/itbase.h>
@@ -102,22 +103,16 @@ vtkPolyData*
   return (reader->GetOutput ());
 }
 
-struct PointXYZViewpoint
-{
-  PCL_ADD_POINT4D;
-  float vx;
-  float vy;
-  float vz;
-};
+// struct PointXYZViewpoint;
 
-POINT_CLOUD_REGISTER_POINT_STRUCT (PointXYZViewpoint,
-                                   (float, x, x)
-                                   (float, y, y)
-                                   (float, z, z)
-                                   (float, vx, vx)
-                                   (float, vy, vy)
-                                   (float, vz, vz)
-);
+// POINT_CLOUD_REGISTER_POINT_STRUCT (PointXYZViewpoint,
+//                                    (float, x, x)
+//                                    (float, y, y)
+//                                    (float, z, z)
+//                                    (float, vx, vx)
+//                                    (float, vy, vy)
+//                                    (float, vz, vz)
+// );
 
 /* ---[ */
 int
@@ -187,10 +182,10 @@ int
   double hor_end    = + ((sp.nr_points_in_scans-1) * sp.hor_res) + hor_start;
 
   // Prepare the point cloud data
-  pcl::PointCloud<PointXYZViewpoint> cloud;
+  pcl::PointCloud<pcl::PointWithViewpoint> cloud;
 
   // Prepare the leaves for downsampling
-  pcl::VoxelGrid<PointXYZViewpoint> grid;
+  pcl::VoxelGrid<pcl::PointWithViewpoint> grid;
   grid.setLeafSize (2.5, 2.5, 2.5);    // @note: this value should be given in mm!
 
   // Reset and set a random seed for the Global Random Number Generator
@@ -348,11 +343,11 @@ int
         vtkIdType cellId;
         if (tree->IntersectWithLine (eye, p, 0, t, x, p_coords, subId, cellId))
         {
-          PointXYZViewpoint pt;
+          pcl::PointWithViewpoint pt;
           if (object_coordinates)
           {
             pt.x = x[0]; pt.y = x[1]; pt.z = x[2];
-            pt.vx = eye[0]; pt.vy = eye[1]; pt.vz = eye[2];
+            pt.vp_x = eye[0]; pt.vp_y = eye[1]; pt.vp_z = eye[2];
           }
           else
           {
@@ -362,7 +357,7 @@ int
             pt.x = -right[0]*x[1] + up[0]*x[2] + viewray[0]*x[0] + eye[0];
             pt.y = -right[1]*x[1] + up[1]*x[2] + viewray[1]*x[0] + eye[1];
             pt.z = -right[2]*x[1] + up[2]*x[2] + viewray[2]*x[0] + eye[2];
-            pt.vx = pt.vy = pt.vz = 0.0;
+            pt.vp_x = pt.vp_y = pt.vp_z = 0.0;
           }
           cloud.points.push_back(pt);
         }
@@ -384,8 +379,8 @@ int
     }
 
     // Downsample and remove silly po int duplicates
-    pcl::PointCloud<PointXYZViewpoint> cloud_downsampled;
-    grid.setInputCloud (boost::make_shared<pcl::PointCloud<PointXYZViewpoint> > (cloud));
+    pcl::PointCloud<pcl::PointWithViewpoint> cloud_downsampled;
+    grid.setInputCloud (boost::make_shared<pcl::PointCloud<pcl::PointWithViewpoint> > (cloud));
     //grid.filter (cloud_downsampled);
 
     // Saves the point cloud data to disk
