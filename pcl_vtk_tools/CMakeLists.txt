@@ -26,6 +26,6 @@ rosbuild_add_executable(vtk_viewer src/vtk_viewer.cpp)
 
 #rosbuild_add_executable(vtk_to_dxf_exporter src/vtk_to_dxf_exporter.cpp src/dxf_writer.cpp)
 
-#rosbuild_add_executable (virtual_scanner src/virtual_scanner.cpp)
-#rosbuild_link_boost (virtual_scanner filesystem system)
-#target_link_libraries (virtual_scanner vtkHybrid itpp)
+rosbuild_add_executable (virtual_scanner src/virtual_scanner.cpp)
+rosbuild_link_boost (virtual_scanner filesystem system)
+target_link_libraries (virtual_scanner vtkHybrid itpp)
