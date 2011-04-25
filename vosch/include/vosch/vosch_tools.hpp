@@ -637,3 +637,25 @@ void extractVOSCH(pcl::VoxelGrid<PointT> grid, pcl::PointCloud<PointT> cloud, pc
   extractVOSCH( grid, cloud, cloud_downsampled, tmp, color_threshold_r, color_threshold_g, color_threshold_b, voxel_size ); // for one signature
   feature = tmp[ 0 ];
 }
+
+//--------------
+//* ConVOSCH
+template <typename PointT>
+Eigen::Vector3i extractConVOSCH(pcl::VoxelGrid<PointT> grid, pcl::PointCloud<PointT> cloud, pcl::PointCloud<PointT> cloud_downsampled, std::vector< std::vector<float> > &feature, int color_threshold_r, int color_threshold_g, int color_threshold_b, const float voxel_size, const int subdivision_size = 0, const int offset_x = 0, const int offset_y = 0, const int offset_z = 0, const bool is_normalize  ){
+  std::vector< std::vector<float> > grsd;
+  Eigen::Vector3i subdiv_b_ = extractGRSDSignature21( grid, cloud, cloud_downsampled, grsd, voxel_size, subdivision_size, offset_x, offset_y, offset_z, is_normalize );
+  std::vector< std::vector<float> > c3_hlac;
+  extractC3HLACSignature981( grid, cloud_downsampled, c3_hlac, color_threshold_r, color_threshold_g, color_threshold_b, voxel_size, subdivision_size, offset_x, offset_y, offset_z );
+
+  const int hist_num = grsd.size();
+  for( int h=0; h<hist_num; h++ )
+    feature.push_back ( concVector( grsd[ h ], c3_hlac[ h ] ) );
+  return subdiv_b_;
+}
+
+template <typename PointT>
+void extractConVOSCH(pcl::VoxelGrid<PointT> grid, pcl::PointCloud<PointT> cloud, pcl::PointCloud<PointT> cloud_downsampled, std::vector<float> &feature, int color_threshold_r, int color_threshold_g, int color_threshold_b, const float voxel_size, const int subdivision_size = 0, const int offset_x = 0, const int offset_y = 0, const int offset_z = 0 ){
+  std::vector< std::vector<float> > tmp;
+  extractConVOSCH( grid, cloud, cloud_downsampled, tmp, color_threshold_r, color_threshold_g, color_threshold_b, voxel_size ); // for one signature
+  feature = tmp[ 0 ];
+}

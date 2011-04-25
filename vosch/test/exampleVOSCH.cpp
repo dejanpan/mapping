@@ -42,11 +42,12 @@ int main( int argc, char** argv ){
   ROS_INFO("VOSCH %ld", input_cloud.points.size());
 #endif
   //* write
-  int length = strlen( argv[1] );
-  argv[1][ length-4 ] = '\0';
-  char filename[ 300 ];
-  sprintf(filename,"%s_VOSCH.pcd",argv[1]);
-  writeFeature( filename, vosch );
+  writeFeature( "vosch.pcd", vosch );
+  // int length = strlen( argv[1] );
+  // argv[1][ length-4 ] = '\0';
+  // char filename[ 300 ];
+  // sprintf(filename,"%s_VOSCH.pcd",argv[1]);
+  // writeFeature( filename, vosch );
 
   return(0);
 }
