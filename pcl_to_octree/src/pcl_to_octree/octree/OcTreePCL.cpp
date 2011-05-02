@@ -214,7 +214,7 @@ void OcTreePCL::insertScanUniform(const ScanNode& scan, double maxrange) {
 
   CountingOcTree free_tree    (this->getResolution());
   CountingOcTree occupied_tree(this->getResolution());
-  std::vector<point3d> ray;
+  octomap::KeyRay ray;
 
   for (octomap::Pointcloud::iterator point_it = scan.scan->begin(); point_it != scan.scan->end(); point_it++) {
 
@@ -225,8 +225,8 @@ void OcTreePCL::insertScanUniform(const ScanNode& scan, double maxrange) {
 
     if (!is_maxrange) {
       // free cells
-      if (this->computeRay(origin, p, ray)){
-        for(std::vector<point3d>::iterator it=ray.begin(); it != ray.end(); it++) {
+      if (this->computeRayKeys(origin, p, ray)){
+        for(octomap::KeyRay::iterator it=ray.begin(); it != ray.end(); it++) {
           free_tree.updateNode(*it);
         }
       }
@@ -237,8 +237,8 @@ void OcTreePCL::insertScanUniform(const ScanNode& scan, double maxrange) {
     else {
       point3d direction = (p - origin).unit();
       point3d new_end = origin + direction * maxrange;
-      if (this->computeRay(origin, new_end, ray)){
-        for(std::vector<point3d>::iterator it=ray.begin(); it != ray.end(); it++) {
+      if (this->computeRayKeys(origin, new_end, ray)){
+        for(octomap::KeyRay::iterator it=ray.begin(); it != ray.end(); it++) {
           free_tree.updateNode(*it);
         }
       }
