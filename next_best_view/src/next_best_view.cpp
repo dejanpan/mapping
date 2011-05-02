@@ -4,7 +4,7 @@
 #include <geometry_msgs/PoseArray.h>
 
 #include "octomap/octomap.h"
-#include <octomap_server/OctomapBinary.h>
+#include <octomap_ros/OctomapBinary.h>
 #include "pcl_to_octree/octree/OcTreePCL.h"
 #include "pcl_to_octree/octree/OcTreeNodePCL.h"
 #include "pcl_to_octree/octree/OcTreeServerPCL.h"
@@ -138,7 +138,7 @@ Nbv::Nbv (ros::NodeHandle &anode) : nh_(anode) {
   nh_.param("boundary_angle_threshold", boundary_angle_threshold_, 2.5);
 
   cloud_sub_ = nh_.subscribe (input_cloud_topic_, 1, &Nbv::cloud_cb, this);
-  octree_pub_ = nh_.advertise<octomap_server::OctomapBinary> (output_octree_topic_, 1);
+  octree_pub_ = nh_.advertise<octomap_ros::OctomapBinary> (output_octree_topic_, 1);
   border_cloud_pub_ = pcl_ros::Publisher<pcl::PointNormal> (nh_, "border_cloud", 1);
   cluster_cloud_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud", 1);
   cluster_cloud2_pub_ = pcl_ros::Publisher<pcl::PointXYZ> (nh_, "cluster_cloud2", 1);
@@ -300,7 +300,7 @@ void Nbv::cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pointcloud2_msg) {
 
   // publish binary octree
   if (0) {
-    octomap_server::OctomapBinary octree_msg;
+    octomap_ros::OctomapBinary octree_msg;
     octomap_server::octomapMapToMsg(*octree_, octree_msg);
     octree_pub_.publish(octree_msg);
   }
@@ -407,7 +407,7 @@ void Nbv::castRayAndLabel(pcl::PointCloud<pcl::PointXYZ>& cloud, octomap::pose6d
       // Get the nodes along the ray and label them as free
       if (octree_->computeRayKeys(origin.trans(), octomap_point3d, ray)) {
 	for(octomap::KeyRay::iterator it=ray.begin(); it != ray.end(); it++) {
-	  octomap::OcTreeNodePCL * free_node = octree_->searchKey(*it);
+	  octomap::OcTreeNodePCL * free_node = octree_->search(*it);
 	  if (free_node != NULL) {
 	    if (free_node->getLabel() != occupied_label_)
 	      free_node->setLabel(free_label_);
@@ -489,8 +489,17 @@ void Nbv::createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap
   // create nodes that are unknown
   //
   octomap::point3d min, max;
-  octree_->getMetricMin(min(0), min(1), min(2));
-  octree_->getMetricMax(max(0), max(1), max(2));
+  double min_x, min_y, min_z; 
+  double max_x, max_y, max_z;
+  octree_->getMetricMin(min_x, min_y, min_z);
+  octree_->getMetricMax(max_x, max_y, max_z);
+  min (0) = (float) min_x;
+  min (1) = (float) min_y;
+  min (2) = (float) min_z;
+  max (0) = (float) max_x;
+  max (1) = (float) max_y;
+  max (2) = (float) max_z;
+
   //ROS_DEBUG("octree min bounds [%f %f %f]", min(0), min(1), min(2));
   //ROS_DEBUG("octree max bounds [%f %f %f]", max(0), max(1), max(2));
 
@@ -531,7 +540,7 @@ void Nbv::createOctree (pcl::PointCloud<pcl::PointXYZ>& pointcloud2_pcl, octomap
       if (octree_node != NULL) {
 	octomap::point3d test_centroid;
 	test_centroid = octree_node->getCentroid();
-	if (centroid.dist(test_centroid) > octree_res_/4)
+	if (centroid.distance(test_centroid) > octree_res_/4)
 	  ROS_INFO("node at [%f %f %f] has a wrong centroid: [%f %f %f]", centroid(0), centroid(1), centroid(2), test_centroid(0), test_centroid(1), test_centroid(2));
       }
       else {
