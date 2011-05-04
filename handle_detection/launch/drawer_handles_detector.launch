@@ -9,7 +9,15 @@
   <!-- drawer handles detector -->
     <node pkg="handle_detection" type="drawer_handles_detector" name="handle_detector" output="screen" respawn="true">
       <remap from="point_cloud_topic" to="/shoulder_cloud2" />
-
+      <rosparam>
+         normal_distance_weight: 0.05
+         eps_angle: 20.0 
+         k: 30
+         sac_distance: 0.02
+         object_cluster_min_size: 200
+         x_max_limit_: 1.5
+         cluster_max_height: .1
+      </rosparam>
     </node>
 
 </launch>

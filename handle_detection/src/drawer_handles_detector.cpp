@@ -95,17 +95,17 @@ public:
     nh_.param("x_min_limit", x_min_limit_, 0.0);
     nh_.param("x_max_limit", x_max_limit_, 1.0);
     
-    nh_.param("k", k_, 10);
+    nh_.param("k", k_, 30);
     normals_tree_ = boost::make_shared<pcl::KdTreeFLANN<Point> > ();
     n3d_.setKSearch (k_);
     n3d_.setSearchMethod (normals_tree_);
     
     nh_.param("sac_distance", sac_distance_, 0.02);
-    nh_.param("normal_distance_weight", normal_distance_weight_, 0.1);
+    nh_.param("normal_distance_weight", normal_distance_weight_, 0.05);
     nh_.param("max_iter", max_iter_, 500);
     nh_.param("eps_angle", eps_angle_, 20.0);
     nh_.param("seg_prob", seg_prob_, 0.99);
-    seg_.setModelType (pcl::SACMODEL_PARALLEL_PLANE);
+    seg_.setModelType (pcl::SACMODEL_NORMAL_PARALLEL_PLANE);
     seg_.setMethodType (pcl::SAC_RANSAC);
     seg_.setDistanceThreshold (sac_distance_);
     seg_.setNormalDistanceWeight (normal_distance_weight_);
@@ -117,7 +117,7 @@ public:
     seg_.setProbability (seg_prob_);
 
     nh_.param("object_cluster_tolerance", object_cluster_tolerance_, 0.03);
-    nh_.param("object_cluster_min_size", object_cluster_min_size_, 100);
+    nh_.param("object_cluster_min_size", object_cluster_min_size_, 200);
     cluster_.setClusterTolerance (object_cluster_tolerance_);
     cluster_.setSpatialLocator(0);
     cluster_.setMinClusterSize (object_cluster_min_size_);
@@ -129,7 +129,7 @@ public:
     nh_.param("nr_cluster", nr_cluster_, 1);
 
     nh_.param("cluster_min_height", cluster_min_height_, 0.03);
-    nh_.param("cluster_max_height", cluster_max_height_, 0.2);
+    nh_.param("cluster_max_height", cluster_max_height_, 0.1);
 
     nh_.param("handle_cluster_tolerance", handle_cluster_tolerance_, 0.02);
     nh_.param("handle_cluster_min_size", handle_cluster_min_size_, 40);
