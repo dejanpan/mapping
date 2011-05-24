@@ -18,7 +18,7 @@
   <depend package="pcl_visualization" />
 
   <rosdep name="libvtk" />
-
+  <rosdep name="libitpp-dev"/>
 <!--   <depend package="cop_for_external_dependencies" /> -->
   <export>
     <cpp cflags="-I${prefix}/include/" />
