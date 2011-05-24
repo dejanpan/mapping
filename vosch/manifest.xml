@@ -1,10 +1,10 @@
 <package>
   <description brief="vosch">
 
-     vosch
+     VOSCH feature extraction from RGB point cloud.
 
   </description>
-  <author>Kanezaki Asako</author>
+  <author>Asako Kanezaki</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/vosch</url>
