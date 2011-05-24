@@ -2,7 +2,7 @@
 \mainpage
 \htmlinclude manifest.html
 
-\b vosch is ... 
+\b vosch is a package which extracts VOSCH features from RGB point clouds.
 
 <!-- 
 Provide an overview of your package.
