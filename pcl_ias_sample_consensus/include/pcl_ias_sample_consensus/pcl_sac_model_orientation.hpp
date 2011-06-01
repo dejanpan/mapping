@@ -226,3 +226,11 @@ template <typename Normal>  void
 
     /// @NOTE: inliers are actually indexes in the indices_ array!
   }
+
+//////////////////////////////////////////////////////////////////////////
+template <typename PointT> bool
+pcl::SACModelOrientation<PointT>::isSampleGood(const std::vector<int> &samples) const
+{
+  return true;
+}
+
