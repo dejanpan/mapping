@@ -7,6 +7,7 @@
 
 #include <pcl/features/normal_3d.h>
 
+#include <boost/make_shared.hpp>
 // Kd Tree
 //#include <pcl/kdtree/kdtree_ann.h>
 
@@ -123,6 +124,13 @@ namespace pcl
         * \param threshold a maximum admissible distance threshold for determining the inliers from the outliers
         */
       bool doSamplesVerifyModel (const std::set<int> &indices, const Eigen::VectorXf &model_coefficients, double threshold) { return true; }
+
+     /** \brief Check if a sample of indices results in a good sample of points    
+        * indices. Pure virtual.
+        * \param samples the resultant index samples                                     
+        */
+    bool
+    isSampleGood(const std::vector<int> &samples) const;
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Return an unique id for each type of model employed. */
