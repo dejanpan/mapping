@@ -1,0 +1,17 @@
+<package>
+  <description brief="pr2_data_acquisition_tools">
+     pr2_data_acquisition_tools - for the data acquisition needed by registration stack.
+  </description>
+  <author>Dejan Pangercic</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pr2_data_acquisition_tools</url>
+  <depend package="roscpp"/>
+  <depend package="sensor_msgs"/>
+  <depend package="actionlib"/>
+  <depend package="pr2_controllers_msgs"/>
+  <depend package="tf"/>
+  <depend package="pcl_ros"/>
+</package>
+
+
