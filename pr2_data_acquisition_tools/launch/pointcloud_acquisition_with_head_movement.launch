@@ -1,0 +1,15 @@
+<launch>
+  <!-- Acquires point cloud data using kinect sensor mounted on PR2's head -->
+  <node pkg="pr2_data_acquisition_tools" type="pointcloud_acquisition_with_head_movement" output="screen" name="pointcloud_acquisition_with_head_movement">
+    <param name="input_cloud_topic" value="/kinect_head/camera/rgb/points" />
+    <param name="move_offset_y_min" value="-1.5" />
+    <param name="move_offset_y_max" value="1.5" />
+    <param name="move_offset_z_min" value="0.3" />
+    <param name="move_offset_z_max" value="1.5" />
+    <param name="step_z" value="0.3" />
+    <param name="step_y" value="0.3" />
+    <param name="move_offset_x" value="1.0" />
+    <param name="bag_name" value="bosch_kitchen_tr.bag" />
+    <param name="to_frame" value="base_link" />
+  </node>
+</launch>
