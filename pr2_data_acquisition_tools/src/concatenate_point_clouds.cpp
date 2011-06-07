@@ -48,6 +48,7 @@
 #include "pcl/filters/voxel_grid.h"
 
 using namespace std;
+typedef pcl::PointXYZRGB PointT;
 
 class ConcatenatePointCloudNode
 {
@@ -55,12 +56,12 @@ protected:
   ros::NodeHandle nh_;
 public:
   string input_cloud_topic_;
-  pcl::PointCloud<pcl::PointXYZ> concatenated_pc_, concatenated_pc_filtered_;
-  pcl::PointCloud<pcl::PointXYZ>::ConstPtr concatenated_pc_ptr_;
+  pcl::PointCloud<PointT> concatenated_pc_, concatenated_pc_filtered_;
+  pcl::PointCloud<PointT>::ConstPtr concatenated_pc_ptr_;
   ros::Subscriber sub_;
   pcl::PCDWriter pcd_writer_;
   double voxel_size_;
-  pcl::VoxelGrid<pcl::PointXYZ> vgrid_;
+  pcl::VoxelGrid<PointT> vgrid_;
 
   ////////////////////////////////////////////////////////////////////////////////
   ConcatenatePointCloudNode  (ros::NodeHandle &n) : nh_(n)
@@ -71,18 +72,16 @@ public:
     sub_ = nh_.subscribe (input_cloud_topic_, 1,  &ConcatenatePointCloudNode::cloud_cb, this);
     ROS_INFO ("[ConcatenatePointCloudNode:] Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
     vgrid_.setLeafSize (voxel_size_, voxel_size_, voxel_size_);
-    concatenated_pc_ptr_.reset(new pcl::PointCloud<pcl::PointXYZ> ());
+    concatenated_pc_ptr_.reset(new pcl::PointCloud<PointT> ());
   }
   
   ////////////////////////////////////////////////////////////////////////////////
   ~ConcatenatePointCloudNode ()
     {
-      concatenated_pc_ptr_.reset(new pcl::PointCloud<pcl::PointXYZ> (concatenated_pc_));
+      concatenated_pc_ptr_.reset(new pcl::PointCloud<PointT> (concatenated_pc_));
       vgrid_.setInputCloud (concatenated_pc_ptr_);
-//      vgrid_.setFilterFieldName("x");
-      //    vgrid_.setFilterLimits(0.0, 3.0);
       vgrid_.setFilterFieldName("y");
-      vgrid_.setFilterLimits(-3.0, 1.5);
+      vgrid_.setFilterLimits(-3.0, 3.0);
       vgrid_.filter(concatenated_pc_filtered_);
       ROS_INFO("[ConcatenatePointCloudNode:] Writting cloud with %ld points", concatenated_pc_filtered_.points.size());
       pcd_writer_.write ("concatenated_cloud.pcd", concatenated_pc_filtered_, true);
@@ -92,7 +91,7 @@ public:
   // cloud_cb (!)
   void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pc)
   {
-    pcl::PointCloud<pcl::PointXYZ> pcl_cloud;
+    pcl::PointCloud<PointT> pcl_cloud;
     pcl::fromROSMsg(*pc, pcl_cloud);
     concatenated_pc_.header = pcl_cloud.header;
     concatenated_pc_ += pcl_cloud;
