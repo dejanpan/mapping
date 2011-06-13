@@ -84,27 +84,27 @@ public:
     {
       //transform to target frame
       bool found_transform = tf_.waitForTransform(pc->header.frame_id, to_frame_,
-						  pc->header.stamp, ros::Duration(10.0));
+                                                  pc->header.stamp, ros::Duration(10.0));
       if (found_transform)
-	{
-	  //ROS_ASSERT_MSG(found_transform, "Could not transform to camera frame");
-	  tf::StampedTransform transform;
-	  tf_.lookupTransform(to_frame_,pc->header.frame_id, pc->header.stamp, transform);
-	  pcl_ros::transformPointCloud(to_frame_, transform, *pc, transformed_cloud_);
-	  ROS_DEBUG("[TransformPointcloudNode:] Point cloud published in frame %s", transformed_cloud_.header.frame_id.c_str());
-	}
+      {
+        //ROS_ASSERT_MSG(found_transform, "Could not transform to camera frame");
+        tf::StampedTransform transform;
+        tf_.lookupTransform(to_frame_,pc->header.frame_id, pc->header.stamp, transform);
+        pcl_ros::transformPointCloud(to_frame_, transform, *pc, transformed_cloud_);
+        ROS_DEBUG("[TransformPointcloudNode:] Point cloud published in frame %s", transformed_cloud_.header.frame_id.c_str());
+      }
       else
-	{
-	  ROS_ERROR("No transform found!!!");
-	  return;
-	}
+      {
+        ROS_ERROR("No transform found!!!");
+        return;
+      }
       bag_.write(input_cloud_topic_, transformed_cloud_.header.stamp, transformed_cloud_);
       ROS_INFO("Wrote cloud to %s", bag_name_.c_str());
       cloud_received_ = true;
     }
   }
 
-   void move_head (std::string frame_id, double x, double y, double z)
+  void move_head (std::string frame_id, double x, double y, double z)
   {
     //the goal message we will be sending
     pr2_controllers_msgs::PointHeadGoal goal;
@@ -131,55 +131,55 @@ public:
     //wait for it to get there
     bool finished_within_time = point_head_client_->waitForResult(ros::Duration(20.0));
     if (!finished_within_time)
-      {
-	ROS_ERROR("Head did not move to pose: %f %f %f", point.point.x, point.point.y, point.point.z);
-      }
+    {
+      ROS_ERROR("Head did not move to pose: %f %f %f", point.point.x, point.point.y, point.point.z);
+    }
     else
-      {
-	actionlib::SimpleClientGoalState state = point_head_client_->getState();
-	bool success = (state == actionlib::SimpleClientGoalState::SUCCEEDED);
-	if(success)
-	  ROS_INFO("Action move head finished: %s position: %f %f %f", state.toString().c_str(), point.point.x, point.point.y, point.point.z);
-	else
-	  ROS_ERROR("Action move head failed: %s", state.toString().c_str());
-      }
+    {
+      actionlib::SimpleClientGoalState state = point_head_client_->getState();
+      bool success = (state == actionlib::SimpleClientGoalState::SUCCEEDED);
+      if(success)
+        ROS_INFO("Action move head finished: %s position: %f %f %f", state.toString().c_str(), point.point.x, point.point.y, point.point.z);
+      else
+        ROS_ERROR("Action move head failed: %s", state.toString().c_str());
+    }
   }
 
-void spin ()
-{
-  ros::Rate loop_rate(5);
-  while (ros::ok())
+  void spin ()
+  {
+    ros::Rate loop_rate(5);
+    while (ros::ok())
     {
       if (cloud_received_ && (move_offset_y_max_ > move_offset_y_min_ || (move_offset_y_max_ - move_offset_y_min_ < EPS))
-	  && (move_offset_z_max_ > move_offset_z_min_ || (move_offset_z_max_ - move_offset_z_min_ < EPS)))
-      	{
-	  if (move_offset_y_max_ < move_offset_y_min_ && move_offset_z_max_ != move_offset_z_min_)
-      	    {
-      	      move_offset_z_max_ = move_offset_z_max_ - step_z_;
-      	      move_offset_y_max_ = -move_offset_y_min_;
-      	    }
-	  else
-	    {
-	      move_offset_y_max_ = move_offset_y_max_ - step_y_;
-	    }
-	  move_head("base_link", move_offset_x_, move_offset_y_max_, move_offset_z_max_);
-      	  cloud_received_ = false; 
-      	}
+          && (move_offset_z_max_ > move_offset_z_min_ || (move_offset_z_max_ - move_offset_z_min_ < EPS)))
+      {
+        if (move_offset_y_max_ < move_offset_y_min_ && move_offset_z_max_ != move_offset_z_min_)
+        {
+          move_offset_z_max_ = move_offset_z_max_ - step_z_;
+          move_offset_y_max_ = -move_offset_y_min_;
+        }
+        else
+        {
+          move_offset_y_max_ = move_offset_y_max_ - step_y_;
+        }
+        move_head("base_link", move_offset_x_, move_offset_y_max_, move_offset_z_max_);
+        cloud_received_ = false; 
+      }
       else if ((move_offset_y_max_ - move_offset_y_min_) < EPS 
-	       && (move_offset_z_max_ - move_offset_z_min_) < EPS)
-	{
-	  ROS_INFO("DONE - exiting");
-	  ros::shutdown();
-	  //break;
-	}
+               && (move_offset_z_max_ - move_offset_z_min_) < EPS)
+      {
+        ROS_INFO("DONE - exiting");
+        ros::shutdown();
+        //break;
+      }
       else
-      	{
-      	  ROS_INFO("Waiting to get pointcloud");
+      {
+        ROS_INFO("Waiting to get pointcloud");
     	}  
       ros::spinOnce();
       loop_rate.sleep();
     }
-}
+  }
 };
 
 int main(int argc, char** argv)
