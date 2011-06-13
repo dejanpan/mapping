@@ -156,7 +156,8 @@ public:
         if (move_offset_y_max_ < move_offset_y_min_ && move_offset_z_max_ != move_offset_z_min_)
         {
           move_offset_z_max_ = move_offset_z_max_ - step_z_;
-          move_offset_y_max_ = -move_offset_y_min_;
+          step_y_ = - step_y_;
+          //move_offset_y_max_ = -move_offset_y_min_;
         }
         else
         {
