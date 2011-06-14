@@ -158,10 +158,10 @@ public:
         {
           // swing left to right and right to left by increasing y step
           if ( (((move_offset_y_min_ < current_position_y_) && (current_position_y_ < move_offset_y_max_))
-                || ((current_position_y_ - move_offset_y_min_) < EPS) || ((current_position_y_ - move_offset_y_max_) < EPS))
+                || (fabs(current_position_y_ - move_offset_y_min_) < EPS) || (fabs(current_position_y_ - move_offset_y_max_) < EPS))
                && 
                ((current_position_z_ < move_offset_z_max_) 
-                || ((current_position_z_ - move_offset_z_min_) < EPS) || ((current_position_z_ - move_offset_z_max_) < EPS)) )
+                || (fabs(current_position_z_ - move_offset_z_min_) < EPS) || (fabs(current_position_z_ - move_offset_z_max_) < EPS)) )
           {
             current_position_y_ += step_y_;
             ROS_INFO("in left to right");
@@ -181,7 +181,7 @@ public:
           // check if we are done
           else if ( ((current_position_y_ < move_offset_y_min_) || (current_position_y_ > move_offset_y_max_)) 
                     && 
-                    ((current_position_z_ > move_offset_z_max_) || ((current_position_z_ - move_offset_z_max_) < EPS)) )
+                    ((current_position_z_ > move_offset_z_max_) || (fabs(current_position_z_ - move_offset_z_max_) < EPS)) )
           {
             ROS_INFO("DONE - exiting");
             ros::shutdown();
