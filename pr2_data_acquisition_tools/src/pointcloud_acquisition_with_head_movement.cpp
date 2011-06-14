@@ -33,6 +33,7 @@ class PointCloudCapturer
   double move_offset_z_min_, move_offset_z_max_, step_z_;
   double move_offset_x_;
   double current_position_x_, current_position_y_, current_position_z_;
+  double rate_;
   boost::thread spin_thread_;
   double EPS;
   rosbag::Bag bag_;
@@ -64,6 +65,7 @@ public:
     nh_.param("move_offset_x", move_offset_x_, 1.0);
     nh_.param("bag_name", bag_name_, std::string("bosch_kitchen_tr.bag"));
     nh_.param("to_frame", to_frame_, std::string("base_link"));
+    nh_.param("rate", rate_, 1.0);
     current_position_x_ = move_offset_x_;
     current_position_y_ = move_offset_y_min_;
     current_position_z_ = move_offset_z_min_;
@@ -149,7 +151,7 @@ public:
 
   void spin ()
     {
-      ros::Rate loop_rate(5);
+      ros::Rate loop_rate(rate_);
       while (ros::ok())
       {
         if (cloud_received_)
@@ -162,6 +164,7 @@ public:
                 || ((current_position_z_ - move_offset_z_min_) < EPS) || ((current_position_z_ - move_offset_z_max_) < EPS)) )
           {
             current_position_y_ += step_y_;
+            ROS_INFO("in left to right");
           }
      
           // increase z step
@@ -172,6 +175,7 @@ public:
             current_position_z_ += step_z_;
             step_y_ = -step_y_;
             current_position_y_ += step_y_;
+            ROS_INFO("in increase z");
           }
 
           // check if we are done
@@ -184,11 +188,11 @@ public:
           }
           else
           {
-            std::cerr << "Not an option" << std::endl; 
+            ROS_INFO("Not an option");
           }
+          move_head("base_link", current_position_x_, current_position_y_, current_position_z_);
+          cloud_received_ = false; 
         }
-        move_head("base_link", move_offset_x_, current_position_y_, current_position_z_);
-        cloud_received_ = false; 
         ros::spinOnce();
         loop_rate.sleep();
        }
