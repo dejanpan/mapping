@@ -69,7 +69,6 @@ public:
     current_position_z_ = move_offset_z_min_;
     move_head("base_link", current_position_x_, current_position_y_, current_position_z_);
     EPS = 1e-5;
-    std::cerr << "EPS " << EPS << std::endl;
     //thread ROS spinner
     spin_thread_ = boost::thread (boost::bind (&ros::spin));
     bag_.open(bag_name_, rosbag::bagmode::Write);
@@ -175,6 +174,7 @@ public:
             current_position_y_ += step_y_;
           }
 
+          // check if we are done
           else if ( ((current_position_y_ < move_offset_y_min_) || (current_position_y_ > move_offset_y_max_)) 
                     && 
                     ((current_position_z_ > move_offset_z_max_) || ((current_position_z_ - move_offset_z_max_) < EPS)) )
@@ -184,42 +184,15 @@ public:
           }
           else
           {
-            std::cerr << "do nothing " << std::endl; 
+            std::cerr << "Not an option" << std::endl; 
           }
         }
         move_head("base_link", move_offset_x_, current_position_y_, current_position_z_);
+        cloud_received_ = false; 
         ros::spinOnce();
         loop_rate.sleep();
        }
     }
-
-
-    //         else
-    //       {
-    //         //move_offset_y_max_ = move_offset_y_max_ - step_y_;
-    //         current_position_y_ = current_position_y_ + step_y_;
-    //       }
-    //       move_head("base_link", move_offset_x_, current_position_y_, current_position_z_);
-    //       cloud_received_ = false; 
-    //     }
-    //     else if (((current_position_y_ - move_offset_y_min_) < EPS 
-    //               && (current_position_z_ - move_offset_z_min_) < EPS)
-    //              || ((current_position_y_ - move_offset_y_max_) < EPS 
-    //                  && (current_position_z_ - move_offset_z_min_) < EPS))
-    //     {
-    //       ROS_INFO("DONE - exiting");
-    //       ros::shutdown();
-    //       //break;
-    //     }
-    //     else
-    //     {
-    //       ROS_INFO("Waiting to get pointcloud");
-    //     }  
-    //     ros::spinOnce();
-    //     loop_rate.sleep();
-    //   }
-    //   }
-    // }
 };
 
 int main(int argc, char** argv)
