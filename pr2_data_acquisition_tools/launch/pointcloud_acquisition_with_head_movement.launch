@@ -11,5 +11,6 @@
     <param name="move_offset_x" value="1.0" />
     <param name="bag_name" value="bosch_kitchen_tr.bag" />
     <param name="to_frame" value="base_link" />
+    <param name="rate" value="1.0" />
   </node>
 </launch>
