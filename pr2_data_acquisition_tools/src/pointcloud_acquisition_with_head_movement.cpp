@@ -32,6 +32,8 @@ class PointCloudCapturer
   double move_offset_y_min_, move_offset_y_max_, step_y_; 
   double move_offset_z_min_, move_offset_z_max_, step_z_;
   double move_offset_x_;
+  double current_position_y_, current_position_z_;
+  std::string start_point_;
   boost::thread spin_thread_;
   double EPS;
   rosbag::Bag bag_;
@@ -63,6 +65,10 @@ public:
     nh_.param("move_offset_x", move_offset_x_, 1.0);
     nh_.param("bag_name", bag_name_, std::string("bosch_kitchen_tr.bag"));
     nh_.param("to_frame", to_frame_, std::string("base_link"));
+    //can take 00, 01, 10 and 11 values
+    nh_.param("start_point", start_point_, std::string("00"));
+    current_position_y_ = move_offset_y_min_;
+    current_position_z_ = move_offset_z_max_;
 
     move_head("base_link", move_offset_x_, move_offset_y_max_, move_offset_z_max_);
     EPS = 1e-5;
@@ -150,24 +156,31 @@ public:
     ros::Rate loop_rate(5);
     while (ros::ok())
     {
-      if (cloud_received_ && (move_offset_y_max_ > move_offset_y_min_ || (move_offset_y_max_ - move_offset_y_min_ < EPS))
-          && (move_offset_z_max_ > move_offset_z_min_ || (move_offset_z_max_ - move_offset_z_min_ < EPS)))
+      if (cloud_received_ && (current_position_y_ > move_offset_y_min_ || (current_position_y_ - move_offset_y_min_ < EPS))
+          && (current_position_z_ > move_offset_z_min_ || (current_position_z_ - move_offset_z_min_ < EPS)))
       {
-        if (move_offset_y_max_ < move_offset_y_min_ && move_offset_z_max_ != move_offset_z_min_)
+        //if (move_offset_y_max_ < move_offset_y_min_ && move_offset_z_max_ != move_offset_z_min_)
+	if ((current_position_y_ < move_offset_y_min_ //||  (current_position_y_ - move_offset_y_min_ < EPS) 
+	     || current_position_y_ > move_offset_y_max_ //|| (current_position_z_ - move_offset_z_min_ < EPS)
+	     ) 
+	    && move_offset_z_max_ != move_offset_z_min_)
         {
-          move_offset_z_max_ = move_offset_z_max_ - step_z_;
-          step_y_ = - step_y_;
+          current_position_z_ = current_position_z_ - step_z_;
+          step_y_ = -step_y_;
           //move_offset_y_max_ = -move_offset_y_min_;
         }
         else
         {
-          move_offset_y_max_ = move_offset_y_max_ - step_y_;
+          //move_offset_y_max_ = move_offset_y_max_ - step_y_;
+	  current_position_y_ = current_position_y_ + step_y_;
         }
-        move_head("base_link", move_offset_x_, move_offset_y_max_, move_offset_z_max_);
+        move_head("base_link", move_offset_x_, current_position_y_, current_position_z_);
         cloud_received_ = false; 
       }
-      else if ((move_offset_y_max_ - move_offset_y_min_) < EPS 
-               && (move_offset_z_max_ - move_offset_z_min_) < EPS)
+      else if (((current_position_y_ - move_offset_y_min_) < EPS 
+		&& (current_position_z_ - move_offset_z_min_) < EPS)
+	       || ((current_position_y_ - move_offset_y_max_) < EPS 
+		   && (current_position_z_ - move_offset_z_min_) < EPS))
       {
         ROS_INFO("DONE - exiting");
         ros::shutdown();
@@ -175,8 +188,8 @@ public:
       }
       else
       {
-        ROS_INFO("Waiting to get pointcloud");
-    	}  
+	ROS_INFO("Waiting to get pointcloud");
+      }  
       ros::spinOnce();
       loop_rate.sleep();
     }
