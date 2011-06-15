@@ -89,10 +89,10 @@ public:
       //transform to target frame
       bool found_transform = tf_.waitForTransform(pc->header.frame_id, to_frame_,
                                                   pc->header.stamp, ros::Duration(10.0));
+      tf::StampedTransform transform;
       if (found_transform)
       {
         //ROS_ASSERT_MSG(found_transform, "Could not transform to camera frame");
-        tf::StampedTransform transform;
         tf_.lookupTransform(to_frame_,pc->header.frame_id, pc->header.stamp, transform);
         pcl_ros::transformPointCloud(to_frame_, transform, *pc, transformed_cloud_);
         ROS_DEBUG("[TransformPointcloudNode:] Point cloud published in frame %s", transformed_cloud_.header.frame_id.c_str());
@@ -103,6 +103,9 @@ public:
         return;
       }
       bag_.write(input_cloud_topic_, transformed_cloud_.header.stamp, transformed_cloud_);
+      geometry_msgs::TransformStamped transform_msg;
+      tf::transformStampedTFToMsg(transform, transform_msg);
+      bag_.write(input_cloud_topic_ + "/transform", transform_msg.header.stamp, transform_msg);
       ROS_INFO("Wrote cloud to %s", bag_name_.c_str());
       cloud_received_ = true;
     }
