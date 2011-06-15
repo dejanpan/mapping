@@ -10,20 +10,27 @@
 //for writting to bag
 #include <rosbag/bag.h>
 
+//msg synchronisation
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
 
 #include "pcl_ros/transforms.h"
 #include <tf/transform_listener.h>
 
 // Our Action interface type, provided as a typedef for convenience
 typedef actionlib::SimpleActionClient<pr2_controllers_msgs::PointHeadAction> PointHeadClient;
+  typedef message_filters::sync_policies::ApproximateTime< sensor_msgs::PointCloud2,
+                                                           sensor_msgs::Image > MySyncPolicy;
 
 class PointCloudCapturer
 {
   //subscribers/publishers
   ros::NodeHandle nh_;
-  ros::Subscriber cloud_sub_;
+  //ros::Subscriber cloud_sub_;
 
-  std::string input_cloud_topic_;
+  std::string input_cloud_topic_, input_image_topic_;
   bool cloud_received_, move_head_;
 
   //point head client
@@ -41,12 +48,26 @@ class PointCloudCapturer
   tf::TransformListener tf_;
   std::string to_frame_;
   sensor_msgs::PointCloud2 transformed_cloud_;
+  //ros::Subscriber camera_sub_;
+
+  message_filters::Subscriber<sensor_msgs::Image> camera_sub_;
+  message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub_;
+  message_filters::Synchronizer<MySyncPolicy> synchronizer_;
+  message_filters::Connection sync_connection_;
+
 public:
   PointCloudCapturer(ros::NodeHandle &n)
-    :  nh_(n)
+    :  nh_(n), synchronizer_( MySyncPolicy(1), cloud_sub_, camera_sub_)
   {
     nh_.param("input_cloud_topic", input_cloud_topic_, std::string("/kinect_head/camera/rgb/points"));
-    cloud_sub_= nh_.subscribe (input_cloud_topic_, 10, &PointCloudCapturer::cloud_cb, this);
+    nh_.param("input_image_topic", input_image_topic_, std::string("/kinect_head/camera/rgb/image_color"));
+//    cloud_sub_= nh_.subscribe (input_cloud_topic_, 10, &PointCloudCapturer::cloud_cb, this);
+  
+    camera_sub_.subscribe( nh_, input_image_topic_, 1000 );
+    cloud_sub_.subscribe( nh_, input_cloud_topic_, 1000 );
+
+    sync_connection_ = synchronizer_.registerCallback( &PointCloudCapturer::callback, this );
+
     ROS_INFO("[PointCloudColorizer:] Subscribing to cloud topic %s", input_cloud_topic_.c_str());
 
     point_head_client_ = new PointHeadClient("/head_traj_controller/point_head_action", true);
@@ -82,7 +103,8 @@ public:
     delete point_head_client_;
   }
 
-  void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pc)
+//  void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pc)
+  void callback (const sensor_msgs::PointCloud2ConstPtr& pc, const sensor_msgs::ImageConstPtr& im)
   {
     if (!cloud_received_)
     {
