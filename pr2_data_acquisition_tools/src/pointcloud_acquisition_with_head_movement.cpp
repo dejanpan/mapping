@@ -31,7 +31,7 @@ class PointCloudCapturer
   //ros::Subscriber cloud_sub_;
 
   std::string input_cloud_topic_, input_image_topic_;
-  bool cloud_received_, move_head_;
+  bool cloud_and_image_received_, move_head_;
 
   //point head client
   PointHeadClient* point_head_client_;
@@ -76,7 +76,7 @@ public:
     {
       ROS_INFO("Waiting for the point_head_action server to come up");
     }
-    cloud_received_ = false;
+    cloud_and_image_received_ = false;
     nh_.param("move_offset_y_min", move_offset_y_min_, -1.5);
     nh_.param("move_offset_y_max", move_offset_y_max_, 1.5);
     nh_.param("step_y", step_y_, 0.3);
@@ -106,8 +106,9 @@ public:
 //  void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& pc)
   void callback (const sensor_msgs::PointCloud2ConstPtr& pc, const sensor_msgs::ImageConstPtr& im)
   {
-    if (!cloud_received_)
+    if (!cloud_and_image_received_)
     {
+      //Write cloud
       //transform to target frame
       bool found_transform = tf_.waitForTransform(pc->header.frame_id, to_frame_,
                                                   pc->header.stamp, ros::Duration(10.0));
@@ -121,7 +122,7 @@ public:
       }
       else
       {
-        ROS_ERROR("No transform found!!!");
+        ROS_ERROR("No transform for pointcloud found!!!");
         return;
       }
       bag_.write(input_cloud_topic_, transformed_cloud_.header.stamp, transformed_cloud_);
@@ -129,7 +130,27 @@ public:
       tf::transformStampedTFToMsg(transform, transform_msg);
       bag_.write(input_cloud_topic_ + "/transform", transform_msg.header.stamp, transform_msg);
       ROS_INFO("Wrote cloud to %s", bag_name_.c_str());
-      cloud_received_ = true;
+
+      //Write image
+      found_transform = tf_.waitForTransform(im->header.frame_id, to_frame_,
+                                                  im->header.stamp, ros::Duration(10.0));
+      if (found_transform)
+      {
+        //ROS_ASSERT_MSG(found_transform, "Could not transform to camera frame");
+        tf_.lookupTransform(to_frame_,im->header.frame_id, im->header.stamp, transform);
+        ROS_DEBUG("[TransformPointcloudNode:] Point cloud published in frame %s", im->header.frame_id.c_str());
+      }
+      else
+      {
+        ROS_ERROR("No transform for image found!!!");
+        return;
+      }
+      bag_.write(input_image_topic_, im->header.stamp, im);
+      tf::transformStampedTFToMsg(transform, transform_msg);
+      bag_.write(input_image_topic_ + "/transform", transform_msg.header.stamp, transform_msg);
+      ROS_INFO("Wrote image to %s", bag_name_.c_str());
+
+      cloud_and_image_received_ = true;
     }
   }
 
@@ -179,7 +200,7 @@ public:
       ros::Rate loop_rate(rate_);
       while (ros::ok())
       {
-        if (cloud_received_)
+        if (cloud_and_image_received_)
         {
           // swing left to right and right to left by increasing y step
           if ( (((move_offset_y_min_ < current_position_y_) && (current_position_y_ < move_offset_y_max_))
@@ -216,7 +237,7 @@ public:
             ROS_INFO("Not an option");
           }
           move_head("base_link", current_position_x_, current_position_y_, current_position_z_);
-          cloud_received_ = false; 
+          cloud_and_image_received_ = false; 
         }
         ros::spinOnce();
         loop_rate.sleep();
