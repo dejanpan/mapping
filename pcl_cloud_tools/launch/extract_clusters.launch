@@ -1,18 +1,16 @@
 <launch>
   <node pkg="pcl_cloud_tools" type="extract_clusters_on_table" name="extract_clusters" output="screen" respawn="true" args="free_view">
     <!-- Parameters --> 
+    <param name="z_max_limit" value="0.9"/>
     <param name="cluster_min_height" value="0.02"/>
     <param name="cluster_max_height" value="0.3"/>	
     <param name="object_cluster_tolerance" value="0.05"/>
     <param name="object_cluster_min_size" value="50"/>
     <param name="nr_cluster" value="1"/>
-    <param name="object_cluster_tolerance" value="0.05"/>
     <param name="downsample" value="true"/>
-    <param name="voxel_size" value="0.02"/>
-    <param name="save_to_files" value="false"/>
-    <param name="base_link_head_tilt_link_angle" value="0.90"/>
-    <param name="point_cloud_topic" value="/camera/rgb/points"/>
+    <param name="voxel_size" value="0.01"/>
+    <param name="save_to_files" value="true"/>
+    <param name="point_cloud_topic" value="/kinect_head/camera/rgb/points"/>
     <param name="publish_token" value="false"/>	
-    <param name="padding" value="0.75"/>		
  </node>
 </launch>
