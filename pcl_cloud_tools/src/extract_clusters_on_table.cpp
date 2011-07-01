@@ -104,7 +104,7 @@ public:
       //min 100 points
       nh_.param("object_cluster_min_size", object_cluster_min_size_, 100);
       nh_.param("k", k_, 10);
-      nh_.param("base_link_head_tilt_link_angle", base_link_head_tilt_link_angle_, 0.8);
+//      nh_.param("base_link_head_tilt_link_angle", base_link_head_tilt_link_angle_, 0.8);
       nh_.param("min_table_inliers", min_table_inliers_, 100);
       nh_.param("cluster_min_height", cluster_min_height_, 0.02);
       nh_.param("cluster_max_height", cluster_max_height_, 0.4);
@@ -145,6 +145,8 @@ public:
       as_.start();
       //needed for the synchronization of callbacks
       got_cluster_ = action_called_ = false;
+      //plane prior (for seg_.setAxis)
+      base_link_head_tilt_link_angle_ = 0.9;
     }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -254,9 +256,28 @@ private:
   void 
   clustersCallback (const sensor_msgs::PointCloud2ConstPtr &cloud_in)
     {
+      //get the transform between base_link and cloud frame
+      bool found_transform = tf_listener_.waitForTransform("head_tilt_link", "base_link",
+                                                           cloud_in->header.stamp, ros::Duration(1.0));
+      tf::StampedTransform transform;
+      if (found_transform)
+      {
+        tf_listener_.lookupTransform("head_tilt_link", "base_link", cloud_in->header.stamp, transform);
+        double yaw, pitch, roll;
+        transform.getBasis().getEulerZYX(yaw, pitch, roll);
+        ROS_INFO("[ExtractCluster:] Transform X: %f Y: %f Z: %f R: %f P: %f Y: %f", transform.getOrigin().getX(), 
+                 transform.getOrigin().getY(), transform.getOrigin().getZ(), roll, pitch, yaw);
+        base_link_head_tilt_link_angle_ = pitch;
+      }
+      else
+      {
+        ROS_INFO("[ExtractCluster:] No transform found between %s and base_link", cloud_in->header.frame_id.c_str());
+        return;
+      }
+      
       if (!got_cluster_ || !action_called_)
       {
-        ROS_INFO_STREAM ("[" << getName ().c_str () << "] Received cloud: cloud time " << cloud_in->header.stamp);
+        ROS_INFO_STREAM ("[" << getName ().c_str () << "] Received cloud: in frame " << cloud_in->header.frame_id);
       
         // Downsample + filter the input dataser
         PointCloud cloud_raw, cloud;
@@ -350,8 +371,11 @@ private:
             if (save_to_files_)
             {
               sprintf (object_name_angle, "%04d",  i);
-              ROS_INFO("Saving cluster to: %s_%s.pcd", object_name_.c_str(), object_name_angle);
-              pcd_writer_.write (object_name_ + "_" +  object_name_angle + ".pcd", cloud_object_clustered, true);
+//              pcd_writer_.write (object_name_ + "_" +  object_name_angle + ".pcd", cloud_object_clustered, true);
+              std::stringstream ss;
+              ss << cloud_in->header.stamp;
+              ROS_INFO("Saving cluster to: %s_%s.pcd", object_name_.c_str(), ss.str().c_str());
+              pcd_writer_.write (object_name_ + "_" +  ss.str () + ".pcd", cloud_object_clustered, true);
             }
             cloud_objects_pub_.publish (cloud_object_clustered);
             cloud_object_clustered_array_.push_back(cloud_object_clustered);
