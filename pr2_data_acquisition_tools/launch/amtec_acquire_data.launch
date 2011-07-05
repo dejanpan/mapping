@@ -1,0 +1,21 @@
+<launch>
+  <!-- Acquires point cloud data using kinect sensor mounted on PR2's head -->
+  <node pkg="pr2_data_acquisition_tools" type="amtec_acquire_data" name="amtec_acquire_data" output="screen">
+    <param name="z_max_limit" value="0.9"/>
+    <param name="cluster_min_height" value="0.02"/>
+    <param name="cluster_max_height" value="0.3"/>	
+    <param name="object_cluster_tolerance" value="0.05"/>
+    <param name="object_cluster_min_size" value="50"/>
+    <param name="nr_cluster" value="1"/>
+    <param name="downsample" value="true"/>
+    <param name="voxel_size" value="0.01"/>
+    <param name="save_to_files" value="true"/>
+    <param name="point_cloud_topic" value="/kinect_head/camera/rgb/points"/>
+    <param name="publish_token" value="false"/>	
+  </node>
+
+  <node pkg="amtec" type="amtec_node" name="amtec_node" output="screen">
+    <param name="port" value="/dev/ttyUSB3"/>	
+  </node>
+
+</launch>
