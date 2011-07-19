@@ -47,7 +47,6 @@ class PointCloudCapturer
   std::string bag_name_;
   tf::TransformListener tf_;
   std::string to_frame_;
-  sensor_msgs::PointCloud2 transformed_cloud_;
   //ros::Subscriber camera_sub_;
 
   message_filters::Subscriber<sensor_msgs::Image> camera_sub_;
@@ -117,15 +116,14 @@ public:
       {
         //ROS_ASSERT_MSG(found_transform, "Could not transform to camera frame");
         tf_.lookupTransform(to_frame_,pc->header.frame_id, pc->header.stamp, transform);
-        pcl_ros::transformPointCloud(to_frame_, transform, *pc, transformed_cloud_);
-        ROS_DEBUG("[TransformPointcloudNode:] Point cloud published in frame %s", transformed_cloud_.header.frame_id.c_str());
+        ROS_DEBUG("[TransformPointcloudNode:] Point cloud published in frame %s", pc->header.frame_id.c_str());
       }
       else
       {
         ROS_ERROR("No transform for pointcloud found!!!");
         return;
       }
-      bag_.write(input_cloud_topic_, transformed_cloud_.header.stamp, transformed_cloud_);
+      bag_.write(input_cloud_topic_, pc->header.stamp, *pc);
       geometry_msgs::TransformStamped transform_msg;
       tf::transformStampedTFToMsg(transform, transform_msg);
       bag_.write(input_cloud_topic_ + "/transform", transform_msg.header.stamp, transform_msg);
