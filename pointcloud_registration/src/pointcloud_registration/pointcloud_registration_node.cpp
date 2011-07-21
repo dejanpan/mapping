@@ -33,6 +33,9 @@
  * the result on /merged_pointcloud (PointCloud2)
  */
 
+#include <pcl/point_types.h>
+#include <pcl/features/feature.h>
+#include <pcl/ros/conversions.h>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/PointCloud.h>
@@ -87,8 +90,6 @@ class PointCloudRegistration
     Eigen::Matrix4f getOverlapTransformation();
     void publishPointCloud(pcl::PointCloud<pcl::PointNormal> &pointcloud);
     pcl::PointCloud<pcl::PointNormal> convertFromMsgToPointCloud(const sensor_msgs::PointCloud2& pointcloud_msg);
-
-    void run();
 
   private:
     ros::NodeHandle nh_;
@@ -340,8 +341,8 @@ PointCloudRegistration::PointCloudRegistration(): nh_("~")
   icp_.setTransformationEpsilon(epsilon_transformation_);
   icp_.setParameters(radius_icp_, max_nn_icp_, epsilon_z_, epsilon_curvature_, curvature_check_ );
   ROS_INFO("pointcloud_registration node is up and running.");
-
-  run();
+  pointcloud_subscriber_ = nh_.subscribe(subscribe_pointcloud_topic_, 100, &PointCloudRegistration::pointcloudRegistrationCallBack, this);
+  pointcloud_merged_publisher_ = nh_.advertise<sensor_msgs::PointCloud2>(merged_pointcloud_topic_, 100);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -349,16 +350,6 @@ PointCloudRegistration::PointCloudRegistration(): nh_("~")
 PointCloudRegistration::~PointCloudRegistration()
 {
   ROS_INFO("Shutting down pointcloud_registration node!.");
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void PointCloudRegistration::run()
-{
-  pointcloud_subscriber_ = nh_.subscribe(subscribe_pointcloud_topic_, 100, &PointCloudRegistration::pointcloudRegistrationCallBack, this);
-  pointcloud_merged_publisher_ = nh_.advertise<sensor_msgs::PointCloud2>(merged_pointcloud_topic_, 100);
-
-  ros::spin();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -414,5 +405,6 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "pointcloud_registration");
     PointCloudRegistration pointcloud_registration;
+    ros::spin();
     return(0);
 }
