@@ -38,7 +38,6 @@
 #include <pcl/io/pcd_io.h>
 #include "pcl/kdtree/kdtree_flann.h" //for the kdtree
 #include <pcl/features/normal_3d_omp.h>
-#include <pcl/features/normal_3d_tbb.h>
 
 #include "fstream" //for writing a ppm image file
 

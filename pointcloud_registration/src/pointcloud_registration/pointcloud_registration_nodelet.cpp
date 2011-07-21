@@ -51,7 +51,6 @@
 #include "pcl/registration/transforms.h" //for the transformation function
 
 #include <pcl/features/normal_3d_omp.h>
-#include <pcl/features/normal_3d_tbb.h>
 #include <pluginlib/class_list_macros.h>
 
 #include <pointcloud_registration/icp/icp_correspondences_check.h> //for icp

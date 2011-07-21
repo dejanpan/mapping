@@ -50,7 +50,6 @@
 #include "pcl/registration/transforms.h" //for the transformation function
 
 #include <pcl/features/normal_3d_omp.h>
-#include <pcl/features/normal_3d_tbb.h>
 
 #include <pointcloud_registration/icp/icp_correspondences_check.h> //for icp
 #include <algorithm> //for the sort and unique functions
