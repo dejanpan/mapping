@@ -96,7 +96,7 @@ class PointCloudRegistration:public pcl_ros::PCLNodelet
     using pcl_ros::PCLNodelet::pnh_;
   private:
     //ros::NodeHandle nh_;
-    std::string merged_pointcloud_topic_, subscribe_pointcloud_topic_, frame_id_;
+  std::string merged_pointcloud_topic_, subscribe_pointcloud_topic_, frame_id_, field_;
     int max_number_of_iterations_icp_, max_nn_icp_, max_nn_overlap_;
     double downsample_leafsize_, epsilon_z_, epsilon_curvature_, epsilon_transformation_, radius_icp_, radius_overlap_;
     bool downsample_pointcloud_before_, downsample_pointcloud_after_, filter_outliers_, curvature_check_;
@@ -334,6 +334,7 @@ void PointCloudRegistration::onInit()
   pnh_->param("epsilon_z", epsilon_z_, 0.001);
   pnh_->param("epsilon_curvature", epsilon_curvature_, 0.001);
   pnh_->param("epsilon_transformation", epsilon_transformation_, 1e-6);
+  pnh_->param("field", field_, std::string("z"));
 
   firstCloudReceived_ = false;
   secondCloudReceived_ = false;
@@ -344,7 +345,7 @@ void PointCloudRegistration::onInit()
   scan_index_ = 0;
   icp_.setMaximumIterations(max_number_of_iterations_icp_);
   icp_.setTransformationEpsilon(epsilon_transformation_);
-  icp_.setParameters(radius_icp_, max_nn_icp_, epsilon_z_, epsilon_curvature_, curvature_check_ );
+  icp_.setParameters(radius_icp_, max_nn_icp_, epsilon_z_, epsilon_curvature_, curvature_check_, field_);
   ROS_INFO("pointcloud_registration node is up and running.");
 
   ros::spin();
