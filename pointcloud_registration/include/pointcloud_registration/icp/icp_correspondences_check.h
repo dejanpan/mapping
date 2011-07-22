@@ -71,14 +71,14 @@ namespace pcl
     int max_nn_;
     bool curvature_check_;
     time_t start, end;
-
+    std::string field_;
     public:
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Empty constructor. */
 
       IterativeClosestPointCorrespondencesCheck(){reg_name_ = "IterativeClosestPointCorrespondencesCheck";};
       /** \brief Parameterized constructor. */
-      IterativeClosestPointCorrespondencesCheck ( double radius, int max_nn, double epsilon_z, double epsilon_curvature, bool curvature_check):
+    IterativeClosestPointCorrespondencesCheck ( double radius, int max_nn, double epsilon_z, double epsilon_curvature, bool curvature_check):
                                                   radius_(radius),
                                                   max_nn_(max_nn),
                                                   epsilon_z_(epsilon_z),
@@ -131,7 +131,7 @@ namespace pcl
             for(size_t i = 0 ; i < nn_indices.size(); i++)
             {
               // Check if the difference between the z coordinates is within user specified limits
-              if(fabs(output.points[idx].z - this->target_->points[nn_indices[i]].z) < epsilon_z_)
+              if(fabs(output.points[idx].z - this->target_->points[nn_indices[i]].z) < epsilon_z_ && field_ == "z") 
               {
                 if(curvature_check_)
                 {
@@ -145,6 +145,41 @@ namespace pcl
                 source_corresp.points.push_back (output.points[idx]);
                 model_corresp.points.push_back (this->target_->points[nn_indices[i]]);
                 break;
+              }
+              else if(fabs(output.points[idx].y - this->target_->points[nn_indices[i]].y) < epsilon_z_ && field_ == "y") 
+              {
+                if(curvature_check_)
+                {
+                  // Check if the difference between the curvature values is within user specified limits
+                  if(fabs(output.points[idx].curvature - this->target_->points[nn_indices[i]].curvature) > epsilon_curvature_)
+                  {
+                    continue;
+                  }
+                }
+                count++;
+                source_corresp.points.push_back (output.points[idx]);
+                model_corresp.points.push_back (this->target_->points[nn_indices[i]]);
+                break;
+              }
+              else if(fabs(output.points[idx].x - this->target_->points[nn_indices[i]].x) < epsilon_z_ && field_ == "x") 
+              {
+                if(curvature_check_)
+                {
+                  // Check if the difference between the curvature values is within user specified limits
+                  if(fabs(output.points[idx].curvature - this->target_->points[nn_indices[i]].curvature) > epsilon_curvature_)
+                  {
+                    continue;
+                  }
+                }
+                count++;
+                source_corresp.points.push_back (output.points[idx]);
+                model_corresp.points.push_back (this->target_->points[nn_indices[i]]);
+                break;
+              }
+              else
+              {
+                ROS_WARN("field_ %s. fabs(output.points[idx].x - this->target_->points[nn_indices[i]].x): %lf", field_.c_str(), fabs(output.points[idx].x - this->target_->points[nn_indices[i]].x));
+                return;
               }
             }
           }
@@ -161,8 +196,26 @@ namespace pcl
           // Zero the Z coordinate value since the robot moved in the x & y plane only
           for(size_t i = 0; i < source_corresp.points.size(); i++)
           {
-            source_corresp.points[i].z = 0.0;
-            model_corresp.points[i].z = 0.0;
+            if (field_ == "z")
+            {
+              source_corresp.points[i].z = 0.0;
+              model_corresp.points[i].z = 0.0;
+            }
+            else if (field_ == "y")
+            {
+              source_corresp.points[i].y = 0.0;
+              model_corresp.points[i].y = 0.0;
+            }
+            else if (field_ == "x")
+            {
+              source_corresp.points[i].x = 0.0;
+              model_corresp.points[i].x = 0.0;
+            }
+            else
+            {
+              ROS_WARN("Unknown field_ %s. Has to be x, y or z.", field_.c_str());
+              return;
+            }
           }
 
 	  start = time(NULL);
@@ -270,13 +323,14 @@ namespace pcl
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief A simple method to set the parameters */
-      void setParameters( double radius, int max_nn, double epsilon_z, double epsilon_curvature, bool curvature_check)
+    void setParameters( double radius, int max_nn, double epsilon_z, double epsilon_curvature, bool curvature_check, std::string field)
       {
         radius_ = radius;
         max_nn_ = max_nn;
         epsilon_z_ = epsilon_z;
         epsilon_curvature_ = epsilon_curvature;
         curvature_check_ = curvature_check;
+        field_ = field;
       }
   };
 }
