@@ -120,7 +120,7 @@ Eigen::Matrix4f PointCloudRegistration::getOverlapTransformation()
 
   if(firstCloudReceived_ == false && secondCloudReceived_ == false )
   {
-    ROS_ERROR("getOverlapTransformation called before receiving atleast 2 point clouds");
+    ROS_ERROR("[PointCloudRegistration:] getOverlapTransformation called before receiving atleast 2 point clouds");
     exit(1);
   }
   else
@@ -149,7 +149,8 @@ Eigen::Matrix4f PointCloudRegistration::getOverlapTransformation()
       }
     }
     end = time(NULL);
-    ROS_INFO("[PointCloudRegistration:] found overlapping points in %d seconds", (int)(end - start));
+    ROS_INFO("[PointCloudRegistration:] found overlapping points in %d seconds with points %ld", 
+             (int)(end - start), overlap_current.points.size());
 
     //Getting rid of duplicate points in model
     ROS_INFO("[PointCloudRegistration:] removing duplicate points");
@@ -201,7 +202,7 @@ void PointCloudRegistration::publishPointCloud(pcl::PointCloud<pcl::PointNormal>
 
     pointcloud_merged_publisher_.publish(mycloud);
   }
-  ROS_INFO("Merged Point cloud published");
+  ROS_INFO("[PointCloudRegistration:] Merged Point cloud published");
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -350,7 +351,7 @@ PointCloudRegistration::PointCloudRegistration(): nh_("~")
   icp_.setMaximumIterations(max_number_of_iterations_icp_);
   icp_.setTransformationEpsilon(epsilon_transformation_);
   icp_.setParameters(radius_icp_, max_nn_icp_, epsilon_z_, epsilon_curvature_, curvature_check_, field_);
-  ROS_INFO("pointcloud_registration node is up and running.");
+  ROS_INFO("[PointCloudRegistration:] pointcloud_registration node is up and running.");
   pointcloud_subscriber_ = nh_.subscribe(subscribe_pointcloud_topic_, 100, &PointCloudRegistration::pointcloudRegistrationCallBack, this);
   pointcloud_merged_publisher_ = nh_.advertise<sensor_msgs::PointCloud2>(merged_pointcloud_topic_, 100);
 }
@@ -359,7 +360,7 @@ PointCloudRegistration::PointCloudRegistration(): nh_("~")
 
 PointCloudRegistration::~PointCloudRegistration()
 {
-  ROS_INFO("Shutting down pointcloud_registration node!.");
+  ROS_INFO("[PointCloudRegistration:] Shutting down pointcloud_registration node!.");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -372,18 +373,18 @@ void PointCloudRegistration::pointcloudRegistrationCallBack(const sensor_msgs::P
   if( firstCloudReceived_ == false)
   {
     pointcloud2_current_ = convertFromMsgToPointCloud(pointcloud_msg);
-    ROS_INFO("Size of point cloud received = %d", (int) pointcloud2_current_.points.size());
+    ROS_INFO("[PointCloudRegistration:] Size of point cloud received = %d", (int) pointcloud2_current_.points.size());
     firstCloudReceived_ = true;
-    ROS_INFO("Received first point cloud.");
+    ROS_INFO("[PointCloudRegistration:] Received first point cloud with points %ld:", pointcloud2_current_.points.size());
     kdtree_.setInputCloud(boost::make_shared< pcl::PointCloud < pcl::PointNormal> > (pointcloud2_current_));
 
     pointcloud2_merged_ = pointcloud2_current_;
   }
   else if( secondCloudReceived_ == false)
   {
-    ROS_INFO("Received second point cloud.");
     secondCloudReceived_ = true;
     pointcloud2_current_ = convertFromMsgToPointCloud(pointcloud_msg);
+    ROS_INFO("[PointCloudRegistration:] Received second point cloud with points %ld.", pointcloud2_current_.points.size());
 
     //Now we get the transformation from the overlapped regions of the 2 point clouds
     final_transformation_= getOverlapTransformation();
@@ -393,8 +394,8 @@ void PointCloudRegistration::pointcloudRegistrationCallBack(const sensor_msgs::P
   }
   else
   {
-    ROS_INFO("Received point cloud number: %d", counter_);
     pointcloud2_current_ = convertFromMsgToPointCloud(pointcloud_msg);
+    ROS_INFO("[PointCloudRegistration:] Received point cloud number: %d with points %ld.", counter_, pointcloud2_current_.points.size());
     kdtree_.setInputCloud(boost::make_shared< pcl::PointCloud < pcl::PointNormal> > (pointcloud2_merged_));
 
     //Now we get the transformation from the overlapped regions of the 2 point clouds
@@ -406,30 +407,30 @@ void PointCloudRegistration::pointcloudRegistrationCallBack(const sensor_msgs::P
 
   publishPointCloud(pointcloud2_merged_);
   end = time(NULL);
-  ROS_INFO("Time taken: %d seconds", (int)(end - start));
+  ROS_INFO("[PointCloudRegistration:] Time taken: %d seconds", (int)(end - start));
 
 }
 
    void PointCloudRegistration::spin (int argc, char** argv)
     {
-      ROS_INFO("argc %d", argc);
       for (int i = 1; i < argc; i++)
       {
-        ROS_INFO("Reading pcd %s.", argv[i]);
+        ROS_INFO("[PointCloudRegistration:] New Cloud ===========================");
+        ROS_INFO("[PointCloudRegistration:] Reading pcd %s.", argv[i]);
         pcl::PCDReader reader;
         pcl::PointCloud<PointT> input_cloud;
         sensor_msgs::PointCloud2 input_cloud_msg;
         reader.read (argv[i], input_cloud);
         if (input_cloud.points.size() == 0)
         {
-          ROS_ERROR("input_cloud.points.size(): %ld", input_cloud.points.size());
+          ROS_ERROR("[PointCloudRegistration:] input_cloud.points.size(): %ld", input_cloud.points.size());
           continue;
         }
         pcl::toROSMsg(input_cloud, input_cloud_msg);
         pointcloudRegistrationCallBack (input_cloud_msg);
         ros::spinOnce();
       }
-      ROS_INFO("Done");
+      ROS_INFO("[PointCloudRegistration:] Done and Exiting!");
       ros::shutdown();
     }
 
