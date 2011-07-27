@@ -105,7 +105,7 @@ namespace pcl
         this->nr_iterations_ = 0;
         while (!this->converged_)           // repeat until convergence
         {
-          //ROS_INFO("Iteration Number: %d", this->nr_iterations_);
+          ROS_INFO("[IterativeClosestPointCorrespondencesCheck:] Iteration Number: %d", this->nr_iterations_);
           // Point cloud containing the correspondences of each point in <input, indices>
           PointCloudTarget model_corresp;
           PointCloudSource source_corresp;
@@ -178,8 +178,13 @@ namespace pcl
               }
               else
               {
-                ROS_WARN("field_ %s. fabs(output.points[idx].x - this->target_->points[nn_indices[i]].x): %lf", field_.c_str(), fabs(output.points[idx].x - this->target_->points[nn_indices[i]].x));
-                return;
+                if (field_ == "x")
+                  ROS_WARN("[IterativeClosestPointCorrespondencesCheck:] field_ %s. fabs(output.points[idx].x - this->target_->points[nn_indices[i]].x): %lf", field_.c_str(), fabs(output.points[idx].x - this->target_->points[nn_indices[i]].x));
+                if (field_ == "y")
+                  ROS_WARN("[IterativeClosestPointCorrespondencesCheck:] field_ %s. fabs(output.points[idx].y - this->target_->points[nn_indices[i]].y): %lf", field_.c_str(), fabs(output.points[idx].y - this->target_->points[nn_indices[i]].y));
+                if (field_ == "z")
+                  ROS_WARN("[IterativeClosestPointCorrespondencesCheck:] field_ %s. fabs(output.points[idx].z - this->target_->points[nn_indices[i]].z): %lf", field_.c_str(), fabs(output.points[idx].z - this->target_->points[nn_indices[i]].z));
+//                return;
               }
             }
           }
@@ -189,7 +194,7 @@ namespace pcl
 
           if(source_corresp.points.size() == 0)
           {
-            ROS_ERROR("[pointcloud_registration::%s::computeTransformation] No correspondences found. Try to relax the conditions.", getClassName().c_str());
+            ROS_ERROR("[IterativeClosestPointCorrespondencesCheck:] No correspondences found. Try to relax the conditions.", getClassName().c_str());
             return;
           }
           //ROS_INFO("Correspondences: %d", count);
@@ -213,7 +218,7 @@ namespace pcl
             }
             else
             {
-              ROS_WARN("Unknown field_ %s. Has to be x, y or z.", field_.c_str());
+              ROS_WARN("[IterativeClosestPointCorrespondencesCheck:] Unknown field_ %s. Has to be x, y or z.", field_.c_str());
               return;
             }
           }
@@ -236,13 +241,13 @@ namespace pcl
           //ROS_INFO("Transformation change: %f", transformation_change);
 
           this->nr_iterations_++;
-	  ROS_INFO("[IterativeClosestPointCorrespondencesCheck] number of iterations: %d", this->nr_iterations_);
+          ROS_INFO("[IterativeClosestPointCorrespondencesCheck] number of iterations: %d", this->nr_iterations_);
           // Check for convergence
           if (this->nr_iterations_ >= this->max_iterations_ ||
               transformation_change < this->transformation_epsilon_)
           {
             this->converged_ = true;
-            ROS_INFO ("[pcl::%s::computeTransformation] Convergence reached. Number of iterations: %d out of %d. Transformation difference: %g",
+            ROS_INFO ("[IterativeClosestPointCorrespondencesCheck:] Convergence reached. Number of iterations: %d out of %d. Transformation difference: %g",
                       getClassName().c_str(), this->nr_iterations_, this->max_iterations_, fabs ((this->transformation_ - this->previous_transformation_).sum ()));
           }
         }
