@@ -333,8 +333,8 @@ PointCloudRegistration::PointCloudRegistration(): nh_("~")
   nh_.param("max_number_of_iterations_icp", max_number_of_iterations_icp_, 100);
   nh_.param("max_nn_icp", max_nn_icp_, 100);
   nh_.param("max_nn_overlap", max_nn_overlap_, 10);
-  nh_.param("radius_icp", radius_icp_, 0.01);
-  nh_.param("radius_overlap", radius_overlap_, 0.01);
+  nh_.param("radius_icp", radius_icp_, 0.005);
+  nh_.param("radius_overlap", radius_overlap_, 0.005);
   nh_.param("curvature_check", curvature_check_, true);
   nh_.param("downsample_pointcloud_before", downsample_pointcloud_before_, false);
   nh_.param("downsample_pointcloud_after", downsample_pointcloud_after_, false);
@@ -342,7 +342,7 @@ PointCloudRegistration::PointCloudRegistration(): nh_("~")
   nh_.param("downsample_leafsize", downsample_leafsize_, 0.05);
   nh_.param("epsilon_z", epsilon_z_, 0.001);
   nh_.param("epsilon_curvature", epsilon_curvature_, 0.001);
-  nh_.param("epsilon_transformation", epsilon_transformation_, 1e-6);
+  nh_.param("epsilon_transformation", epsilon_transformation_, 1e-8);
   nh_.param("field", field_, std::string("x"));
   firstCloudReceived_ = false;
   secondCloudReceived_ = false;

@@ -178,13 +178,13 @@ namespace pcl
               }
               else
               {
-                if (field_ == "x")
-                  ROS_WARN("[IterativeClosestPointCorrespondencesCheck:] field_ %s. fabs(output.points[idx].x - this->target_->points[nn_indices[i]].x): %lf", field_.c_str(), fabs(output.points[idx].x - this->target_->points[nn_indices[i]].x));
-                if (field_ == "y")
-                  ROS_WARN("[IterativeClosestPointCorrespondencesCheck:] field_ %s. fabs(output.points[idx].y - this->target_->points[nn_indices[i]].y): %lf", field_.c_str(), fabs(output.points[idx].y - this->target_->points[nn_indices[i]].y));
-                if (field_ == "z")
-                  ROS_WARN("[IterativeClosestPointCorrespondencesCheck:] field_ %s. fabs(output.points[idx].z - this->target_->points[nn_indices[i]].z): %lf", field_.c_str(), fabs(output.points[idx].z - this->target_->points[nn_indices[i]].z));
-//                return;
+//                 if (field_ == "x")
+//                   ROS_WARN("[IterativeClosestPointCorrespondencesCheck:] field_ %s. fabs(output.points[idx].x - this->target_->points[nn_indices[i]].x): %lf", field_.c_str(), fabs(output.points[idx].x - this->target_->points[nn_indices[i]].x));
+//                 if (field_ == "y")
+//                   ROS_WARN("[IterativeClosestPointCorrespondencesCheck:] field_ %s. fabs(output.points[idx].y - this->target_->points[nn_indices[i]].y): %lf", field_.c_str(), fabs(output.points[idx].y - this->target_->points[nn_indices[i]].y));
+//                 if (field_ == "z")
+//                   ROS_WARN("[IterativeClosestPointCorrespondencesCheck:] field_ %s. fabs(output.points[idx].z - this->target_->points[nn_indices[i]].z): %lf", field_.c_str(), fabs(output.points[idx].z - this->target_->points[nn_indices[i]].z));
+// //                return;
               }
             }
           }
