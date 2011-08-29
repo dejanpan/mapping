@@ -19,6 +19,7 @@
 #include "pcl_ros/transforms.h"
 #include <tf/transform_listener.h>
 
+#include "sensor_msgs/CameraInfo.h"
 // Our Action interface type, provided as a typedef for convenience
 typedef actionlib::SimpleActionClient<pr2_controllers_msgs::PointHeadAction> PointHeadClient;
   typedef message_filters::sync_policies::ApproximateTime< sensor_msgs::PointCloud2,
@@ -30,7 +31,7 @@ class PointCloudCapturer
   ros::NodeHandle nh_;
   //ros::Subscriber cloud_sub_;
 
-  std::string input_cloud_topic_, input_image_topic_;
+  std::string input_cloud_topic_, input_image_topic_, input_camera_info_topic_;
   bool cloud_and_image_received_, move_head_;
 
   //point head client
@@ -53,13 +54,14 @@ class PointCloudCapturer
   message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub_;
   message_filters::Synchronizer<MySyncPolicy> synchronizer_;
   message_filters::Connection sync_connection_;
-
+  sensor_msgs::CameraInfoConstPtr cam_info_;
 public:
   PointCloudCapturer(ros::NodeHandle &n)
     :  nh_(n), synchronizer_( MySyncPolicy(1), cloud_sub_, camera_sub_)
   {
     nh_.param("input_cloud_topic", input_cloud_topic_, std::string("/kinect_head/camera/rgb/points"));
     nh_.param("input_image_topic", input_image_topic_, std::string("/kinect_head/camera/rgb/image_color"));
+    nh_.param("input_camera_info_topic", input_camera_info_topic_, std::string("/kinect_head/camera/rgb/camera_info"));
 //    cloud_sub_= nh_.subscribe (input_cloud_topic_, 10, &PointCloudCapturer::cloud_cb, this);
   
     camera_sub_.subscribe( nh_, input_image_topic_, 1000 );
@@ -148,6 +150,9 @@ public:
       bag_.write(input_image_topic_ + "/transform", transform_msg.header.stamp, transform_msg);
       ROS_INFO("Wrote image to %s", bag_name_.c_str());
 
+      cam_info_ = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(input_camera_info_topic_);
+      bag_.write(input_camera_info_topic_, cam_info_->header.stamp, cam_info_);
+      ROS_INFO("Wrote Camera Info to %s", bag_name_.c_str());
       cloud_and_image_received_ = true;
     }
   }
