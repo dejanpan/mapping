@@ -13,7 +13,7 @@
   <depend package="tf"/>
   <depend package="pcl_ros"/>
   <depend package="message_filters"/>
-  <depend package="amtec"/>
+  <!-- <depend package="amtec"/> -->
   <depend package="pcl_cloud_tools"/>
 </package>
 
