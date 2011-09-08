@@ -20,6 +20,7 @@
 #include <tf/transform_listener.h>
 
 #include "sensor_msgs/CameraInfo.h"
+#include "sensor_msgs/Image.h"
 // Our Action interface type, provided as a typedef for convenience
 typedef actionlib::SimpleActionClient<pr2_controllers_msgs::PointHeadAction> PointHeadClient;
   typedef message_filters::sync_policies::ApproximateTime< sensor_msgs::PointCloud2,
