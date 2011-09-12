@@ -125,7 +125,7 @@ public:
   image_geometry::PinholeCameraModel cam_model_;
   pcl::PCDWriter pcd_writer_;
   pcl::ConvexHull<pcl::PointXYZ> chull_;
-  
+  std::string kinect_rgb_optical_frame_;
   ////////////////////////////////////////////////////////////////////////////////
   HandleDetectorNANNode  (ros::NodeHandle &n) : nh_(n)
   {
@@ -195,6 +195,7 @@ public:
     nh_.param("x_handle_position_offset", x_handle_position_offset_, 0.03);
     //expected height of handle in base_link
     nh_.param("z_handle_position", z_handle_position_, 0.75);
+    nh_.param("kinect_rgb_optical_frame", kinect_rgb_optical_frame_, std::string("/openni_rgb_optical_frame"));
   }
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -217,7 +218,7 @@ public:
   int findBiggestPlane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_cloud, Rect & roi, pcl::PointIndices & indices_biggest_plane)
   {
     //transform point cloud into base_link
-    bool found_transform = tf_listener_.waitForTransform("kinect_head_rgb_optical_frame", "base_link",
+    bool found_transform = tf_listener_.waitForTransform(pcl_cloud->header.frame_id, "base_link",
 							 pcl_cloud->header.stamp, ros::Duration(1.0));
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_temp (new pcl::PointCloud<pcl::PointXYZRGB>());
     if (found_transform)
