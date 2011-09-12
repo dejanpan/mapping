@@ -1,0 +1,6 @@
+#run handle_detector_nan server
+$ ./bin/handle_detector_nan _input_cloud_topic:=/kinect_head/camera/rgb/points 
+z_handle_position:=0.75
+
+#run handle_detector_nan client
+$ rosservice call /handle_detector_nan/get_handles_nan
