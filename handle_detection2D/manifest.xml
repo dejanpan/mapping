@@ -1,0 +1,20 @@
+<package>
+  <description brief="handle_detector2D">
+
+     handle_detector2D
+
+  </description>
+  <author>Dejan Pangercic</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/handle_detector2D</url>
+  <depend package="opencv2"/>
+  <depend package="roscpp"/>
+  <depend package="pcl"/>
+  <depend package="bullet"/>
+  <depend package="pcl_ros"/>
+  <depend package="image_geometry"/>
+  <depend package="visualization_msgs"/>
+</package>
+
+
