@@ -680,7 +680,7 @@ public:
     vector_point_avg.clear();
     for (uint i = 0; i < temp.size(); i++)
       {
-	if (((z_handle_position_ - 0.05) < temp[i].point.z) && ((z_handle_position_ + 0.05) > temp[i].point.z ))
+	if (((z_handle_position_ - 0.1) < temp[i].point.z) && ((z_handle_position_ + 0.1) > temp[i].point.z ))
 	  {
 	    temp[i].point.x -= x_handle_position_offset_;
 	    vector_point_avg.push_back (temp[i]);
