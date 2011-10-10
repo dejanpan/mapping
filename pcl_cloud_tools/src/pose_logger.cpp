@@ -46,13 +46,6 @@
 // ROS core
 #include <ros/ros.h>
 
-#include "pcl/io/pcd_io.h"
-#include "pcl/point_types.h"
-#include "pcl_ros/transforms.h"
-
-//#include "pcl_ros/publisher.h"
-//#include "pcl_ros/subscriber.h"
-
 #include <tf/transform_listener.h>
 
 #include <fstream>
@@ -66,13 +59,11 @@ protected:
   ros::NodeHandle nh_;
 
 public:
-  string output_cloud_topic_, input_cloud_topic_, to_frame_;
 
   ros::Subscriber sub_;
   ros::Publisher pub_;
   tf::TransformListener tf_;
 
-  sensor_msgs::PointCloud2 output_cloud_;
   ////////////////////////////////////////////////////////////////////////////////
   PoseLogger  (ros::NodeHandle &n) : nh_(n)
   {
