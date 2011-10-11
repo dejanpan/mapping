@@ -1,0 +1,15 @@
+
+<launch>
+
+  <node pkg="pcl_ros" type="pcd_to_pointcloud" name="pcd_to_pointcloud" args="$(find pcl_cloud_algos)/data/icedtea-ascii.pcd 1" output="screen" respawn="true">
+    <remap from="/cloud_pcd" to="/merged_cloud" />
+  </node>
+
+  <node pkg="pcl_cloud_algos" type="box_fit2_node" name="box_fit2_node" output="screen" respawn="true">
+  </node>
+
+  <node pkg="rviz" type="rviz" name="rviz"> 
+  </node>
+
+</launch>
+
