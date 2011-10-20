@@ -32,8 +32,8 @@
 //    kdtree_ = new cloud_kdtree::KdTreeANN (normals_);
 //  }
 
-//template<typename Normal> void
-//    pcl::SACModelOrientation<Normal>::getMinAndMax (boost::shared_ptr<pcl::PointCloud<pcl::PointT> > cloud, Eigen::VectorXf *model_coefficients, std::vector<int> *inliers, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances)
+//template<typename NormalT> void
+//    pcl::SACModelOrientation<NormalT>::getMinAndMax (boost::shared_ptr<pcl::PointCloud<PointT> > cloud, Eigen::VectorXf *model_coefficients, std::vector<int> *inliers, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances)
 //  {
 //    // Initialize result vectors
 //    min_max_indices.resize (6);
@@ -65,8 +65,8 @@
 //    }
 //  }
 
-template <typename Normal> void
-    pcl::SACModelOrientation<Normal>::getSamples (int &iterations, std::vector<int> &samples)
+template <typename NormalT> void
+    pcl::SACModelOrientation<NormalT>::getSamples (int &iterations, std::vector<int> &samples)
   {
     // We're assuming that indices_ have already been set in the constructor
     ROS_ASSERT (indices_->size () != 0);
@@ -86,8 +86,8 @@ template <typename Normal> void
     // TODO: repeat this and test coefficients until ok? increase iterations?
   }
 
-template <typename Normal> bool
-   pcl::SACModelOrientation<Normal>::computeModelCoefficients (const std::vector<int> &samples, Eigen::VectorXf &model_coefficients)
+template <typename NormalT> bool
+   pcl::SACModelOrientation<NormalT>::computeModelCoefficients (const std::vector<int> &samples, Eigen::VectorXf &model_coefficients)
   {
     // Check whether the given index samples can form a valid model
     // compute the model coefficients from these samples
@@ -106,8 +106,8 @@ template <typename Normal> bool
     return true; // return value not used anyways
   }
 
-template <typename Normal> void
-   pcl::SACModelOrientation<Normal>::refitModel (const std::vector<int> &inliers, std::vector<double> &refit_coefficients)
+template <typename NormalT> void
+   pcl::SACModelOrientation<NormalT>::refitModel (const std::vector<int> &inliers, std::vector<double> &refit_coefficients)
   {
     // Compute average direction
     refit_coefficients.resize (4);
@@ -166,8 +166,8 @@ template <typename Normal> void
     //*/
   }
 
-template <typename Normal>  void
-   pcl::SACModelOrientation<Normal>::selectWithinDistance (const Eigen::VectorXf &model_coefficients, double threshold, std::vector<int> &inliers)
+template <typename NormalT>  void
+   pcl::SACModelOrientation<NormalT>::selectWithinDistance (const Eigen::VectorXf &model_coefficients, double threshold, std::vector<int> &inliers)
   {
     //std::cerr << model_coefficients[3] << ": " << model_coefficients[0] << " " << model_coefficients[1] << " " << model_coefficients[2] << " ";
 
@@ -199,14 +199,14 @@ template <typename Normal>  void
     // TODO: pre-check?
 
     // List of points matching the model's back side (opposing normal to the sample)
-    pcl::Normal tmp;
+    NormalT tmp;
     tmp.normal[0] = -input_->points[model_coefficients[3]].normal[0];
     tmp.normal[1] = -input_->points[model_coefficients[3]].normal[1];
     tmp.normal[2] = -input_->points[model_coefficients[3]].normal[2];
     kdtree_->radiusSearch (tmp, radius, back_indices_, points_sqr_distances_, input_->points.size ());
 
     // Number of points matching the model's left side (perpendicular normal to the sample)
-    pcl::Normal zXn; // cross product of axis and original normal (==-tmp)
+    NormalT zXn; // cross product of axis and original normal (==-tmp)
     zXn.normal[0] = axis_[1]*(-tmp.normal[2]) - axis_[2]*(-tmp.normal[1]);
     zXn.normal[1] = axis_[2]*(-tmp.normal[0]) - axis_[0]*(-tmp.normal[2]);
     zXn.normal[2] = axis_[0]*(-tmp.normal[1]) - axis_[1]*(-tmp.normal[0]);

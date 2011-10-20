@@ -31,30 +31,31 @@ namespace pcl
 
   /** \brief A Sample Consensus Model class for determining the 2 perpendicular directions to which most normals align.
    */
-  template <typename Normal>
-  class SACModelOrientation : public SampleConsensusModel<Normal>
+  template <typename NormalT>
+  class SACModelOrientation : public SampleConsensusModel<NormalT>
   {
     public:
-      using SampleConsensusModel<Normal>::input_;
-      using SampleConsensusModel<Normal>::indices_;
+      using SampleConsensusModel<NormalT>::input_;
+      using SampleConsensusModel<NormalT>::indices_;
 
-      typedef typename SampleConsensusModel<Normal>::PointCloud Normals;
-      typedef typename SampleConsensusModel<Normal>::PointCloudPtr NormalsPtr;
-      typedef typename SampleConsensusModel<Normal>::PointCloudConstPtr NormalsConstPtr;
+      typedef typename SampleConsensusModel<NormalT>::PointCloud Normals;
+      typedef typename SampleConsensusModel<NormalT>::PointCloudPtr NormalsPtr;
+      typedef typename SampleConsensusModel<NormalT>::PointCloudConstPtr NormalsConstPtr;
 
       typedef boost::shared_ptr<SACModelOrientation> Ptr;
+      typedef boost::shared_ptr<const SACModelOrientation> ConstPtr;
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      /** \brief The fixed axis. */
+      /** \brief The fixed axis (the sides will be perpendicular to it). */
       Eigen::Vector3f axis_;
 
       /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Constructor for base SACModelOrientation
         * \param cloud the input point cloud dataset
         */
-      SACModelOrientation (const NormalsConstPtr &cloud) : SampleConsensusModel<Normal> (cloud)
+      SACModelOrientation (const NormalsConstPtr &cloud) : SampleConsensusModel<NormalT> (cloud)
       {
-        kdtree_ = boost::make_shared<KdTreeFLANN <Normal> >();
+        kdtree_ = boost::make_shared<KdTreeFLANN <NormalT> >();
         kdtree_->setInputCloud  (cloud);
       }
 
@@ -63,11 +64,21 @@ namespace pcl
         * \param cloud the input point cloud dataset
         * \param indices a vector of point indices to be used from \a cloud
         */
-      SACModelOrientation (const NormalsConstPtr &cloud, const std::vector<int> &indices) : SampleConsensusModel<Normal> (cloud, indices)
+      SACModelOrientation (const NormalsConstPtr &cloud, const std::vector<int> &indices) : SampleConsensusModel<NormalT> (cloud, indices)
       {
-        kdtree_ = boost::make_shared<KdTreeFLANN <Normal> >();
+        kdtree_ = boost::make_shared<KdTreeFLANN <NormalT> >();
         kdtree_->setInputCloud (cloud);
       }
+
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      /** \brief Specify the fixed "up" axis (the sides will be perpendicular to it).
+        * \param axis a direction in 3D space.
+        */
+      inline void setAxis (Eigen::Vector3f axis) { axis_ = axis; }
+
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      /** \brief Get the fixed axis. */
+      inline Eigen::Vector3f getAxis () const { return (axis_); }
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Get a random point and return its index.
@@ -163,7 +174,7 @@ namespace pcl
     private:
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Kd-Tree for searching in normal space. */
-      KdTreeFLANN<pcl::Normal>::Ptr kdtree_;
+      typename KdTreeFLANN<NormalT>::Ptr kdtree_;
       std::vector<int> front_indices_;
       std::vector<int>  back_indices_;
       std::vector<int>  left_indices_;
