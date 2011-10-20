@@ -13,6 +13,7 @@
   <depend stack="ros"/> <!-- roscpp, std_msgs --> 
   <depend stack="image_common"/> <!-- image_transport -->
   <depend stack="common_msgs"/> <!-- geometry_msgs, sensor_msgs --> 
+  <depend stack="ias-common"/> <!-- triangle_mesh_msgs --> 
   <depend stack="octomap_mapping"/> <!-- octomap, octomap_server --> 
   <depend stack="geometry"/> <!-- tf, bullet --> 
   <depend stack="ias_visualization"/> <!-- triangle_mesh_msgs --> 
