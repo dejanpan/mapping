@@ -1,5 +1,5 @@
 # .PCD v.7 - Point Cloud Data file format
-FIELDS x y z intensities index line rgb normal_x normal_y normal_z curvature f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15 f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26 f27 point_label point_class
+FIELDS x y z intensity index line rgb normal_x normal_y normal_z curvature f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15 f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26 f27 point_label point_class
 SIZE 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
 TYPE F F F F F F F F F F F F F F F F F F F F F F F F F F F F F F F F F F F F F F F F
 COUNT 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
