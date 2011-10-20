@@ -61,11 +61,10 @@ class RobustBoxEstimation : public BoxEstimation
   RobustBoxEstimation ()
   {
     eps_angle_ = 0.1; // approximately 6 degrees
-    success_probability_ = 0.99; // default value from SAC
-    //success_probability_ = 0.9999; // increasing the default precision of RANSAC a bit, maybe it helps
+    success_probability_ = 1; // for using SAC replace with 0.99
   };
 
-  void getMinAndMax(Eigen::VectorXf model_coefficients, boost::shared_ptr<pcl::SACModelOrientation<pcl::Normal> > model, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances);
+  void getMinAndMax(Eigen::VectorXf model_coefficients, boost::shared_ptr<pcl::SACModelOrientation<pcl::PointXYZINormal> > model, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances);
 
   // Overwritten Cloud Algo stuff
   void pre  ();
