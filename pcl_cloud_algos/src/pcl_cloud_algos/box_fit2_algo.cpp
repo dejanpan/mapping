@@ -43,7 +43,7 @@ using namespace pcl_cloud_algos;
 using namespace pcl;
 //using namespace sample_consensus;
 
-void RobustBoxEstimation::getMinAndMax(Eigen::VectorXf model_coefficients, boost::shared_ptr<SACModelOrientation<Normal> > model, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances)
+void RobustBoxEstimation::getMinAndMax(Eigen::VectorXf model_coefficients, boost::shared_ptr<SACModelOrientation<PointXYZINormal> > model, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances)
 {
 
   boost::shared_ptr<vector<int> > inliers = model->getIndices();
@@ -116,18 +116,18 @@ bool RobustBoxEstimation::find_model(boost::shared_ptr<const pcl::PointCloud <pc
   //cloud_geometry::nearest::computeCentroid (*cloud, box_centroid_);
 
   // TODO template SAC model and method on input point type and get rid of this
-  PointCloud<Normal> nrmls ;
-  nrmls.header = cloud->header;
-  nrmls.points.resize(cloud->points.size());
-  for(size_t i = 0 ; i < cloud->points.size(); i++)
-  {
-    nrmls.points[i].normal[0] = cloud->points[i].normal[0];
-    nrmls.points[i].normal[1] = cloud->points[i].normal[1];
-    nrmls.points[i].normal[2] = cloud->points[i].normal[2];
-  }
+//  PointCloud<Normal> nrmls ;
+//  nrmls.header = cloud->header;
+//  nrmls.points.resize(cloud->points.size());
+//  for(size_t i = 0 ; i < cloud->points.size(); i++)
+//  {
+//    nrmls.points[i].normal[0] = cloud->points[i].normal[0];
+//    nrmls.points[i].normal[1] = cloud->points[i].normal[1];
+//    nrmls.points[i].normal[2] = cloud->points[i].normal[2];
+//  }
 
-  // Create model
-  SACModelOrientation<Normal>::Ptr model (new SACModelOrientation<Normal> (nrmls.makeShared ()));
+  // Create model - @NOTE: the model needs/uses only pcl::Normal but this way it is simpler to use
+  SACModelOrientation<PointXYZINormal>::Ptr model (new SACModelOrientation<PointXYZINormal> (cloud));
   model->axis_[0] = 0 ;
   model->axis_[1] = 0 ;
   model->axis_[2] = 1 ;
@@ -143,7 +143,7 @@ bool RobustBoxEstimation::find_model(boost::shared_ptr<const pcl::PointCloud <pc
     if (verbosity_level_ > 0) ROS_INFO ("[RobustBoxEstimation] Using RANSAC with stop probability of %g and model refinement", success_probability_);
 
     // Fit model using RANSAC
-    RandomSampleConsensus<Normal>::Ptr sac (new RandomSampleConsensus<Normal> (model, eps_angle_));
+    RandomSampleConsensus<PointXYZINormal>::Ptr sac (new RandomSampleConsensus<PointXYZINormal> (model, eps_angle_));
     sac->setProbability (success_probability_);
     if (!sac->computeModel ())
     {
