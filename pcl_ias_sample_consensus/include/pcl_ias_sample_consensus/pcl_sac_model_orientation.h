@@ -29,6 +29,31 @@ namespace pcl
     return r * cos(angle) + (axis.cross(r)) * sin(angle) + axis * axis.dot(r) * (1-cos(angle));
   }
 
+  /** \brief Making sure that only the normals are used from the input point cloud. */
+  template <typename NormalT>
+  class NormalPointRepresentation : public PointRepresentation <NormalT>
+  {
+    public:
+
+      using PointRepresentation<NormalT>::nr_dimensions_;
+
+      typedef boost::shared_ptr<NormalPointRepresentation<NormalT> > Ptr;
+      typedef boost::shared_ptr<const NormalPointRepresentation<NormalT> > ConstPtr;
+
+      NormalPointRepresentation ()
+      {
+        nr_dimensions_ = 3;
+      }
+
+      virtual void
+      copyToFloatArray (const NormalT &p, float * out) const
+      {
+        out[0] = p.normal[0];
+        out[1] = p.normal[1];
+        out[2] = p.normal[2];
+      }
+  };
+
   /** \brief A Sample Consensus Model class for determining the 2 perpendicular directions to which most normals align.
    */
   template <typename NormalT>
@@ -51,12 +76,14 @@ namespace pcl
 
       /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Constructor for base SACModelOrientation
-        * \param cloud the input point cloud dataset
+        * \param cloud the input point cloud dataset of type pcl::Normal
         */
       SACModelOrientation (const NormalsConstPtr &cloud) : SampleConsensusModel<NormalT> (cloud)
       {
+        typename NormalPointRepresentation<NormalT>::ConstPtr repr (new NormalPointRepresentation<NormalT>);
         kdtree_ = boost::make_shared<KdTreeFLANN <NormalT> >();
-        kdtree_->setInputCloud  (cloud);
+        kdtree_->setPointRepresentation (repr);
+        kdtree_->setInputCloud (cloud);
       }
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////

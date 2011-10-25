@@ -224,7 +224,11 @@ template <typename NormalT>  void
     inliers.insert (inliers.end (), left_indices_.begin (), left_indices_.end ());
     inliers.insert (inliers.end (), right_indices_.begin (), right_indices_.end ());
 
-    /// @NOTE: inliers are actually indexes in the indices_ array!
+    // TODO if inlier threshold is too large, there could be overlaps
+    //sort (inliers.begin (), inliers.end ());
+    //inliers.erase (unique (inliers.begin (), inliers.end ()), inliers.end ());
+
+    /// @NOTE: inliers are actually indexes in the indices_ array! TODO still true?
   }
 
 //////////////////////////////////////////////////////////////////////////
