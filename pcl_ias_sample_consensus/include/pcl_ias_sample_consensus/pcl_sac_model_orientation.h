@@ -76,7 +76,7 @@ namespace pcl
 
       /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Constructor for base SACModelOrientation
-        * \param cloud the input point cloud dataset of type pcl::Normal
+        * \param cloud the input point cloud dataset containing the normals
         */
       SACModelOrientation (const NormalsConstPtr &cloud) : SampleConsensusModel<NormalT> (cloud)
       {
