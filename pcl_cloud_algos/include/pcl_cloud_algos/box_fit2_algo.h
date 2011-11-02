@@ -61,7 +61,7 @@ class RobustBoxEstimation : public BoxEstimation
   RobustBoxEstimation ()
   {
     eps_angle_ = 0.1; // approximately 6 degrees
-    success_probability_ = 1; // for using SAC replace with 0.99
+    success_probability_ = 0.99; // use 1 for exhaustive search
   };
 
   void getMinAndMax(Eigen::VectorXf model_coefficients, boost::shared_ptr<pcl::SACModelOrientation<pcl::PointXYZINormal> > model, std::vector<int> &min_max_indices, std::vector<float> &min_max_distances);
