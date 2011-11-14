@@ -273,7 +273,7 @@ private:
         return;
       }
       //For Debug
-      //cloud_pub_.publish(*cloud_hull);
+      cloud_pub_.publish(*cloud_hull);
       //return;
 
       // Extract the handle clusters using a polygonal prism 
