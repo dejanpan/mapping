@@ -1,0 +1,7 @@
+ias_projected_light/src/ias_projected_light
+kinect_cleanup/src/kinect_cleanup
+build/
+bin/
+srv_gen/
+msg_gen/
+lib/
