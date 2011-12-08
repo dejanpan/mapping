@@ -58,7 +58,7 @@ int main(int argc, char** argv)
     f2d::BruteForceMatcher<f2d::L2<float> > descriptorMatcher;
 
     /*****************************************************
-     *TODO 1: read in img1 and img1 from the command line
+     *TODO 1: read in img1 and img2 from the command line
      */
 
 
