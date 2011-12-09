@@ -210,7 +210,7 @@ Eigen::Vector3i extractGRSDSignature21(pcl::VoxelGrid<T> grid, pcl::PointCloud<T
       for (int j=i; j<NR_CLASS+1; j++)
     /* for (int i=1; i<NR_CLASS+1; i++) */
     /*   for (int j=0; j<=i; j++) */
-    cloud_grsd.points[ h ].histogram[nrf++] = transition_matrix[ h ](i, j); //@TODO: resize point cloud
+    cloud_grsd.points[ h ].histogram[nrf++] = transition_matrix[ h ](i, j) + transition_matrix[ h ](j, i);
   }
 
   feature.resize( hist_num );
