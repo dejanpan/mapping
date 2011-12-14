@@ -157,13 +157,10 @@ private:
   clustersCallback (pcl_cloud_tools::GetClusters::Request & req,
                     pcl_cloud_tools::GetClusters::Response & res)
     {
-      std::cerr << "in cb" << std::endl;
       sensor_msgs::PointCloud2ConstPtr cloud_in;
       cloud_in =
       ros::topic::waitForMessage<sensor_msgs::PointCloud2>(point_cloud_topic,
                                                        ros::Duration(5.0));
-      std::cerr << "after wfm" << std::endl;
-
       if (cloud_in->width == 0)
         {
           res.result = false;
