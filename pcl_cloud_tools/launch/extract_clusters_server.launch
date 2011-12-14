@@ -1,5 +1,5 @@
 <launch>
-  <node pkg="pcl_cloud_tools" type="extract_clusters_on_table" name="extract_clusters" output="screen" respawn="true" args="free_view">
+  <node pkg="pcl_cloud_tools" type="extract_clusters_on_table_server" name="extract_clusters_server" output="screen" respawn="true">
     <!-- Parameters --> 
     <param name="z_max_limit" value="0.9"/>
     <param name="cluster_min_height" value="0.02"/>
