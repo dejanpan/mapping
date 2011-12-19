@@ -132,11 +132,12 @@ public:
     nh_.param("cluster_max_height", cluster_max_height_, 0.1);
 
     nh_.param("handle_cluster_tolerance", handle_cluster_tolerance_, 0.02);
-    nh_.param("handle_cluster_min_size", handle_cluster_min_size_, 40);
+    nh_.param("handle_cluster_min_size", handle_cluster_min_size_,40);
+    nh_.param("handle_cluster_max_size", handle_cluster_max_size_, 500);
     handle_cluster_.setClusterTolerance (handle_cluster_tolerance_);
     handle_cluster_.setSpatialLocator(0);
     handle_cluster_.setMinClusterSize (handle_cluster_min_size_);
-    //    cluster_.setMaxClusterSize (object_cluster_max_size_);
+    handle_cluster_.setMaxClusterSize (handle_cluster_max_size_);
     cluster_.setSearchMethod (clusters_tree_);
     
     seg_line_.setModelType (pcl::SACMODEL_LINE);
