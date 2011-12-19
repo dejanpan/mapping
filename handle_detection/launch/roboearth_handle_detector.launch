@@ -17,6 +17,7 @@
          x_max_limit_: 1.5
          cluster_max_height: .1
          handle_cluster_min_size: 20
+         handle_cluster_max_size: 500   
       </rosparam>
     </node>
 
