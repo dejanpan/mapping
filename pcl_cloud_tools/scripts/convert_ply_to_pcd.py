@@ -31,7 +31,7 @@ def convertPLYToPCD(mesh_file, pcd_file):
         if write_points and points_counter < nr_points:
             points_counter = points_counter + 1
             output.write(" ".join(s.split(" ", 3)[:3]))
-            output.write("\n")
+#            output.write("\n")
     input.close()
     output.close()
 
