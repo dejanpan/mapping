@@ -157,11 +157,12 @@ private:
   clustersCallback (pcl_cloud_tools::GetClusters::Request & req,
                     pcl_cloud_tools::GetClusters::Response & res)
     {
-      sensor_msgs::PointCloud2ConstPtr cloud_in;
-      cloud_in =
-      ros::topic::waitForMessage<sensor_msgs::PointCloud2>(point_cloud_topic,
-                                                       ros::Duration(5.0));
-      if (cloud_in->width == 0)
+      //sensor_msgs::PointCloud2ConstPtr cloud_in;
+	  sensor_msgs::PointCloud2 cloud_in;
+      cloud_in = req.input_cloud;
+      //ros::topic::waitForMessage<sensor_msgs::PointCloud2>(point_cloud_topic,
+                                                     //  ros::Duration(5.0));
+      if (cloud_in.width == 0)
         {
           res.result = false;
           return false;
@@ -169,11 +170,11 @@ private:
 
       //get the transform between base_link and cloud frame
       bool found_transform = tf_listener_.waitForTransform("head_tilt_link", "base_link",
-                                                           cloud_in->header.stamp, ros::Duration(1.0));
+                                                           cloud_in.header.stamp, ros::Duration(1.0));
       tf::StampedTransform transform;
       if (found_transform)
       {
-        tf_listener_.lookupTransform("head_tilt_link", "base_link", cloud_in->header.stamp, transform);
+        tf_listener_.lookupTransform("head_tilt_link", "base_link", cloud_in.header.stamp, transform);
         double yaw, pitch, roll;
         transform.getBasis().getEulerZYX(yaw, pitch, roll);
         ROS_INFO("[ExtractCluster:] Transform X: %f Y: %f Z: %f R: %f P: %f Y: %f", transform.getOrigin().getX(), 
@@ -182,16 +183,16 @@ private:
       }
       else
       {
-        ROS_INFO("[ExtractCluster:] No transform found between %s and base_link", cloud_in->header.frame_id.c_str());
+        ROS_INFO("[ExtractCluster:] No transform found between %s and base_link", cloud_in.header.frame_id.c_str());
         res.result = false;
         return false;
       }
       
-        ROS_INFO_STREAM ("[" << getName ().c_str () << "] Received cloud: in frame " << cloud_in->header.frame_id);
+        ROS_INFO_STREAM ("[" << getName ().c_str () << "] Received cloud: in frame " << cloud_in.header.frame_id);
       
         // Downsample + filter the input dataser
         PointCloud cloud_raw, cloud;
-        pcl::fromROSMsg (*cloud_in, cloud_raw);
+        pcl::fromROSMsg (cloud_in, cloud_raw);
         vgrid_.setInputCloud (boost::make_shared<PointCloud> (cloud_raw));
         vgrid_.filter (cloud);
         //cloud_pub_.publish(cloud);
@@ -272,27 +273,29 @@ private:
         cluster_.setSearchMethod (clusters_tree_);
         cluster_.extract (clusters);
 
-        res.clusters.clear();
+        res.clusters_indices.clear();
+        res.clusters_indices = clusters;
+        res.result = true;
 
-        pcl::PointCloud<Point> cloud_object_clustered;
-        if (int(clusters.size()) >= 0)
-        {
-          for (int i = 0; i < clusters.size(); i++)
-          {
-            pcl::copyPointCloud (cloud_object, clusters[i], cloud_object_clustered);
-            cloud_objects_pub_.publish (cloud_object_clustered);
-            sensor_msgs::PointCloud2 cluster;
-            pcl::toROSMsg (cloud_object_clustered, cluster);
-            res.clusters.push_back(cluster);
-          }
-          res.result = true;
-        }
-        else
-        {
-          ROS_ERROR("Only %ld clusters found with size > %d points",
-                    clusters.size(), object_cluster_min_size_);
-          res.result = false;
-        }
+//        pcl::PointCloud<Point> cloud_object_clustered;
+//        if (int(clusters.size()) >= 0)
+//        {
+//          for (int i = 0; i < clusters.size(); i++)
+//          {
+//            pcl::copyPointCloud (cloud_object, clusters[i], cloud_object_clustered);
+//            cloud_objects_pub_.publish (cloud_object_clustered);
+//            sensor_msgs::PointCloud2 cluster;
+//            pcl::toROSMsg (cloud_object_clustered, cluster);
+//            res.clusters.push_back(cluster);
+//          }
+//          res.result = true;
+//        }
+//        else
+//        {
+//          ROS_ERROR("Only %ld clusters found with size > %d points",
+//                    clusters.size(), object_cluster_min_size_);
+//          res.result = false;
+//        }
         return true;
     }
 
