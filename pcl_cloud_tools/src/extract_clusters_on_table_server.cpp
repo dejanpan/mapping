@@ -252,30 +252,39 @@ private:
         // ---[ Get the objects on top of the table
         pcl::PointIndices cloud_object_indices;
         prism_.setHeightLimits (cluster_min_height_, cluster_max_height_);
-        prism_.setInputCloud (boost::make_shared<PointCloud> (cloud));
+        prism_.setInputCloud (boost::make_shared<PointCloud> (cloud_raw));
         prism_.setInputPlanarHull (boost::make_shared<PointCloud>(cloud_hull));
         prism_.segment (cloud_object_indices);
         //ROS_INFO ("[%s] Number of object point indices: %d.", getName ().c_str (), (int)cloud_object_indices.indices.size ());
       
-        pcl::PointCloud<Point> cloud_object;
-        pcl::ExtractIndices<Point> extract_object_indices;
-        extract_object_indices.setInputCloud (boost::make_shared<PointCloud> (cloud));
-        extract_object_indices.setIndices (boost::make_shared<const pcl::PointIndices> (cloud_object_indices));
-        extract_object_indices.filter (cloud_object);
+        //pcl::PointCloud<Point> cloud_object;
+        //pcl::ExtractIndices<Point> extract_object_indices;
+        //extract_object_indices.setInputCloud (boost::make_shared<PointCloud> (cloud));
+        //extract_object_indices.setIndices (boost::make_shared<const pcl::PointIndices> (cloud_object_indices));
+        //extract_object_indices.filter (cloud_object);
         //ROS_INFO ("[%s ] Publishing number of object point candidates: %d.", getName ().c_str (), 
         //        (int)cloud_objects.points.size ());
       
       
         std::vector<pcl::PointIndices> clusters;
-        cluster_.setInputCloud (boost::make_shared<PointCloud>(cloud_object));
+        cluster_.setInputCloud (boost::make_shared<PointCloud>(cloud_raw));
+        cluster_.setIndices (boost::make_shared<const pcl::PointIndices> (cloud_object_indices));
         cluster_.setClusterTolerance (object_cluster_tolerance_);
         cluster_.setMinClusterSize (object_cluster_min_size_);
         cluster_.setSearchMethod (clusters_tree_);
         cluster_.extract (clusters);
 
         res.clusters_indices.clear();
-        res.clusters_indices = clusters;
-        res.result = true;
+
+        if (clusters.size() > 0)
+        {
+			res.clusters_indices = clusters;
+			res.result = true;
+        }
+        else
+        {
+        	res.result = false;
+        }
 
 //        pcl::PointCloud<Point> cloud_object_clustered;
 //        if (int(clusters.size()) >= 0)
@@ -331,7 +340,7 @@ private:
   pcl::VoxelGrid<Point> vgrid_;                   // Filtering + downsampling object
   pcl::NormalEstimation<Point, pcl::Normal> n3d_;   //Normal estimation
   // The resultant estimated point cloud normals for \a cloud_filtered_
-  pcl::PointCloud<pcl::Normal>::ConstPtr cloud_normals_;
+  pcl::PointCloud<pcl::Normal>::Ptr cloud_normals_;
   pcl::SACSegmentationFromNormals<Point, pcl::Normal> seg_;               // Planar segmentation object
   pcl::ProjectInliers<Point> proj_;               // Inlier projection object
   pcl::ExtractIndices<Point> extract_;            // Extract (too) big tables
