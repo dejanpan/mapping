@@ -62,7 +62,7 @@
 #include "pcl/segmentation/extract_clusters.h"
 #include <pcl/features/normal_3d.h>
 #include <pcl/common/angles.h>
-
+#include "pcl/common/common.h"
 #include <pcl_ros/publisher.h>
 
 #include <tf/transform_broadcaster.h>
@@ -94,6 +94,7 @@ public:
     nh_.param("y_max_limit", y_max_limit_, 0.5);
     nh_.param("x_min_limit", x_min_limit_, 0.0);
     nh_.param("x_max_limit", x_max_limit_, 1.0);
+    nh_.param("publish_largest_handle_pose", publish_largest_handle_pose_, false);
     
     nh_.param("k", k_, 30);
     normals_tree_ = boost::make_shared<pcl::KdTreeFLANN<Point> > ();
@@ -151,10 +152,13 @@ public:
     nh_.param("min_table_inliers", min_table_inliers_, 100);
     nh_.param("voxel_size", voxel_size_, 0.01);
     nh_.param("point_cloud_topic", point_cloud_topic_, std::string("/shoulder_cloud2"));
-    nh_.param("output_handle_topic", output_handle_topic_, std::string("handle_projected_inliers/output"));
+    nh_.param("output_handle_topic", output_handle_topic_,
+    std::string("handle_projected_inliers/output"));
+    nh_.param("handle_pose_topic", handle_pose_topic_, std::string("handle_pose"));
     cloud_pub_.advertise (nh_, "debug_cloud", 1);
     //cloud_extracted_pub_.advertise (nh_, "cloud_extracted", 1);
     cloud_handle_pub_.advertise (nh_, output_handle_topic_, 10);
+    handle_pose_pub_ = nh_.advertise<geometry_msgs::PoseStamped> (handle_pose_topic_, 1);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -280,29 +284,36 @@ private:
       // Extract the handle clusters using a polygonal prism 
       pcl::PointIndices::Ptr handles_indices (new pcl::PointIndices ());
       prism_.setHeightLimits (cluster_min_height_, cluster_max_height_);
-      prism_.setInputCloud (cloud_z_ptr);
+      //prism_.setInputCloud (cloud_z_ptr);
+      prism_.setInputCloud (cloud_raw_ptr);
       prism_.setInputPlanarHull (cloud_hull);
       prism_.segment (*handles_indices);
       ROS_INFO ("[%s] Number of handle point indices: %d.", getName ().c_str (), (int)handles_indices->indices.size ());
 
       //Cluster handles
       PointCloudPtr handles (new PointCloud());
-      pcl::copyPointCloud (*cloud_z_ptr, *handles_indices, *handles);
+      pcl::copyPointCloud (*cloud_raw_ptr, *handles_indices, *handles);
       //For Debug
       //cloud_pub_.publish(*handles);
       //return;
 
       std::vector<pcl::PointIndices> handle_clusters;
       handle_cluster_.setInputCloud (handles);
-//      cluster_.setIndices(table_inliers);
       handle_cluster_.extract (handle_clusters);
       ROS_INFO ("[%s] Found handle clusters: %d.", getName ().c_str (), (int)handle_clusters.size ());
 
       PointCloudPtr handle_final (new PointCloud());
       pcl::ModelCoefficients::Ptr line_coeff (new pcl::ModelCoefficients ());
       pcl::PointIndices::Ptr line_inliers (new pcl::PointIndices ());
+
+      uint handle_clusters_size;
+      if (publish_largest_handle_pose_)
+        handle_clusters_size = 1;
+      else
+        handle_clusters_size = handle_clusters.size();
+
       //fit lines, project points into perfect lines
-      for (uint i = 0; i < handle_clusters.size(); i++)
+      for (uint i = 0; i < handle_clusters_size; i++)
       {
         pcl::copyPointCloud (*handles, handle_clusters[i], *handle_final);
         seg_line_.setInputCloud (handle_final);
@@ -316,15 +327,63 @@ private:
         proj_.filter (*line_projected);
         //For Debug
         cloud_handle_pub_.publish(*line_projected);
-        //sleep(2);
-        //return;
+        //TODO: get centroid, get orientation and publish pose
+        //stamped, change topic name
+        pcl::PointXYZ point_center;
+        geometry_msgs::PoseStamped handle_pose;
+        std::string frame (cloud_in->header.frame_id);
+        getHandlePose(line_projected, table_coeff, frame,
+                      handle_pose);
+        handle_pose_pub_.publish(handle_pose);
+        ROS_INFO("Handle pose published: x %f, y %f, z %f, ox %f, oy \
+      %f, oz %f, ow %f", handle_pose.pose.position.x,
+      handle_pose.pose.position.y, handle_pose.pose.position.z,
+      handle_pose.pose.orientation.x, handle_pose.pose.orientation.y,
+      handle_pose.pose.orientation.z, handle_pose.pose.orientation.w);
       }
     }
+
+  void getHandlePose(pcl::PointCloud<Point>::Ptr line_projected,
+                     pcl::ModelCoefficients::Ptr table_coeff,
+                     std::string & frame,
+                     geometry_msgs::PoseStamped & pose)
+  {
+    //Calculate the centroid of the line
+    pcl::PointXYZ point_min;
+    pcl::PointXYZ point_max;
+    pcl::getMinMax3D (*line_projected, point_min, point_max);
+    pose.pose.position.x = (point_max.x + point_min.x)/2;
+    pose.pose.position.y = (point_max.y + point_min.y)/2;
+    pose.pose.position.z = (point_max.z + point_min.z)/2;
+
+    //Calculate orientation of the line
+    //x = orientation of the handle line
+    //z = orientation of the normal of the plane
+    //y = cross product of x and y
+    btVector3 z_axis(table_coeff->values[0],  table_coeff->values[1],
+    table_coeff->values[2]);
+    btVector3 x_axis (point_max.x - point_min.x, point_max.y -
+    point_min.y, point_max.z - point_min.z);
+    x_axis.normalize();
+    btVector3 y_axis = z_axis.cross(x_axis);
+    btMatrix3x3 rot(x_axis.getX(), x_axis.getY(), x_axis.getZ(),
+                y_axis.getX(), y_axis.getY(), y_axis.getZ(),
+                z_axis.getX(), z_axis.getY(), z_axis.getZ());
+    btQuaternion rot_quat;
+    rot.getRotation(rot_quat);
+    pose.pose.orientation.x = rot_quat.getX();
+    pose.pose.orientation.y = rot_quat.getY();
+    pose.pose.orientation.z = rot_quat.getZ();
+    pose.pose.orientation.w = rot_quat.getW();
+    pose.header.frame_id = frame;
+    pose.header.stamp = ros::Time::now();
+    pose.header.seq = 0;
+  }
 
   ros::NodeHandle nh_;
   double voxel_size_;
 
-  std::string point_cloud_topic_, output_handle_topic_;
+  std::string point_cloud_topic_, output_handle_topic_, handle_pose_topic_;
   double object_cluster_tolerance_, handle_cluster_tolerance_, cluster_min_height_, cluster_max_height_;
   int object_cluster_min_size_, object_cluster_max_size_, handle_cluster_min_size_, handle_cluster_max_size_;
 
@@ -332,10 +391,13 @@ private:
   double y_min_limit_, y_max_limit_, x_min_limit_, x_max_limit_;
   double eps_angle_, seg_prob_;
   int k_, max_iter_, min_table_inliers_, nr_cluster_;
-  
+  //whether to publish the pose of the largest handle found or all of them
+  bool publish_largest_handle_pose_;
+
   ros::Subscriber point_cloud_sub_;
   pcl_ros::Publisher<Point> cloud_pub_;
   pcl_ros::Publisher<Point> cloud_handle_pub_;
+  ros::Publisher handle_pose_pub_;
 
   // PCL objects
   //pcl::PassThrough<Point> vgrid_;                   // Filtering + downsampling object
