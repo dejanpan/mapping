@@ -18,6 +18,7 @@
          cluster_max_height: .1
          handle_cluster_min_size: 20
          handle_cluster_max_size: 500   
+         publish_largest_handle_pose: true
       </rosparam>
     </node>
 
