@@ -1,0 +1,28 @@
+<launch>
+
+  <!-- <node pkg="pcl_cloud_tools" type="transform_pointcloud_node" name="transform_pointcloud_node" output="screen" respawn="true"> -->
+  <!--   <param name="input_cloud_topic" value="/camera/rgb/points" /> -->
+  <!--   <param name="to_frame" value="base_link" /> -->
+  <!-- </node> -->
+
+  <!-- drawer handles detector -->
+    <node pkg="handle_detection" type="drawer_cluster_detector" name="drawer_cluster_detector" output="screen" respawn="true">
+      <param name="point_cloud_topic" value="/camera/rgb/points_transformed" />
+      <rosparam>
+         normal_distance_weight: 0.05
+         eps_angle: 20.0 
+         k: 30
+         sac_distance: 0.02
+         object_cluster_min_size: 200
+         x_max_limit: 1.5
+         z_max_limit: 0.9
+         z_min_limit: 0.7
+         cluster_max_height: -0.02
+         cluster_min_height: -0.2
+         handle_cluster_min_size: 500
+         handle_cluster_max_size: 2000   
+         publish_largest_handle_pose: true
+      </rosparam>
+    </node>
+
+</launch>
