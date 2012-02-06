@@ -279,6 +279,13 @@ private:
       }
       //For Debug
       cloud_pub_.publish(*cloud_hull);
+      pcl::PointXYZ hull_min;
+      pcl::PointXYZ hull_max;
+      pcl::PointXYZ hull_center;
+      pcl::getMinMax3D (*cloud_hull, hull_min, hull_max);
+      hull_center.x = (hull_max.x + hull_min.x)/2;
+      hull_center.y = (hull_max.y + hull_min.y)/2;
+      hull_center.z = (hull_max.z + hull_min.z)/2;
       //return;
 
       // Extract the handle clusters using a polygonal prism 
@@ -304,15 +311,18 @@ private:
       ROS_INFO ("[%s] Found handle clusters: %d.", getName ().c_str (), (int)handle_clusters.size ());
 
       PointCloudPtr handle_final (new PointCloud());
+      PointCloudPtr handle_final_final (new PointCloud());
       pcl::ModelCoefficients::Ptr line_coeff (new pcl::ModelCoefficients ());
       pcl::PointIndices::Ptr line_inliers (new pcl::PointIndices ());
 
       uint handle_clusters_size;
-      if (publish_largest_handle_pose_)
-        handle_clusters_size = 1;
-      else
-        handle_clusters_size = handle_clusters.size();
+      // if (publish_largest_handle_pose_)
+      //   handle_clusters_size = 1;
+      // else
+      handle_clusters_size = handle_clusters.size();
 
+      double dist = 1000.0;
+      geometry_msgs::PoseStamped handle_pose_final;
       //fit lines, project points into perfect lines
       for (uint i = 0; i < handle_clusters_size; i++)
       {
@@ -327,7 +337,7 @@ private:
         // proj_.setModelType (pcl::SACMODEL_LINE);
         // proj_.filter (*line_projected);
         //For Debug
-        cloud_handle_pub_.publish(*handle_final);
+        
         //TODO: get centroid, get orientation and publish pose
         //stamped, change topic name
         pcl::PointXYZ point_center;
@@ -335,13 +345,27 @@ private:
         std::string frame (cloud_in->header.frame_id);
 	getHandlePose(handle_final, table_coeff, frame,
                        handle_pose);
-	handle_pose_pub_.publish(handle_pose);
+	//	handle_pose_pub_.publish(handle_pose);
+	double dist_tmp = sqrt((hull_center.x - handle_pose.pose.position.x)*(hull_center.x - handle_pose.pose.position.x) + 
+	  (hull_center.y - handle_pose.pose.position.y)*(hull_center.y - handle_pose.pose.position.y));
+	std::cerr << "dist: " << i << " " << dist_tmp << "cluster size: " << handle_final->points.size () << std::endl;
+	if (dist_tmp < dist)
+	  {
+	    dist = dist_tmp;
+	    handle_pose_final = handle_pose;
+	    *handle_final_final = *handle_final;
+	  }
       //   ROS_INFO("Handle pose published: x %f, y %f, z %f, ox %f, oy \
       // %f, oz %f, ow %f", handle_pose.pose.position.x,
       // handle_pose.pose.position.y, handle_pose.pose.position.z,
       // handle_pose.pose.orientation.x, handle_pose.pose.orientation.y,
       // handle_pose.pose.orientation.z, handle_pose.pose.orientation.w);
       }
+      if (dist < 999.0)
+	{
+	  handle_pose_pub_.publish(handle_pose_final);
+	  cloud_handle_pub_.publish(*handle_final_final);
+	}
     }
 
   void getHandlePose(pcl::PointCloud<Point>::Ptr line_projected,
