@@ -351,24 +351,36 @@ private:
     //Calculate the centroid of the line
     pcl::PointXYZ point_min;
     pcl::PointXYZ point_max;
-    pcl::getMinMax3D (*line_projected, point_min, point_max);
+    //pcl::getMinMax3D (*line_projected, point_min, point_max);
+    point_min = line_projected->points[line_projected->points.size() - 1];
+    point_max = line_projected->points[0];
     pose.pose.position.x = (point_max.x + point_min.x)/2;
     pose.pose.position.y = (point_max.y + point_min.y)/2;
     pose.pose.position.z = (point_max.z + point_min.z)/2;
 
+    ROS_INFO("min  %f %f %f", point_min.x, point_min.y, point_min.z);
+    ROS_INFO("max  %f %f %f", point_max.x, point_max.y, point_max.z);
+
     //Calculate orientation of the line
-    //x = orientation of the handle line
-    //z = orientation of the normal of the plane
+    //x = orientation of the normal of the plane
     //y = cross product of x and y
-    btVector3 z_axis(table_coeff->values[0],  table_coeff->values[1],
-    table_coeff->values[2]);
-    btVector3 x_axis (point_max.x - point_min.x, point_max.y -
-    point_min.y, point_max.z - point_min.z);
+    //z = orientation of the handle line
+    btVector3 x_axis(table_coeff->values[0],  table_coeff->values[1],  table_coeff->values[2]);
+    btVector3 z_axis(point_max.x - point_min.x, point_max.y - point_min.y, point_max.z - point_min.z);
     x_axis.normalize();
-    btVector3 y_axis = z_axis.cross(x_axis);
-    btMatrix3x3 rot(x_axis.getX(), x_axis.getY(), x_axis.getZ(),
-                y_axis.getX(), y_axis.getY(), y_axis.getZ(),
-                z_axis.getX(), z_axis.getY(), z_axis.getZ());
+    z_axis.normalize();
+    btVector3 y_axis = (z_axis.cross(x_axis)).normalize();
+    x_axis =  (y_axis.cross(z_axis)).normalize();
+    z_axis =  (x_axis.cross(y_axis)).normalize();
+    y_axis = (z_axis.cross(x_axis)).normalize();
+
+    ROS_DEBUG("x_AXIS %f %f %f len %f", x_axis.x(), x_axis.y(), x_axis.z(), x_axis.length());
+    ROS_DEBUG("y_AXIS %f %f %f len %f", y_axis.x(), y_axis.y(), y_axis.z(), y_axis.length());
+    ROS_DEBUG("z_AXIS %f %f %f len %f", z_axis.x(), z_axis.y(), z_axis.z(), z_axis.length());
+  
+    btMatrix3x3 rot(x_axis.x(), y_axis.x(), z_axis.x(),
+	                 x_axis.y(), y_axis.y(), z_axis.y(),
+                    x_axis.z(), y_axis.z(), z_axis.z());
     btQuaternion rot_quat;
     rot.getRotation(rot_quat);
     pose.pose.orientation.x = rot_quat.getX();
