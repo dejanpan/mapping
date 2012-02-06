@@ -19,8 +19,8 @@
          z_min_limit: 0.7
          cluster_max_height: -0.02
          cluster_min_height: -0.2
-         handle_cluster_min_size: 500
-         handle_cluster_max_size: 2000   
+         handle_cluster_min_size: 200
+         handle_cluster_max_size: 5000   
          publish_largest_handle_pose: true
       </rosparam>
     </node>
