@@ -76,7 +76,7 @@ int
   //estimate normals
   pcl::PointCloud<pcl::Normal> cloud_b;
   pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> ne;
-  pcl::KdTreeFLANN<pcl::PointXYZI>::Ptr tree (new pcl::KdTreeFLANN<pcl::PointXYZI> ());
+  pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI> ());
   ne.setSearchMethod (tree);
   ne.setInputCloud (cloud_a.makeShared());
   ne.setKSearch (10);

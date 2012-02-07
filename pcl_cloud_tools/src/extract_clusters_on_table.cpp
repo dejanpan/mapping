@@ -78,7 +78,7 @@ typedef pcl::PointXYZ Point;
 typedef pcl::PointCloud<Point> PointCloud;
 typedef PointCloud::Ptr PointCloudPtr;
 typedef PointCloud::ConstPtr PointCloudConstPtr;
-typedef pcl::KdTree<Point>::Ptr KdTreePtr;
+typedef pcl::search::KdTree<Point>::Ptr KdTreePtr;
 
 const tf::Vector3 wp_normal(1, 0, 0);
 const double wp_offset = -1.45;
@@ -135,9 +135,9 @@ public:
       seg_.setProbability (seg_prob_);
 
       proj_.setModelType (pcl::SACMODEL_NORMAL_PLANE);
-      clusters_tree_ = boost::make_shared<pcl::KdTreeFLANN<Point> > ();
+      clusters_tree_ = boost::make_shared<pcl::search::KdTree<Point> > ();
       clusters_tree_->setEpsilon (1);
-      normals_tree_ = boost::make_shared<pcl::KdTreeFLANN<Point> > ();
+      normals_tree_ = boost::make_shared<pcl::search::KdTree<Point> > ();
 
       n3d_.setKSearch (k_);
       n3d_.setSearchMethod (normals_tree_);
