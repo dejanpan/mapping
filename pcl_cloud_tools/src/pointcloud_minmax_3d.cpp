@@ -65,7 +65,7 @@ class PointcloudMinMax3DNode
 {
 protected:
   ros::NodeHandle nh_;
-  typedef pcl::KdTree<pcl::PointXYZ>::Ptr KdTreePtr;
+  typedef pcl::search::KdTree<pcl::PointXYZ>::Ptr KdTreePtr;
 public:
   string output_cluster_topic_, input_cloud_topic_, output_cloud_cluster_topic_;
 
@@ -116,7 +116,7 @@ public:
 
     nh_.param("output_cloud_cluster_topic", output_cloud_cluster_topic_, std::string("cloud_cluster"));
     //setup cluster object
-    clusters_tree_ = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ> > ();
+    clusters_tree_ = boost::make_shared<pcl::search::KdTree<pcl::PointXYZ> > ();
     output_cloud_cluster_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(output_cloud_cluster_topic_, 5);
     clusters_tree_->setEpsilon (1);
   }
