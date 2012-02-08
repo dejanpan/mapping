@@ -309,6 +309,8 @@ private:
       handle_cluster_.setInputCloud (handles);
       handle_cluster_.extract (handle_clusters);
       ROS_INFO ("[%s] Found handle clusters: %d.", getName ().c_str (), (int)handle_clusters.size ());
+      if ((int)handle_clusters.size () == 0)
+        return;
 
       PointCloudPtr handle_final (new PointCloud());
       PointCloudPtr handle_final_final (new PointCloud());
