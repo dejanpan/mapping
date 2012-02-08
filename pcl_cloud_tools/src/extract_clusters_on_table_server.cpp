@@ -101,7 +101,7 @@ public:
       //min 100 points
       nh_.param("object_cluster_min_size", object_cluster_min_size_, 100);
       nh_.param("k", k_, 10);
-//      nh_.param("base_link_head_tilt_link_angle", base_link_head_tilt_link_angle_, 0.8);
+      nh_.param("base_link_head_tilt_link_angle", base_link_head_tilt_link_angle_, 0.8);
       nh_.param("min_table_inliers", min_table_inliers_, 100);
       nh_.param("cluster_min_height", cluster_min_height_, 0.02);
       nh_.param("cluster_max_height", cluster_max_height_, 0.4);
@@ -112,6 +112,7 @@ public:
       nh_.param("point_cloud_topic", point_cloud_topic, std::string("/narrow_stereo_textured/points2"));
       nh_.param("publish_token", publish_token_, false);
       nh_.param("padding", padding_, 0.85);
+      nh_.param("target_frame", target_frame_, std::string("base_link"));
 
       service_ = nh_.advertiseService("cluster_tracking", &ExtractClustersServer::clustersCallback, this);
 
@@ -141,7 +142,7 @@ public:
       n3d_.setKSearch (k_);
       n3d_.setSearchMethod (normals_tree_);
       //plane prior (for seg_.setAxis)
-      base_link_head_tilt_link_angle_ = 0.9;
+      //      base_link_head_tilt_link_angle_ = 0.9;
     }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -169,12 +170,12 @@ private:
         }
 
       //get the transform between base_link and cloud frame
-      bool found_transform = tf_listener_.waitForTransform("head_tilt_link", "base_link",
+      bool found_transform = tf_listener_.waitForTransform(cloud_in.header.frame_id.c_str(), target_frame_,
                                                            cloud_in.header.stamp, ros::Duration(1.0));
       tf::StampedTransform transform;
       if (found_transform)
       {
-        tf_listener_.lookupTransform("head_tilt_link", "base_link", cloud_in.header.stamp, transform);
+        tf_listener_.lookupTransform(cloud_in.header.frame_id.c_str(), target_frame_, cloud_in.header.stamp, transform);
         double yaw, pitch, roll;
         transform.getBasis().getEulerZYX(yaw, pitch, roll);
         ROS_INFO("[ExtractCluster:] Transform X: %f Y: %f Z: %f R: %f P: %f Y: %f", transform.getOrigin().getX(), 
@@ -183,9 +184,8 @@ private:
       }
       else
       {
-        ROS_INFO("[ExtractCluster:] No transform found between %s and base_link", cloud_in.header.frame_id.c_str());
-        res.result = false;
-        return false;
+        ROS_WARN("[ExtractCluster:] No transform found between %s and %s", cloud_in.header.frame_id.c_str(), target_frame_.c_str());
+        ROS_WARN("[ExtractCluster:] Taking the following base_link_head_tilt_link_angle: %f", base_link_head_tilt_link_angle_);
       }
       
         ROS_INFO_STREAM ("[" << getName ().c_str () << "] Received cloud: in frame " << cloud_in.header.frame_id);
@@ -317,7 +317,7 @@ private:
   double voxel_size_;
   double padding_;
 
-  std::string rot_table_frame_, object_name_, point_cloud_topic;
+  std::string rot_table_frame_, object_name_, point_cloud_topic, target_frame_;
   double object_cluster_tolerance_,  cluster_min_height_, cluster_max_height_;
   int object_cluster_min_size_, object_cluster_max_size_;
 
