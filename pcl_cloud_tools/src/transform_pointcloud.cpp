@@ -63,7 +63,7 @@ protected:
   ros::NodeHandle nh_;
 
 public:
-  string output_cloud_topic_, input_cloud_topic_, to_frame_;
+  string output_cloud_topic_, input_cloud_topic_, to_frame_, point_cloud_name_;
   bool save_point_cloud_;
 
   ros::Subscriber sub_;
@@ -78,6 +78,7 @@ public:
     nh_.param("input_cloud_topic", input_cloud_topic_, std::string("cloud_pcd"));
     output_cloud_topic_ = input_cloud_topic_ + "_transformed";
     nh_.param("to_frame", to_frame_, std::string("base_link"));
+    nh_.param("point_cloud_name", point_cloud_name_, std::string("pc"));
     nh_.param("save_point_cloud", save_point_cloud_, false);
 
     sub_ = nh_.subscribe (input_cloud_topic_, 1,  &TransformPointcloudNode::cloud_cb, this);
@@ -104,7 +105,8 @@ public:
 	{
 	  pcl::PointCloud<pcl::PointXYZ> pcl_cloud;
 	  pcl::fromROSMsg(output_cloud_, pcl_cloud);
-	  pcd_writer_.write (output_cloud_topic_, pcl_cloud);
+	  pcd_writer_.write (point_cloud_name_ + ".pcd", pcl_cloud);
+      ROS_INFO("Point cloud saved as %s.pcd", point_cloud_name_.c_str());
 	}
     }
   }
