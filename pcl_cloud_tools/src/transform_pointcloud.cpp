@@ -64,11 +64,12 @@ protected:
 
 public:
   string output_cloud_topic_, input_cloud_topic_, to_frame_;
+  bool save_point_cloud_;
 
   ros::Subscriber sub_;
   ros::Publisher pub_;
   tf::TransformListener tf_;
-
+  pcl::PCDWriter pcd_writer_;
   sensor_msgs::PointCloud2 output_cloud_;
   ////////////////////////////////////////////////////////////////////////////////
   TransformPointcloudNode  (ros::NodeHandle &n) : nh_(n)
@@ -77,6 +78,7 @@ public:
     nh_.param("input_cloud_topic", input_cloud_topic_, std::string("cloud_pcd"));
     output_cloud_topic_ = input_cloud_topic_ + "_transformed";
     nh_.param("to_frame", to_frame_, std::string("base_link"));
+    nh_.param("save_point_cloud", save_point_cloud_, false);
 
     sub_ = nh_.subscribe (input_cloud_topic_, 1,  &TransformPointcloudNode::cloud_cb, this);
     ROS_INFO ("[TransformPointcloudNode:] Listening for incoming data on topic %s", nh_.resolveName (input_cloud_topic_).c_str ());
@@ -98,6 +100,12 @@ public:
       pcl_ros::transformPointCloud(to_frame_, transform, *pc, output_cloud_);
       ROS_DEBUG("[TransformPointcloudNode:] Point cloud published in frame %s", output_cloud_.header.frame_id.c_str());
       pub_.publish (output_cloud_);
+      if (save_point_cloud_)
+	{
+	  pcl::PointCloud<pcl::PointXYZ> pcl_cloud;
+	  pcl::fromROSMsg(output_cloud_, pcl_cloud);
+	  pcd_writer_.write (output_cloud_topic_, pcl_cloud);
+	}
     }
   }
 };
