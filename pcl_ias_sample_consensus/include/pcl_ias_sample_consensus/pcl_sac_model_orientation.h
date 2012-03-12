@@ -157,8 +157,8 @@ namespace pcl
         */
       int countWithinDistance(const Eigen::VectorXf& model_coefficients, double threshold)
       {
-        std::vector<int> &inliers;
-        selectWithinDistance (model_coefficients, threshold);
+        std::vector<int> inliers;
+        selectWithinDistance (model_coefficients, threshold, inliers);
         return inliers.size ();
       }
 
