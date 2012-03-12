@@ -146,6 +146,21 @@ namespace pcl
         *        refined_coeff = refitModel (...); selectWithinDistance (refined_coeff, threshold);
         */
       void selectWithinDistance (const Eigen::VectorXf &model_coefficients, double threshold, std::vector<int> &inliers);
+      
+      
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      /** \brief Count all the points which respect the given model coefficients as inliers.
+        * 
+        * \param[in] model_coefficients the coefficients of a model that we need to compute distances to
+        * \param[in] threshold a maximum admissible distance threshold for determining the inliers from the outliers
+        * \return the resultant number of inliers
+        */
+      int countWithinDistance(const Eigen::VectorXf& model_coefficients, double threshold)
+      {
+        std::vector<int> &inliers;
+        selectWithinDistance (model_coefficients, threshold);
+        return inliers.size ();
+      }
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Create a new point cloud with inliers projected onto the model.
