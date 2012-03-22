@@ -13,6 +13,8 @@
   <depend package="pcl" />
   <depend package="pcl_ros" />
   <depend package="visualization_msgs" />
+  <depend package="geometry_msgs" />
+  <depend package="actionlib" />
 </package>
 
 
