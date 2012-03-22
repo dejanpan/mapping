@@ -1,0 +1,8 @@
+#goal
+int32 number_of_handles
+---
+#result
+int32 number_of_handles_detected
+geometry_msgs/PoseStamped[] handles
+---
+#feedback

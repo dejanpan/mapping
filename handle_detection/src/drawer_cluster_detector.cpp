@@ -357,7 +357,7 @@ private:
 	    handle_pose_final = handle_pose;
 	    *handle_final_final = *handle_final;
 	  }
-      //   ROS_INFO("Handle pose published: x %f, y %f, z %f, ox %f, oy \
+      //   ROS_INFO("Handle pose published: x %f, y %f, z %f, ox %f, oy 
       // %f, oz %f, ow %f", handle_pose.pose.position.x,
       // handle_pose.pose.position.y, handle_pose.pose.position.z,
       // handle_pose.pose.orientation.x, handle_pose.pose.orientation.y,
