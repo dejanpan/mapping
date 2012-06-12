@@ -78,7 +78,7 @@ typedef pcl::PointCloud<Point> PointCloud;
 typedef PointCloud::Ptr PointCloudPtr;
 typedef PointCloud::Ptr PointCloudPtr;
 typedef PointCloud::ConstPtr PointCloudConstPtr;
-typedef pcl::KdTree<Point>::Ptr KdTreePtr;
+typedef pcl::search::KdTree<Point>::Ptr KdTreePtr;
 
 const tf::Vector3 wp_normal(1, 0, 0);
 const double wp_offset = -1.45;
@@ -105,7 +105,7 @@ public:
 				false);
 
 		nh_.param("k", k_, 30);
-		normals_tree_ = boost::make_shared<pcl::KdTreeFLANN<Point> >();
+		normals_tree_ = boost::make_shared<pcl::search::KdTree<Point> >();
 		n3d_.setKSearch(k_);
 		n3d_.setSearchMethod(normals_tree_);
 
@@ -130,10 +130,9 @@ public:
 		nh_.param("object_cluster_tolerance", object_cluster_tolerance_, 0.03);
 		nh_.param("object_cluster_min_size", object_cluster_min_size_, 200);
 		cluster_.setClusterTolerance(object_cluster_tolerance_);
-		cluster_.setSpatialLocator(0);
 		cluster_.setMinClusterSize(object_cluster_min_size_);
 		//    cluster_.setMaxClusterSize (object_cluster_max_size_);
-		clusters_tree_ = boost::make_shared<pcl::KdTreeFLANN<Point> >();
+		clusters_tree_ = boost::make_shared<pcl::search::KdTree<Point> >();
 		clusters_tree_->setEpsilon(1);
 		cluster_.setSearchMethod(clusters_tree_);
 
@@ -146,7 +145,6 @@ public:
 		nh_.param("handle_cluster_min_size", handle_cluster_min_size_, 40);
 		nh_.param("handle_cluster_max_size", handle_cluster_max_size_, 500);
 		handle_cluster_.setClusterTolerance(handle_cluster_tolerance_);
-		handle_cluster_.setSpatialLocator(0);
 		handle_cluster_.setMinClusterSize(handle_cluster_min_size_);
 		handle_cluster_.setMaxClusterSize(handle_cluster_max_size_);
 		cluster_.setSearchMethod(clusters_tree_);
