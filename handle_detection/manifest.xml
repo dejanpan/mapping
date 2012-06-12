@@ -8,7 +8,6 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/handle_detection</url>
-  <depend package="point_cloud_converter" /> <!-- pcl, pcl_ros -->
   <depend package="nodelet" />
   <depend package="pcl" />
   <depend package="pcl_ros" />

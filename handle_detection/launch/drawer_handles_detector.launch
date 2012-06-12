@@ -1,11 +1,5 @@
 <launch>
 
-    <!-- RAW PointCloud to PointCloud2 converter -->
-    <node pkg="point_cloud_converter" type="point_cloud_converter" name="convert_cloud" output="screen">
-      <remap from="/points_in" to="/shoulder_cloud" />
-      <remap from="/points2_out" to="/shoulder_cloud2" />
-    </node>
-
   <!-- drawer handles detector -->
     <node pkg="handle_detection" type="drawer_handles_detector" name="handle_detector" output="screen" respawn="true">
       <remap from="point_cloud_topic" to="/shoulder_cloud2" />
