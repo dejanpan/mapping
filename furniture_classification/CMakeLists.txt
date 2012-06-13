@@ -55,7 +55,4 @@ target_link_libraries(sac_test vtkCommon vtkIO vtkFiltering vtkGraphics vtkRende
 rosbuild_add_executable(region_grow src/region_grow.cpp)
 target_link_libraries(region_grow vtkCommon vtkIO vtkFiltering vtkGraphics vtkRendering)
 
-rosbuild_add_executable(train_new src/train_new.cpp)
-target_link_libraries(train_new training)
-rosbuild_link_boost(train_new system filesystem)
 
