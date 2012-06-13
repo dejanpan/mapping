@@ -187,7 +187,7 @@ template<class PointT, class PointNormalT, class FeatureT>
       findLocalMaximaInGrid();
       findVotedSegments(it->first);
       fitModelsWithRansac(it->first);
-      generateVisibility(it->first);
+      generateVisibilityScore();
 
     }
 
