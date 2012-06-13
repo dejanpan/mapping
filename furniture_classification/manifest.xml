@@ -1,0 +1,18 @@
+<package>
+  <description brief="furniture_classification">
+
+     furniture_classification
+
+  </description>
+  <author>Vladyslav Usenko</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/furniture_classification</url>
+  <depend package="pcl"/>
+  <depend package="opencv2"/>
+  <depend package="furniture_features"/>
+  <rosdep name="yaml-cpp" />
+
+</package>
+
+
