@@ -56,3 +56,15 @@ rosbuild_add_executable(region_grow src/region_grow.cpp)
 target_link_libraries(region_grow vtkCommon vtkIO vtkFiltering vtkGraphics vtkRendering)
 
 
+rosbuild_add_library(furniture_classification src/pcl/classification/PHVObjectClassifier.cpp)
+rosbuild_link_boost(furniture_classification system filesystem)
+target_link_libraries(furniture_classification yaml-cpp)
+
+rosbuild_add_executable(train_new src/train_new.cpp)
+target_link_libraries(train_new training furniture_classification)
+rosbuild_link_boost(train_new system filesystem)
+
+rosbuild_add_executable(classify_new src/classify_new.cpp)
+target_link_libraries(classify_new training furniture_classification)
+rosbuild_link_boost(classify_new system filesystem)
+
