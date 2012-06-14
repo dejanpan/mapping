@@ -24,7 +24,8 @@
 int main(int argc, char** argv)
 {
 
-  std::string database_file_name = "data/database/database.yaml";
+  std::string database_dir = "data/database/";
+  std::string scene_file_name = "data/test/scenes/chairAndDesk1.pcd";
 
 
   pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, pcl::Histogram<25> > oc;
@@ -35,8 +36,10 @@ int main(int argc, char** argv)
       pcl::PointNormal, pcl::Histogram<25> >);
   oc.setFeatureEstimator(feature_estimator);
 
-  oc.loadFromFile(database_file_name);
-  oc.saveToFile("data/database/database1.yaml");
+  oc.setDatabaseDir(database_dir);
+  oc.loadFromFile();
+
+
 
   return 0;
 }

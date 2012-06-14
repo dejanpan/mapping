@@ -60,25 +60,36 @@ template<class PointT, class PointNormalT, class FeatureT>
   }
 
 template<class PointT, class PointNormalT, class FeatureT>
-  void pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::saveToFile(string filename)
+  void pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::saveToFile()
   {
+
+    // Delete old and create new directory sturcture for output
+    boost::filesystem::path output_path(database_dir_);
+    boost::filesystem::path output_models_path(database_dir_+"models/");
+    if (boost::filesystem::exists(output_path))
+    {
+      boost::filesystem::remove_all(output_path);
+    }
+
+    boost::filesystem::create_directories(output_path);
+    boost::filesystem::create_directories(output_models_path);
 
     YAML::Emitter out;
 
     out << *this;
 
-    std::ofstream f;
-    f.open(filename.c_str());
-    f << out.c_str();
-    f.close();
+  std::ofstream f;
+  f.open((database_dir_ + "database.yaml").c_str());
+  f << out.c_str();
+  f.close();
 
-  }
+}
 
 template<class PointT, class PointNormalT, class FeatureT>
-  void pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::loadFromFile(string filename)
+  void pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::loadFromFile()
   {
 
-    std::ifstream fin(filename.c_str());
+    std::ifstream fin((database_dir_ + "database.yaml").c_str());
     YAML::Parser parser(fin);
     YAML::Node doc;
     parser.GetNextDocument(doc);
