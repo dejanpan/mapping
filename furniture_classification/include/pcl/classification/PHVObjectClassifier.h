@@ -70,6 +70,9 @@ template<class PointT, class PointNormalT, class FeatureT>
           ransac_distance_threshold_(0.01f), ransac_probability_(0.9), ransac_num_iter_(100), debug_(false),
           debug_folder_(""), mls_(new MovingLeastSquares<PointT, PointNormalT> )
     {
+
+      typedef pcl::PointCloud<FeatureT> PointFeatureCloud;
+      database_features_cloud_.reset(new PointFeatureCloud);
     }
     virtual ~PHVObjectClassifier()
     {
@@ -127,9 +130,9 @@ template<class PointT, class PointNormalT, class FeatureT>
     return !this->database_.empty();
   }
 
-  void saveToFile(string filename);
+  void saveToFile();
 
-  void loadFromFile(string filename);
+  void loadFromFile();
 
   void setDebug(bool debug)
   {
@@ -191,6 +194,16 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     }
 
+  }
+
+  void setDatabaseDir(const string & database_dir)
+  {
+    database_dir_ = database_dir;
+  }
+
+  string getDatabaseDir()
+  {
+    return database_dir_;
   }
 
   template<class PT, class PNT, class FT> friend YAML::Emitter& operator <<(YAML::Emitter& out, const PHVObjectClassifier< PT, PNT, FT> & h);
@@ -672,7 +685,6 @@ protected:
 
   }
 
-
   bool intersectXY(const pcl::PointCloud<PointNormalT> & cloud1, const pcl::PointCloud<PointNormalT> & cloud2)
   {
 
@@ -682,18 +694,18 @@ protected:
 
     bool intersectX, intersectY;
     if (min1.x < min2.x)
-      intersectX = max1.x > min2.x;
+    intersectX = max1.x > min2.x;
     else if (min1.x > min2.x)
-      intersectX = max2.x > min1.x;
+    intersectX = max2.x > min1.x;
     else // min1.x == min2.x
-      intersectX = true;
+    intersectX = true;
 
     if (min1.y < min2.y)
-      intersectY = max1.y > min2.y;
+    intersectY = max1.y > min2.y;
     else if (min1.y > min2.y)
-      intersectY = max2.y > min1.y;
+    intersectY = max2.y > min1.y;
     else // min1.y == min2.y
-      intersectY = true;
+    intersectY = true;
 
     return intersectX && intersectY;
 
@@ -703,7 +715,7 @@ protected:
   {
 
     if(result_.size() == 0)
-      return;
+    return;
 
     vector<PointNormalCloud> no_intersect_result;
 
@@ -715,7 +727,7 @@ protected:
         if (intersectXY(result_[i], result_[j]))
         {
           if (scores_[i] > scores_[j])
-            best = false;
+          best = false;
         }
 
       }
@@ -724,7 +736,6 @@ protected:
         no_intersect_result.push_back(result_[i]);
       }
     }
-
 
     result_ = no_intersect_result;
 
@@ -752,6 +763,7 @@ public:
 
   bool debug_;
   string debug_folder_;
+  string database_dir_;
 
   FeatureEstimatorType feature_estimator_;
   MovingLeastSquaresType mls_;
@@ -835,8 +847,30 @@ YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PHVObjectClassifier<PT
 
   out << YAML::Key << "max_feature";
   out << YAML::Value << h.max_;
-  //out << YAML::Key << "full_models";
-  //out << YAML::Value << class_to_full_pointcloud_;
+  out << YAML::Key << "full_models";
+
+  out << YAML::Value;
+  out << YAML::BeginMap;
+
+  typedef typename pcl::PHVObjectClassifier<PT, PNT, FT>::ModelMapValueType M;
+
+  BOOST_FOREACH(M v, h.class_name_to_full_models_map_)
+  { out << YAML::Key << v.first;
+    out << YAML::Value << YAML::BeginSeq;
+
+    for(size_t i=0; i<v.second.size(); i++)
+    {
+      std::stringstream ss;
+      ss << "models/" << v.first << i << ".pcd";
+      pcl::io::savePCDFileASCII(h.database_dir_ + ss.str(), *v.second[i]);
+      out << ss.str();
+
+    }
+    out << YAML::EndSeq;
+
+  }
+  out << YAML::EndMap;
+
   out << YAML::EndMap;
 
   return out;
@@ -976,7 +1010,22 @@ void operator >>(const YAML::Node& node, pcl::PHVObjectClassifier<PT, PNT, FT> &
   node["min_feature"] >> h.min_;
   node["max_feature"] >> h.max_;
 
-  //node["full_models"] >> h.class_to_full_pointcloud;
+  map<string, vector<string> >  full_models_locations;
+  node["full_models"] >> full_models_locations;
+
+
+  typedef map<string, vector<string> >::value_type vt;
+
+  BOOST_FOREACH(vt &v, full_models_locations)
+  {
+    for(size_t i=0; i<v.second.size(); i++){
+      typename PointCloud<PNT>::Ptr cloud(new PointCloud<PNT>);
+      pcl::io::loadPCDFile(h.database_dir_ + v.second[i], *cloud);
+      h.class_name_to_full_models_map_[v.first].push_back(cloud);
+
+    }
+
+  }
 
 }
 
