@@ -65,7 +65,7 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     // Delete old and create new directory sturcture for output
     boost::filesystem::path output_path(database_dir_);
-    boost::filesystem::path output_models_path(database_dir_+"models/");
+    boost::filesystem::path output_models_path(database_dir_ + "models/");
     if (boost::filesystem::exists(output_path))
     {
       boost::filesystem::remove_all(output_path);
@@ -78,12 +78,12 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     out << *this;
 
-  std::ofstream f;
-  f.open((database_dir_ + "database.yaml").c_str());
-  f << out.c_str();
-  f.close();
+    std::ofstream f;
+    f.open((database_dir_ + "database.yaml").c_str());
+    f << out.c_str();
+    f.close();
 
-}
+  }
 
 template<class PointT, class PointNormalT, class FeatureT>
   void pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::loadFromFile()
@@ -97,5 +97,45 @@ template<class PointT, class PointNormalT, class FeatureT>
     doc >> *this;
 
   }
+
+template<class PointT, class PointNormalT, class FeatureT>
+  void pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::computeClassifier()
+  {
+
+    BOOST_FOREACH(ModelMapValueType &v, class_name_to_partial_views_map_)
+{    int view_num_counter = 0;
+
+    for(size_t i=0; i<v.second.size(); i++)
+    {
+      appendFeaturesFromCloud(v.second[i], v.first, view_num_counter);
+      view_num_counter++;
+
+    }
+
+  }
+
+  // Transform to model centroinds in local coordinate frame of the segment
+  centroids_.getMatrixXfMap() *= -1;
+
+  normalizeFeatures(features_);
+
+  vector<FeatureT> cluster_centers;
+  vector<int> cluster_labels;
+
+  clusterFeatures(cluster_centers, cluster_labels);
+
+  database_.clear();
+
+  for (size_t i = 0; i < cluster_labels.size(); i++)
+  {
+    database_[cluster_centers[cluster_labels[i]]][classes_[i]].points.push_back(centroids_[i]);
+    database_[cluster_centers[cluster_labels[i]]][classes_[i]].width
+    = database_[cluster_centers[cluster_labels[i]]][classes_[i]].points.size();
+    database_[cluster_centers[cluster_labels[i]]][classes_[i]].height = 1;
+    database_[cluster_centers[cluster_labels[i]]][classes_[i]].is_dense = true;
+
+  }
+
+}
 
 #endif /* PHVOBJECTCLASSIFIER_HPP_ */

@@ -53,11 +53,11 @@ int main(int argc, char** argv)
 
   pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
   pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-  // Create the segmentation object
+
   pcl::SACSegmentation<pcl::PointXYZRGB> seg;
-  // Optional
+
   seg.setOptimizeCoefficients(true);
-  // Mandatory
+
   seg.setModelType(pcl::SACMODEL_PLANE);
   seg.setMethodType(pcl::SAC_RANSAC);
   seg.setDistanceThreshold(0.01);
@@ -88,12 +88,7 @@ int main(int argc, char** argv)
   std::cout << "Z vector: " << coefficients->values[0] << " " << coefficients->values[1] << " "
       << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
 
-  pcl::VoxelGrid<pcl::PointXYZRGB> sor;
-  sor.setInputCloud(cloud_aligned.makeShared());
-  sor.setLeafSize(0.02f, 0.02f, 0.02f);
-  sor.filter(cloud_filtered);
-
-  pcl::io::savePCDFile(output_file, cloud_filtered);
+  pcl::io::savePCDFile(output_file, cloud_aligned);
 
   return 0;
 }

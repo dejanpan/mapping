@@ -145,8 +145,8 @@ void uniform_sampling(vtkSmartPointer<vtkPolyData> polydata, size_t n_samples,
 }
 // End of code from mesh_sampling.cpp
 
-void createFullModelPointcloud(vtkSmartPointer<vtkPolyData> polydata, size_t n_samples, pcl::PointCloud<
-    pcl::PointNormal> & cloud_out)
+void createFullModelPointcloud(vtkSmartPointer<vtkPolyData> polydata, size_t n_samples,
+                               pcl::PointCloud<pcl::PointXYZ> & cloud_out)
 {
 
   vtkSmartPointer<vtkTriangleFilter> triangleFilter = vtkSmartPointer<vtkTriangleFilter>::New();
@@ -159,31 +159,7 @@ void createFullModelPointcloud(vtkSmartPointer<vtkPolyData> polydata, size_t n_s
   polydata = triangleMapper->GetInput();
   polydata->Update();
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointNormal>::Ptr cloud_normals(new pcl::PointCloud<
-      pcl::PointNormal>);
-  uniform_sampling(polydata, n_samples, *cloud);
-
-  // Create a KD-Tree
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
-
-  pcl::MovingLeastSquares<pcl::PointXYZ, pcl::PointNormal> mls;
-  mls.setComputeNormals(true);
-
-  // Set parameters
-  mls.setPolynomialFit(true);
-  mls.setPolynomialOrder(2);
-  mls.setSearchMethod(tree);
-  mls.setSearchRadius(0.03);
-
-  // Reconstruct
-  mls.setInputCloud(cloud);
-  mls.process(*cloud_normals);
-
-  pcl::VoxelGrid<pcl::PointNormal> grid_;
-  grid_.setInputCloud(cloud_normals);
-  grid_.setLeafSize(0.02f, 0.02f, 0.02f);
-  grid_.filter(cloud_out);
+  uniform_sampling(polydata, n_samples, cloud_out);
 
 }
 
@@ -296,7 +272,6 @@ int main(int argc, char** argv)
     vtkSmartPointer<vtkPolyDataReader> reader = vtkPolyDataReader::New();
     vtkSmartPointer<vtkTransform> transform = vtkTransform::New();
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
-    pcl::PointCloud<pcl::PointNormal>::Ptr cloudn(new pcl::PointCloud<pcl::PointNormal>());
 
     // Compute output directory for this model
     std::vector<std::string> st;
@@ -331,14 +306,14 @@ int main(int argc, char** argv)
     double center[3];
     model->GetCenter(center);
 
-    createFullModelPointcloud(model, full_model_n_points, *cloudn);
-    pcl::io::savePCDFile(dirname + "/full.pcd", *cloudn);
+    createFullModelPointcloud(model, full_model_n_points, *cloud);
+    pcl::io::savePCDFile(dirname + "/full.pcd", *cloud);
 
     // Initialize PCLVisualizer. Add model to scene.
     pcl::visualization::PCLVisualizer viz;
     viz.initCameraParameters();
     viz.updateCamera();
-    viz.setCameraPose(0, 0, 0, 1, 0, 0, 0, 0, 1);
+    //viz.setCameraPose(0, 0, 0, 1, 0, 0, 0, 0, 1);
     viz.addModelFromPolyData(model, transform);
     viz.setRepresentationToSurfaceForAllActors();
 
@@ -380,19 +355,12 @@ int main(int argc, char** argv)
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_transformed(new pcl::PointCloud<pcl::PointXYZ>());
             moveToNewCenterAndAlign(cloud, cloud_transformed, new_center, tilt[tilt_index]);
 
-            // Downsample
-            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_transformed_downsampled(new pcl::PointCloud<pcl::PointXYZ>());
-            pcl::VoxelGrid<pcl::PointXYZ> grid;
-            grid.setInputCloud(cloud_transformed);
-            grid.setLeafSize(0.02f, 0.02f, 0.02f);
-            grid.filter(*cloud_transformed_downsampled);
-
             // Compute file name for this pointcloud and save it
             std::stringstream ss;
             ss << dirname << "/rotation" << angle << "_distance" << distances[distance_index] << "_tilt"
                 << tilt[tilt_index] << "_shift" << shift[shift_index] << ".pcd";
             PCL_INFO("Writing %d points to file %s\n", cloud->points.size(), ss.str().c_str());
-            pcl::io::savePCDFile(ss.str(), *cloud_transformed_downsampled);
+            pcl::io::savePCDFile(ss.str(), *cloud_transformed);
 
             // increment angle by step
             angle += angle_step;

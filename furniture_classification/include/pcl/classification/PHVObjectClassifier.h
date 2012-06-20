@@ -64,9 +64,9 @@ template<class PointT, class PointNormalT, class FeatureT>
     typedef typename ModelMapType::value_type ModelMapValueType;
 
     PHVObjectClassifier() :
-      subsampling_resolution_(0.02f), mls_polynomial_order_(2), mls_search_radius_(0.03f), min_points_in_segment_(100),
+      subsampling_resolution_(0.02f), mls_polynomial_order_(2), mls_search_radius_(0.06f), min_points_in_segment_(100),
           rg_residual_threshold_(0.05f), rg_smoothness_threshold_(40 * M_PI / 180), fe_k_neighbours_(10),
-          num_clusters_(40), num_neighbours_(1), cell_size_(0.01), window_size_(0.6f), local_maxima_threshold_(0.4),
+          num_clusters_(40), num_neighbours_(1), cell_size_(0.01), window_size_(0.6f), local_maxima_threshold_(0.0f),
           ransac_distance_threshold_(0.01f), ransac_probability_(0.9), ransac_num_iter_(100), debug_(false),
           debug_folder_(""), mls_(new MovingLeastSquares<PointT, PointNormalT> )
     {
@@ -89,41 +89,7 @@ template<class PointT, class PointNormalT, class FeatureT>
       class_name_to_full_models_map_[class_name].push_back(estimateNormalsAndSubsample(model));
     }
 
-    virtual void computeClassifier()
-    {
-
-      BOOST_FOREACH(ModelMapValueType &v, class_name_to_partial_views_map_)
-{      for(size_t i=0; i<v.second.size(); i++)
-      {
-        appendFeaturesFromCloud(v.second[i], v.first, i);
-
-      }
-
-    }
-
-    // Transform to model centroinds in local coordinate frame of the segment
-    centroids_.getMatrixXfMap() *= -1;
-
-    normalizeFeatures(features_);
-
-    vector<FeatureT> cluster_centers;
-    vector<int> cluster_labels;
-
-    clusterFeatures(cluster_centers, cluster_labels);
-
-    database_.clear();
-
-    for (size_t i = 0; i < cluster_labels.size(); i++)
-    {
-      database_[cluster_centers[cluster_labels[i]]][classes_[i]].points.push_back(centroids_[i]);
-      database_[cluster_centers[cluster_labels[i]]][classes_[i]].width
-      = database_[cluster_centers[cluster_labels[i]]][classes_[i]].points.size();
-      database_[cluster_centers[cluster_labels[i]]][classes_[i]].height = 1;
-      database_[cluster_centers[cluster_labels[i]]][classes_[i]].is_dense = true;
-
-    }
-
-  }
+    virtual void computeClassifier();
 
   virtual bool isClassifierComputed()
   {
@@ -146,8 +112,9 @@ template<class PointT, class PointNormalT, class FeatureT>
 
   void setDebugFolder(const string & debug_folder)
   {
-    debug_folder_ = debug_folder;
-    boost::filesystem::path debug_path(debug_folder_);
+    boost::filesystem::path debug_path(debug_folder);
+    debug_folder_ = boost::filesystem::system_complete(debug_path).c_str();
+
     if(boost::filesystem::exists(debug_path))
     {
       boost::filesystem::remove_all(debug_path);
@@ -186,11 +153,28 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     for (std::map<std::string, pcl::PointCloud<pcl::PointXYZI> >::const_iterator it = votes_.begin(); it != votes_.end(); it++)
     {
-      projectVotesToGrid(it->second);
-      findLocalMaximaInGrid();
-      findVotedSegments(it->first);
-      fitModelsWithRansac(it->first);
-      generateVisibilityScore();
+
+      std::cerr << "Checking for " << it->first << std::endl;
+      pcl::io::savePCDFileASCII(debug_folder_ + it->first + "_votes.pcd", it->second);
+
+      Eigen::MatrixXf grid = projectVotesToGrid(it->second);
+      PointCloudPtr local_maxima_ = findLocalMaximaInGrid(grid);
+
+      pcl::io::savePCDFileASCII(debug_folder_ + it->first + "_local_maxima.pcd", *local_maxima_);
+
+      vector<PointNormalCloudPtr> voted_segments;
+      voted_segments = findVotedSegments(local_maxima_, it->first);
+
+      vector<PointNormalCloudPtr> result;
+      vector<float> scores;
+
+      fitModelsWithRansac(voted_segments, it->first, result, scores);
+
+
+      generateVisibilityScore(result, scores);
+      result = removeIntersecting(result, scores);
+
+      found_objects_[it->first] = result;
 
     }
 
@@ -206,12 +190,22 @@ template<class PointT, class PointNormalT, class FeatureT>
     return database_dir_;
   }
 
+  map<string, vector<PointNormalCloudPtr> > getFoundObjects()
+  {
+    return found_objects_;
+  }
+
   template<class PT, class PNT, class FT> friend YAML::Emitter& operator <<(YAML::Emitter& out, const PHVObjectClassifier< PT, PNT, FT> & h);
 
 protected:
 
-  PointNormalCloudPtr estimateNormalsAndSubsample(PointCloudConstPtr cloud)
+  PointNormalCloudPtr estimateNormalsAndSubsample(PointCloudConstPtr cloud_orig)
   {
+
+    std::vector<int> idx;
+    PointCloudPtr cloud(new PointCloud);
+    pcl::removeNaNFromPointCloud(*cloud_orig, *cloud, idx);
+
     PointNormalCloudPtr cloud_with_normals(new PointNormalCloud), cloud_downsampled(new PointNormalCloud);
 
     PointTreePtr tree(new PointTree);
@@ -230,6 +224,9 @@ protected:
     grid.setInputCloud(cloud_with_normals);
     grid.setLeafSize(subsampling_resolution_, subsampling_resolution_, subsampling_resolution_);
     grid.filter(*cloud_downsampled);
+
+    cloud_downsampled->is_dense = false;
+    pcl::removeNaNFromPointCloud(*cloud_downsampled, *cloud_downsampled, idx);
 
     return cloud_downsampled;
 
@@ -463,28 +460,35 @@ protected:
 
   }
 
-  void projectVotesToGrid(const pcl::PointCloud<pcl::PointXYZI> & model_centers)
+  Eigen::MatrixXf projectVotesToGrid(const pcl::PointCloud<pcl::PointXYZI> & model_centers)
   {
+
+    Eigen::MatrixXf grid;
+
     int image_x_width = (int)((max_scene_bound_.x - min_scene_bound_.x) / cell_size_);
     int image_y_width = (int)((max_scene_bound_.y - min_scene_bound_.y) / cell_size_);
 
-    grid_ = Eigen::MatrixXf::Zero(image_x_width, image_y_width);
+    grid = Eigen::MatrixXf::Zero(image_x_width, image_y_width);
 
     for (size_t i = 0; i < model_centers.points.size(); i++)
     {
       int vote_x = (model_centers.points[i].x - min_scene_bound_.x) / cell_size_;
       int vote_y = (model_centers.points[i].y - min_scene_bound_.y) / cell_size_;
       if ((vote_x >= 0) && (vote_y >= 0) && (vote_x < image_x_width) && (vote_y < image_y_width))
-      grid_(vote_x, vote_y) += model_centers.points[i].intensity;
+      grid(vote_x, vote_y) += model_centers.points[i].intensity;
     }
+
+    return grid;
   }
 
-  void findLocalMaximaInGrid()
+  PointCloudPtr findLocalMaximaInGrid(Eigen::MatrixXf grid)
   {
 
+    PointCloudPtr local_maxima(new PointCloud);
+
     float max, min;
-    max = grid_.maxCoeff();
-    min = grid_.minCoeff();
+    max = grid.maxCoeff();
+    min = grid.minCoeff();
 
     float threshold = min + (max - min) * local_maxima_threshold_;
 
@@ -496,44 +500,48 @@ protected:
 
     int side = window_size_pixels / 2;
 
-    for (int i = side; i < (grid_.rows() - side); i++)
+    for (int i = side; i < (grid.rows() - side); i++)
     {
-      for (int j = side; j < (grid_.cols() - side); j++)
+      for (int j = side; j < (grid.cols() - side); j++)
       {
 
         float max;
-        Eigen::MatrixXf window = grid_.block(i - side, j - side, window_size_pixels, window_size_pixels);
+        Eigen::MatrixXf window = grid.block(i - side, j - side, window_size_pixels, window_size_pixels);
         max = window.maxCoeff();
 
         assert(window.cols() == window_size_pixels);
         assert(window.rows() == window_size_pixels);
 
         // if max of the window is in its center then this point is local maxima
-        if ((max == grid_(i, j)) && (max > 0) && (max > threshold))
+        if ((max == grid(i, j)) && (max > 0) && (max > threshold))
         {
           PointT point;
           point.x = i * cell_size_ + min_scene_bound_.x;
           point.y = j * cell_size_ + min_scene_bound_.y;
           point.z = 0;
-          local_maxima_.points.push_back(point);
+          local_maxima->points.push_back(point);
         }
       }
     }
 
-    local_maxima_.width = local_maxima_.points.size();
-    local_maxima_.height = 1;
-    local_maxima_.is_dense = true;
+    local_maxima->width = local_maxima->points.size();
+    local_maxima->height = 1;
+    local_maxima->is_dense = true;
+
+    return local_maxima;
 
   }
 
-  void findVotedSegments(const string & class_name)
+  vector<PointNormalCloudPtr> findVotedSegments(PointCloudPtr local_maxima_, const string & class_name)
   {
+
+    vector<PointNormalCloudPtr> voted_segments_;
 
     std::vector<std::set<int> > segment_combinations;
 
-    for (size_t j = 0; j < local_maxima_.points.size(); j++)
+    for (size_t j = 0; j < local_maxima_->points.size(); j++)
     {
-      PointT local_maxima = local_maxima_.points[j];
+      PointT local_maxima = local_maxima_->points[j];
       std::vector<int> idx;
 
       for (size_t i = 0; i < votes_[class_name].points.size(); i++)
@@ -565,22 +573,25 @@ protected:
 
     for (size_t i = 0; i < segment_combinations.size(); i++)
     {
-      PointNormalCloud cloud;
+      PointNormalCloudPtr cloud(new PointNormalCloud);
 
       for (std::set<int>::iterator it = segment_combinations[i].begin(); it != segment_combinations[i].end(); it++)
       {
         PointNormalCloud segment(*scene_, *segment_indices_[*it]);
-        cloud += segment;
+        *cloud += segment;
       }
 
       voted_segments_.push_back(cloud);
 
     }
 
+    return voted_segments_;
+
   }
 
-  void fitModelsWithRansac(const string class_name)
+  void fitModelsWithRansac(vector<PointNormalCloudPtr> & voted_segments_, const string class_name, vector<PointNormalCloudPtr> & result_, vector<float> & scores_)
   {
+
 
     BOOST_FOREACH(PointNormalCloudPtr & full_model, class_name_to_full_models_map_[class_name])
     {
@@ -593,7 +604,7 @@ protected:
                 full_model));
 
         // TODO dont use makeShared
-        model->setTarget(voted_segments_[i].makeShared());
+        model->setTarget(voted_segments_[i]);
         pcl::RandomSampleConsensus<PointNormalT> ransac(model);
 
         ransac.setDistanceThreshold(ransac_distance_threshold_);
@@ -615,8 +626,8 @@ protected:
           transform.translate(Eigen::Vector3f(model_coefs[0], model_coefs[1], 0));
           transform.rotate(Eigen::AngleAxisf(model_coefs[2], Eigen::Vector3f(0, 0, 1)));
 
-          pcl::PointCloud<pcl::PointNormal> full_model_transformed;
-          pcl::transformPointCloudWithNormals(*full_model, full_model_transformed, transform);
+          PointNormalCloudPtr full_model_transformed(new PointNormalCloud);
+          pcl::transformPointCloudWithNormals(*full_model, *full_model_transformed, transform);
 
           result_.push_back(full_model_transformed);
           scores_.push_back(1 - weight);
@@ -626,7 +637,7 @@ protected:
     }
   }
 
-  void generateVisibilityScore()
+  void generateVisibilityScore(vector<PointNormalCloudPtr> & result_, vector<float> & scores_)
   {
 
     pcl::octree::OctreePointCloudSearch<PointNormalT> octree(0.05f);
@@ -636,9 +647,9 @@ protected:
     for (size_t i = 0; i < result_.size(); i++)
     {
       int free = 0, occupied = 0, occluded = 0;
-      for (size_t j = 0; j < result_[i].points.size(); j++)
+      for (size_t j = 0; j < result_[i]->points.size(); j++)
       {
-        PointNormalT point = result_[i].points[j];
+        PointNormalT point = result_[i]->points[j];
 
         if (octree.isVoxelOccupiedAtPoint(point))
         {
@@ -711,20 +722,21 @@ protected:
 
   }
 
-  void removeIntersecting()
+  vector<PointNormalCloudPtr> removeIntersecting(vector<PointNormalCloudPtr> & result_, vector<float> & scores_)
   {
 
-    if(result_.size() == 0)
-    return;
+    vector<PointNormalCloudPtr> no_intersect_result;
 
-    vector<PointNormalCloud> no_intersect_result;
+    if(result_.size() == 0)
+    return no_intersect_result;
+
 
     for (size_t i = 0; i < result_.size(); i++)
     {
       bool best = true;
       for (size_t j = 0; j < result_.size(); j++)
       {
-        if (intersectXY(result_[i], result_[j]))
+        if (intersectXY(*result_[i], *result_[j]))
         {
           if (scores_[i] > scores_[j])
           best = false;
@@ -737,7 +749,7 @@ protected:
       }
     }
 
-    result_ = no_intersect_result;
+    return no_intersect_result;
 
   }
 
@@ -783,11 +795,9 @@ public:
   PointNormalT min_scene_bound_, max_scene_bound_;
   map<string, pcl::PointCloud<pcl::PointXYZI> > votes_;
   map<string, vector<int> > voted_segment_idx_;
-  Eigen::MatrixXf grid_;
-  PointCloud local_maxima_;
-  vector<PointNormalCloud> voted_segments_;
-  std::vector<PointNormalCloud> result_;
-  std::vector<float> scores_;
+
+
+  map<string, vector<PointNormalCloudPtr> > found_objects_;
 
   FeatureT min_;
   FeatureT max_;
@@ -832,6 +842,18 @@ YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PHVObjectClassifier<PT
 
   out << YAML::Key << "num_clusters";
   out << YAML::Value << h.num_clusters_;
+
+  out << YAML::Key << "num_neighbours";
+  out << YAML::Value << h.num_neighbours_;
+
+  out << YAML::Key << "cell_size";
+  out << YAML::Value << h.cell_size_;
+
+  out << YAML::Key << "window_size";
+  out << YAML::Value << h.window_size_;
+
+  out << YAML::Key << "local_maxima_threshold";
+  out << YAML::Value << h.local_maxima_threshold_;
 
   out << YAML::Key << "debug";
   out << YAML::Value << h.debug_;
@@ -1001,6 +1023,12 @@ void operator >>(const YAML::Node& node, pcl::PHVObjectClassifier<PT, PNT, FT> &
 
   node["fe_k_neighbours"] >> h.fe_k_neighbours_;
   node["num_clusters"] >> h.num_clusters_;
+
+  node["num_neighbours"] >> h.num_neighbours_;
+  node["cell_size"] >> h.cell_size_;
+  node["window_size"] >> h.window_size_;
+  node["local_maxima_threshold"] >> h.local_maxima_threshold_;
+
   node["debug"] >> h.debug_;
   node["debug_folder"] >> h.debug_folder_;
 
@@ -1010,15 +1038,15 @@ void operator >>(const YAML::Node& node, pcl::PHVObjectClassifier<PT, PNT, FT> &
   node["min_feature"] >> h.min_;
   node["max_feature"] >> h.max_;
 
-  map<string, vector<string> >  full_models_locations;
+  map<string, vector<string> > full_models_locations;
   node["full_models"] >> full_models_locations;
-
 
   typedef map<string, vector<string> >::value_type vt;
 
   BOOST_FOREACH(vt &v, full_models_locations)
   {
-    for(size_t i=0; i<v.second.size(); i++){
+    for(size_t i=0; i<v.second.size(); i++)
+    {
       typename PointCloud<PNT>::Ptr cloud(new PointCloud<PNT>);
       pcl::io::loadPCDFile(h.database_dir_ + v.second[i], *cloud);
       h.class_name_to_full_models_map_[v.first].push_back(cloud);
