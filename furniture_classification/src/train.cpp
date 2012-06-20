@@ -1,20 +1,21 @@
 /*
- * scan.cpp
+ * region_grow.cpp
  *
- *  Created on: Apr 17, 2012
+ *  Created on: May 30, 2012
  *      Author: vsu
  */
 
+#include <pcl/point_types.h>
+#include <pcl/features/sgfall.h>
 #include <pcl/console/parse.h>
-#include <training.h>
+#include <pcl/classification/PHVObjectClassifier.h>
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 
-	// TODO write about dir structure
   if (argc < 5)
   {
-    PCL_INFO ("Usage %s -input_dir /dir/with/pointclouds -output_file /where/to/put/database [options]\n", argv[0]);
+    PCL_INFO ("Usage %s -input_dir /dir/with/pointclouds -output_dir /where/to/put/database [options]\n", argv[0]);
     PCL_INFO (" * where options are:\n"
         "         -min_points_in_segment <X>  : set minimal number of points in segment to X. Default : 300\n"
         "         -num_clusters <X>           : set Number of clusters. Default : 5\n"
@@ -22,51 +23,57 @@ int main(int argc, char** argv)
     return -1;
   }
 
-  int min_points_in_segment = 300;
-  int num_clusters = 5;
   std::string input_dir;
-  std::string output_file;
+  std::string output_dir;
 
   pcl::console::parse_argument(argc, argv, "-input_dir", input_dir);
-  pcl::console::parse_argument(argc, argv, "-output_file", output_file);
-  pcl::console::parse_argument(argc, argv, "-num_clusters", num_clusters);
-  pcl::console::parse_argument(argc, argv, "-min_points_in_segment", min_points_in_segment);
+  pcl::console::parse_argument(argc, argv, "-output_dir", output_dir);
 
-  std::vector<featureType> features;
-  pcl::PointCloud<pcl::PointXYZ> centroids;
-  std::vector<std::string> classes;
+  pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, pcl::Histogram<25> > oc;
+  oc.setDebugFolder("data/debug/");
+  oc.setDebug(true);
 
-  std::vector<featureType> cluster_centers;
-  std::vector<int> cluster_labels;
+  pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<25> >::Ptr feature_estimator(new pcl::SGFALLEstimation<
+      pcl::PointNormal, pcl::Histogram<25> >);
+  oc.setFeatureEstimator(feature_estimator);
 
-  std::map<std::string, std::vector<std::string> > class_to_full_pointcloud;
+  //PCL_INFO("Processing following files:\n");
 
-  std::vector<std::string> files_to_process;
-  get_files_to_process(input_dir, files_to_process, class_to_full_pointcloud);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
-  pcl::PointCloud<pcl::PointNormal> tmp;
+  boost::filesystem::directory_iterator dir_iter(input_dir), end;
 
-  for (size_t i = 0; i < files_to_process.size(); i++)
+  BOOST_FOREACH(const boost::filesystem::path& class_dir, std::make_pair(dir_iter, end))
+{
+  boost::filesystem::directory_iterator class_dir_iter(class_dir), end;
+  BOOST_FOREACH(const boost::filesystem::path& model_dir, std::make_pair(class_dir_iter, end))
   {
-    std::vector<std::vector<int> > tmp_segment_indices;
-    append_segments_from_file(files_to_process[i], features, centroids, classes, min_points_in_segment, tmp, tmp_segment_indices);
+
+    boost::filesystem::directory_iterator model_dir_iter(model_dir), end;
+    BOOST_FOREACH(const boost::filesystem::path& v, std::make_pair(model_dir_iter, end))
+    {
+      if(v.filename() == "full.pcd")
+      {
+
+        pcl::io::loadPCDFile(v.c_str(), *cloud);
+        oc.addObjectFullModel(cloud, class_dir.filename().c_str());
+      }
+
+      if(v.extension() == ".pcd")
+      {
+        pcl::io::loadPCDFile(v.c_str(), *cloud);
+        oc.addObjectPartialView(cloud, class_dir.filename().c_str());
+      }
+
+    }
+
   }
 
-
-  // Transform to model centroinds in local coordinate frame of the segment
-  centroids.getMatrixXfMap() *= -1;
-
-  featureType min, max;
-  normalizeFeatures(features, min, max);
-
-  cluster_features(features, num_clusters, cluster_centers, cluster_labels);
-
-  databaseType database;
-
-  create_codebook(features, centroids, classes, cluster_centers, cluster_labels, database);
-
-  save_codebook(output_file, database, min, max, class_to_full_pointcloud);
-
-  return 0;
 }
 
+oc.computeClassifier();
+oc.setDatabaseDir(output_dir);
+oc.saveToFile();
+
+return 0;
+}
