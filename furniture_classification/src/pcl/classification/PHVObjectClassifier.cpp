@@ -10,4 +10,6 @@
 #include <pcl/classification/PHVObjectClassifier.h>
 #include <pcl/classification/impl/PHVObjectClassifier.hpp>
 
+
+
 template class pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, pcl::Histogram<pcl::SGFALL_SIZE> >;

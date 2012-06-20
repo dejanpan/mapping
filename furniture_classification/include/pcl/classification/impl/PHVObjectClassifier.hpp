@@ -155,6 +155,7 @@ template<class PointT, class PointNormalT, class FeatureT>
       Eigen::MatrixXf grid = projectVotesToGrid(it->second);
       PointCloudPtr local_maxima_ = findLocalMaximaInGrid(grid);
 
+      if(!local_maxima_->empty())
       pcl::io::savePCDFileASCII(debug_folder_ + it->first + "_local_maxima.pcd", *local_maxima_);
 
       vector<PointNormalCloudPtr> voted_segments;
@@ -180,17 +181,23 @@ template<class PointT, class PointNormalT, class FeatureT>
                                                                                                                                         PointT>::ConstPtr cloud_orig)
   {
 
-    std::vector<int> idx;
-    PointCloudPtr cloud(new PointCloud);
-    pcl::removeNaNFromPointCloud(*cloud_orig, *cloud, idx);
+    //std::vector<int> idx;
+    //PointCloudPtr cloud(new PointCloud);
+    //pcl::removeNaNFromPointCloud(*cloud_orig, *cloud, idx);
 
-    PointNormalCloudPtr cloud_with_normals(new PointNormalCloud), cloud_downsampled(new PointNormalCloud);
+    PointNormalCloudPtr cloud_with_normals(new PointNormalCloud);
+    PointCloudPtr cloud_downsampled(new PointCloud);
+
+    pcl::VoxelGrid<PointT> grid;
+    grid.setInputCloud(cloud_orig);
+    grid.setLeafSize(subsampling_resolution_, subsampling_resolution_, subsampling_resolution_);
+    grid.filter(*cloud_downsampled);
 
     PointTreePtr tree(new PointTree);
 
     mls_->setComputeNormals(true);
 
-    mls_->setInputCloud(cloud);
+    mls_->setInputCloud(cloud_downsampled);
     mls_->setPolynomialFit(true);
     mls_->setPolynomialOrder(mls_polynomial_order_);
     mls_->setSearchMethod(tree);
@@ -198,15 +205,18 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     this->mls_->process(*cloud_with_normals);
 
-    pcl::VoxelGrid<PointNormalT> grid;
-    grid.setInputCloud(cloud_with_normals);
-    grid.setLeafSize(subsampling_resolution_, subsampling_resolution_, subsampling_resolution_);
-    grid.filter(*cloud_downsampled);
+    //pcl::VoxelGrid<PointNormalT> grid;
+    //grid.setInputCloud(cloud_with_normals);
+    //grid.setLeafSize(subsampling_resolution_, subsampling_resolution_, subsampling_resolution_);
+    //grid.filter(*cloud_downsampled);
 
-    cloud_downsampled->is_dense = false;
-    pcl::removeNaNFromPointCloud(*cloud_downsampled, *cloud_downsampled, idx);
+    //cloud_downsampled->is_dense = false;
+    //pcl::removeNaNFromPointCloud(*cloud_downsampled, *cloud_downsampled, idx);
 
-    return cloud_downsampled;
+    cloud_with_normals->sensor_origin_ = cloud_orig->sensor_origin_;
+    cloud_with_normals->sensor_orientation_ = cloud_orig->sensor_orientation_;
+
+    return cloud_with_normals;
 
   }
 
