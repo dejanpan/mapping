@@ -29,17 +29,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 include_directories ("/usr/include/openni/")
 
 
-rosbuild_add_library(training src/training.cpp)
-rosbuild_link_boost(training system filesystem)
-target_link_libraries(training yaml-cpp)
-
-rosbuild_add_executable(train src/train.cpp)
-target_link_libraries(train training)
-
-rosbuild_add_executable(classify src/classify.cpp)
-target_link_libraries(classify training)
-target_link_libraries(classify vtkCommon vtkIO vtkFiltering vtkGraphics)
-
 rosbuild_add_executable(scan src/scan.cpp)
 rosbuild_link_boost(scan system filesystem)
 target_link_libraries(scan vtkCommon vtkIO vtkFiltering vtkGraphics vtkRendering)
@@ -47,7 +36,6 @@ target_link_libraries(scan vtkCommon vtkIO vtkFiltering vtkGraphics vtkRendering
 rosbuild_add_executable(convert src/convert.cpp)
 rosbuild_link_boost(convert system filesystem)
 
-INCLUDE_DIRECTORIES("/usr/include/python2.7")
 
 rosbuild_add_gtest(utest test/utest.cpp)
 target_link_libraries(utest training)
@@ -63,13 +51,13 @@ rosbuild_add_library(furniture_classification src/pcl/classification/PHVObjectCl
 rosbuild_link_boost(furniture_classification system filesystem)
 target_link_libraries(furniture_classification yaml-cpp)
 
-rosbuild_add_executable(train_new src/train_new.cpp)
-target_link_libraries(train_new furniture_classification)
-rosbuild_link_boost(train_new system filesystem)
+rosbuild_add_executable(train src/train.cpp)
+target_link_libraries(train furniture_classification)
+rosbuild_link_boost(train system filesystem)
 
-rosbuild_add_executable(classify_new src/classify_new.cpp)
-target_link_libraries(classify_new furniture_classification)
-rosbuild_link_boost(classify_new system filesystem)
+rosbuild_add_executable(classify src/classify.cpp)
+target_link_libraries(classify furniture_classification)
+rosbuild_link_boost(classify system filesystem)
 
 rosbuild_add_executable(classify_live src/classify_live.cpp)
 target_link_libraries(classify_live furniture_classification)

@@ -70,6 +70,7 @@ public:
         }
 
         *cloud_transformed += *model;
+
       }
     }
 

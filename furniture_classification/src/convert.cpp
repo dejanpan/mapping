@@ -7,7 +7,6 @@
 
 #include <pcl/console/parse.h>
 #include <pcl/common/transforms.h>
-#include <training.h>
 
 #include <pcl/ModelCoefficients.h>
 #include <pcl/io/pcd_io.h>
