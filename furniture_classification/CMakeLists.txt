@@ -26,6 +26,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 
+include_directories ("/usr/include/openni/")
+
+
 rosbuild_add_library(training src/training.cpp)
 rosbuild_link_boost(training system filesystem)
 target_link_libraries(training yaml-cpp)
@@ -61,10 +64,14 @@ rosbuild_link_boost(furniture_classification system filesystem)
 target_link_libraries(furniture_classification yaml-cpp)
 
 rosbuild_add_executable(train_new src/train_new.cpp)
-target_link_libraries(train_new training furniture_classification)
+target_link_libraries(train_new furniture_classification)
 rosbuild_link_boost(train_new system filesystem)
 
 rosbuild_add_executable(classify_new src/classify_new.cpp)
-target_link_libraries(classify_new training furniture_classification)
+target_link_libraries(classify_new furniture_classification)
 rosbuild_link_boost(classify_new system filesystem)
+
+rosbuild_add_executable(classify_live src/classify_live.cpp)
+target_link_libraries(classify_live furniture_classification)
+target_link_libraries(classify_live vtkCommon vtkIO vtkFiltering vtkGraphics)
 

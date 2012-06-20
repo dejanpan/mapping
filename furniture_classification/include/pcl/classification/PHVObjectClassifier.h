@@ -20,6 +20,13 @@
 #include <pcl/segmentation/region_growing.h>
 #include <pcl/common/transforms.h>
 
+#include <pcl/ModelCoefficients.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+
 #include <pcl/sample_consensus/ransac.h>
 #include <sac_3dof.h>
 
@@ -91,221 +98,244 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     virtual void computeClassifier();
 
-  virtual bool isClassifierComputed()
-  {
-    return !this->database_.empty();
-  }
-
-  void saveToFile();
-
-  void loadFromFile();
-
-  void setDebug(bool debug)
-  {
-    debug_ = debug;
-  }
-
-  bool getDebug()
-  {
-    return debug_;
-  }
-
-  void setDebugFolder(const string & debug_folder)
-  {
-    boost::filesystem::path debug_path(debug_folder);
-    debug_folder_ = boost::filesystem::system_complete(debug_path).c_str();
-
-    if(boost::filesystem::exists(debug_path))
+    virtual bool isClassifierComputed()
     {
-      boost::filesystem::remove_all(debug_path);
+      return !this->database_.empty();
     }
 
-    boost::filesystem::create_directories(debug_path);
+    void saveToFile();
 
-  }
+    void loadFromFile();
 
-  string getDebugFolder()
-  {
-    return debug_folder_;
-  }
+    void setDebug(bool debug)
+    {
+      debug_ = debug;
+    }
 
-  void setFeatureEstimator(FeatureEstimatorType feature_estimator)
-  {
-    feature_estimator_ = feature_estimator;
-  }
+    bool getDebug()
+    {
+      return debug_;
+    }
 
-  FeatureEstimatorType getFeatureEstimator()
-  {
-    return feature_estimator_;
-  }
+    void setDebugFolder(const string & debug_folder)
+    {
+      boost::filesystem::path debug_path(debug_folder);
+      debug_folder_ = boost::filesystem::system_complete(debug_path).c_str();
 
-  virtual void setScene(PointCloudConstPtr model)
-  {
-    scene_ = estimateNormalsAndSubsample(model);
-    pcl::getMinMax3D<PointNormalT>(*scene_, min_scene_bound_, max_scene_bound_);
-  }
+      if (boost::filesystem::exists(debug_path))
+      {
+        boost::filesystem::remove_all(debug_path);
+      }
 
-  void classify();
+      boost::filesystem::create_directories(debug_path);
 
-  void setDatabaseDir(const string & database_dir)
-  {
-    database_dir_ = database_dir;
-  }
+    }
 
-  string getDatabaseDir()
-  {
-    return database_dir_;
-  }
+    string getDebugFolder()
+    {
+      return debug_folder_;
+    }
 
-  map<string, vector<PointNormalCloudPtr> > getFoundObjects()
-  {
-    return found_objects_;
-  }
+    void setFeatureEstimator(FeatureEstimatorType feature_estimator)
+    {
+      feature_estimator_ = feature_estimator;
+    }
 
-  template<class PT, class PNT, class FT> friend YAML::Emitter& operator <<(YAML::Emitter& out, const PHVObjectClassifier< PT, PNT, FT> & h);
+    FeatureEstimatorType getFeatureEstimator()
+    {
+      return feature_estimator_;
+    }
 
-protected:
+    virtual void setScene(PointCloudConstPtr model)
+    {
+      scene_ = estimateNormalsAndSubsample(model);
+      pcl::getMinMax3D<PointNormalT>(*scene_, min_scene_bound_, max_scene_bound_);
+    }
 
-  typename pcl::PointCloud<PointNormalT>::Ptr estimateNormalsAndSubsample(typename pcl::PointCloud<PointT>::ConstPtr cloud_orig);
-  void getSegmentsFromCloud(PointNormalCloudPtr cloud_with_normals, vector<boost::shared_ptr<vector<int> > > & segment_indices, pcl::PointCloud<pcl::PointXYZRGB>::Ptr & colored_segments);
-  void appendFeaturesFromCloud(PointNormalCloudPtr & cloud, const string & class_name, const int i);
-  void normalizeFeatures(std::vector<FeatureT> & features);
-  void normalizeFeaturesWithCurrentMinMax(std::vector<FeatureT> & features);
-  void clusterFeatures(vector<FeatureT> & cluster_centers, vector<int> & cluster_labels);
-  void vote();
-  Eigen::MatrixXf projectVotesToGrid(const pcl::PointCloud<pcl::PointXYZI> & model_centers);
-  typename pcl::PointCloud<PointT>::Ptr findLocalMaximaInGrid(Eigen::MatrixXf grid);
-  vector<typename pcl::PointCloud<PointNormalT>::Ptr> findVotedSegments(typename pcl::PointCloud<PointT>::Ptr local_maxima_, const string & class_name);
-  void fitModelsWithRansac(vector<PointNormalCloudPtr> & voted_segments_, const string class_name, vector<PointNormalCloudPtr> & result_, vector<float> & scores_);
-  void generateVisibilityScore(vector<PointNormalCloudPtr> & result_, vector<float> & scores_);
-  bool intersectXY(const pcl::PointCloud<PointNormalT> & cloud1, const pcl::PointCloud<PointNormalT> & cloud2);
-  vector<typename pcl::PointCloud<PointNormalT>::Ptr> removeIntersecting(vector<typename pcl::PointCloud<PointNormalT>::Ptr> & result_, vector<float> & scores_);
+    PointNormalCloudPtr getScene()
+    {
+      return scene_;
+    }
 
-public:
+    void classify();
 
-  float subsampling_resolution_;
-  int mls_polynomial_order_;
-  float mls_search_radius_;
-  int min_points_in_segment_;
-  float rg_residual_threshold_;
-  float rg_smoothness_threshold_;
-  float fe_k_neighbours_;
-  int num_clusters_;
-  int num_neighbours_;
-  float cell_size_;
-  float window_size_;
-  float local_maxima_threshold_;
+    void setDatabaseDir(const string & database_dir)
+    {
+      database_dir_ = database_dir;
+    }
 
-  float ransac_distance_threshold_;
-  float ransac_probability_;
-  int ransac_num_iter_;
-  float ransac_result_threshold_;
+    string getDatabaseDir()
+    {
+      return database_dir_;
+    }
 
-  bool debug_;
-  string debug_folder_;
-  string database_dir_;
+    map<string, vector<PointNormalCloudPtr> > getFoundObjects()
+    {
+      return found_objects_;
+    }
 
-  FeatureEstimatorType feature_estimator_;
-  MovingLeastSquaresType mls_;
+    template<class PT, class PNT, class FT>
+      friend YAML::Emitter& operator <<(YAML::Emitter& out, const PHVObjectClassifier<PT, PNT, FT> & h);
 
-  DatabaseType database_;
-  typename pcl::PointCloud<FeatureT>::Ptr database_features_cloud_;
+  protected:
 
-  ModelMapType class_name_to_partial_views_map_;
-  ModelMapType class_name_to_full_models_map_;
+    typename pcl::PointCloud<PointNormalT>::Ptr
+    estimateNormalsAndSubsample(typename pcl::PointCloud<PointT>::ConstPtr cloud_orig);
+    void getSegmentsFromCloud(PointNormalCloudPtr cloud_with_normals,
+                              vector<boost::shared_ptr<vector<int> > > & segment_indices, pcl::PointCloud<
+                                  pcl::PointXYZRGB>::Ptr & colored_segments);
+    void appendFeaturesFromCloud(PointNormalCloudPtr & cloud, const string & class_name, const int i);
+    void normalizeFeatures(std::vector<FeatureT> & features);
+    void normalizeFeaturesWithCurrentMinMax(std::vector<FeatureT> & features);
+    void clusterFeatures(vector<FeatureT> & cluster_centers, vector<int> & cluster_labels);
+    void vote();
+    Eigen::MatrixXf projectVotesToGrid(const pcl::PointCloud<pcl::PointXYZI> & model_centers);
+    typename pcl::PointCloud<PointT>::Ptr findLocalMaximaInGrid(Eigen::MatrixXf grid);
+    vector<typename pcl::PointCloud<PointNormalT>::Ptr>
+    findVotedSegments(typename pcl::PointCloud<PointT>::Ptr local_maxima_, const string & class_name);
+    void fitModelsWithRansac(vector<PointNormalCloudPtr> & voted_segments_, const string class_name, vector<
+        PointNormalCloudPtr> & result_, vector<float> & scores_);
+    void generateVisibilityScore(vector<PointNormalCloudPtr> & result_, vector<float> & scores_);
+    bool intersectXY(const pcl::PointCloud<PointNormalT> & cloud1, const pcl::PointCloud<PointNormalT> & cloud2);
+    vector<typename pcl::PointCloud<PointNormalT>::Ptr> removeIntersecting(vector<
+        typename pcl::PointCloud<PointNormalT>::Ptr> & result_, vector<float> & scores_);
 
-  vector<FeatureT> features_;
-  PointCloud centroids_;
-  vector<std::string> classes_;
-  vector<boost::shared_ptr<vector<int> > > segment_indices_;
+  public:
 
-  PointNormalCloudPtr scene_;
-  PointNormalT min_scene_bound_, max_scene_bound_;
-  map<string, pcl::PointCloud<pcl::PointXYZI> > votes_;
-  map<string, vector<int> > voted_segment_idx_;
+    float subsampling_resolution_;
+    int mls_polynomial_order_;
+    float mls_search_radius_;
+    int min_points_in_segment_;
+    float rg_residual_threshold_;
+    float rg_smoothness_threshold_;
+    float fe_k_neighbours_;
+    int num_clusters_;
+    int num_neighbours_;
+    float cell_size_;
+    float window_size_;
+    float local_maxima_threshold_;
 
+    float ransac_distance_threshold_;
+    float ransac_probability_;
+    int ransac_num_iter_;
+    float ransac_result_threshold_;
 
-  map<string, vector<PointNormalCloudPtr> > found_objects_;
+    bool debug_;
+    string debug_folder_;
+    string database_dir_;
 
-  FeatureT min_;
-  FeatureT max_;
+    FeatureEstimatorType feature_estimator_;
+    MovingLeastSquaresType mls_;
 
-};
+    DatabaseType database_;
+    typename pcl::PointCloud<FeatureT>::Ptr database_features_cloud_;
+
+    ModelMapType class_name_to_partial_views_map_;
+    ModelMapType class_name_to_full_models_map_;
+
+    vector<FeatureT> features_;
+    PointCloud centroids_;
+    vector<std::string> classes_;
+    vector<boost::shared_ptr<vector<int> > > segment_indices_;
+
+    PointNormalCloudPtr scene_;
+    PointNormalT min_scene_bound_, max_scene_bound_;
+    map<string, pcl::PointCloud<pcl::PointXYZI> > votes_;
+    map<string, vector<int> > voted_segment_idx_;
+
+    map<string, vector<PointNormalCloudPtr> > found_objects_;
+
+    FeatureT min_;
+    FeatureT max_;
+
+  };
 
 template<class FeatureT>
-inline bool operator <(const FeatureT & f, const FeatureT & s)
-{
-  int N = sizeof(f.histogram)/sizeof(float);
+  inline bool operator <(const FeatureT & f, const FeatureT & s)
+  {
+    int N = sizeof(f.histogram) / sizeof(float);
 
-  std::vector<float> v_f(f.histogram, f.histogram + N), v_s(s.histogram, s.histogram + N);
-  return v_f < v_s;
-}
+    std::vector<float> v_f(f.histogram, f.histogram + N), v_s(s.histogram, s.histogram + N);
+    return v_f < v_s;
+  }
 
 template<class PT, class PNT, class FT>
-YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PHVObjectClassifier<PT, PNT, FT> & h)
-{
+  YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PHVObjectClassifier<PT, PNT, FT> & h)
+  {
 
-  out << YAML::BeginMap;
+    out << YAML::BeginMap;
 
-  out << YAML::Key << "subsampling_resolution";
-  out << YAML::Value << h.subsampling_resolution_;
+    out << YAML::Key << "subsampling_resolution";
+    out << YAML::Value << h.subsampling_resolution_;
 
-  out << YAML::Key << "mls_polynomial_order";
-  out << YAML::Value << h.mls_polynomial_order_;
+    out << YAML::Key << "mls_polynomial_order";
+    out << YAML::Value << h.mls_polynomial_order_;
 
-  out << YAML::Key << "mls_search_radius";
-  out << YAML::Value << h.mls_search_radius_;
+    out << YAML::Key << "mls_search_radius";
+    out << YAML::Value << h.mls_search_radius_;
 
-  out << YAML::Key << "min_points_in_segment";
-  out << YAML::Value << h.min_points_in_segment_;
+    out << YAML::Key << "min_points_in_segment";
+    out << YAML::Value << h.min_points_in_segment_;
 
-  out << YAML::Key << "rg_residual_threshold";
-  out << YAML::Value << h.rg_residual_threshold_;
+    out << YAML::Key << "rg_residual_threshold";
+    out << YAML::Value << h.rg_residual_threshold_;
 
-  out << YAML::Key << "rg_smoothness_threshold";
-  out << YAML::Value << h.rg_smoothness_threshold_;
+    out << YAML::Key << "rg_smoothness_threshold";
+    out << YAML::Value << h.rg_smoothness_threshold_;
 
-  out << YAML::Key << "fe_k_neighbours";
-  out << YAML::Value << h.fe_k_neighbours_;
+    out << YAML::Key << "fe_k_neighbours";
+    out << YAML::Value << h.fe_k_neighbours_;
 
-  out << YAML::Key << "num_clusters";
-  out << YAML::Value << h.num_clusters_;
+    out << YAML::Key << "num_clusters";
+    out << YAML::Value << h.num_clusters_;
 
-  out << YAML::Key << "num_neighbours";
-  out << YAML::Value << h.num_neighbours_;
+    out << YAML::Key << "num_neighbours";
+    out << YAML::Value << h.num_neighbours_;
 
-  out << YAML::Key << "cell_size";
-  out << YAML::Value << h.cell_size_;
+    out << YAML::Key << "cell_size";
+    out << YAML::Value << h.cell_size_;
 
-  out << YAML::Key << "window_size";
-  out << YAML::Value << h.window_size_;
+    out << YAML::Key << "window_size";
+    out << YAML::Value << h.window_size_;
 
-  out << YAML::Key << "local_maxima_threshold";
-  out << YAML::Value << h.local_maxima_threshold_;
+    out << YAML::Key << "local_maxima_threshold";
+    out << YAML::Value << h.local_maxima_threshold_;
 
-  out << YAML::Key << "debug";
-  out << YAML::Value << h.debug_;
+    out << YAML::Key << "ransac_distance_threshold";
+    out << YAML::Value << h.ransac_distance_threshold_;
 
-  out << YAML::Key << "debug_folder";
-  out << YAML::Value << h.debug_folder_;
+    out << YAML::Key << "ransac_probability";
+    out << YAML::Value << h.ransac_probability_;
 
-  out << YAML::Key << "database";
-  out << YAML::Value << h.database_;
+    out << YAML::Key << "ransac_num_iter";
+    out << YAML::Value << h.ransac_num_iter_;
 
-  out << YAML::Key << "min_feature";
-  out << YAML::Value << h.min_;
+    out << YAML::Key << "ransac_result_threshold";
+    out << YAML::Value << h.ransac_result_threshold_;
 
-  out << YAML::Key << "max_feature";
-  out << YAML::Value << h.max_;
-  out << YAML::Key << "full_models";
+    out << YAML::Key << "debug";
+    out << YAML::Value << h.debug_;
 
-  out << YAML::Value;
-  out << YAML::BeginMap;
+    out << YAML::Key << "debug_folder";
+    out << YAML::Value << h.debug_folder_;
 
-  typedef typename pcl::PHVObjectClassifier<PT, PNT, FT>::ModelMapValueType M;
+    out << YAML::Key << "database";
+    out << YAML::Value << h.database_;
 
-  BOOST_FOREACH(M v, h.class_name_to_full_models_map_)
-  { out << YAML::Key << v.first;
+    out << YAML::Key << "min_feature";
+    out << YAML::Value << h.min_;
+
+    out << YAML::Key << "max_feature";
+    out << YAML::Value << h.max_;
+    out << YAML::Key << "full_models";
+
+    out << YAML::Value;
+    out << YAML::BeginMap;
+
+    typedef typename pcl::PHVObjectClassifier<PT, PNT, FT>::ModelMapValueType M;
+
+    BOOST_FOREACH(M v, h.class_name_to_full_models_map_)
+{    out << YAML::Key << v.first;
     out << YAML::Value << YAML::BeginSeq;
 
     for(size_t i=0; i<v.second.size(); i++)
@@ -456,6 +486,11 @@ void operator >>(const YAML::Node& node, pcl::PHVObjectClassifier<PT, PNT, FT> &
   node["cell_size"] >> h.cell_size_;
   node["window_size"] >> h.window_size_;
   node["local_maxima_threshold"] >> h.local_maxima_threshold_;
+
+  node["ransac_distance_threshold"] >> h.ransac_distance_threshold_;
+  node["ransac_probability"] >> h.ransac_probability_;
+  node["ransac_num_iter"] >> h.ransac_num_iter_;
+  node["ransac_result_threshold"] >> h.ransac_result_threshold_;
 
   node["debug"] >> h.debug_;
   node["debug_folder"] >> h.debug_folder_;
