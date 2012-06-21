@@ -313,7 +313,7 @@ int main(int argc, char** argv)
     pcl::visualization::PCLVisualizer viz;
     viz.initCameraParameters();
     viz.updateCamera();
-    viz.setCameraPosition(0, 0, 0, 1, 0, 0, 0, 0, 1);
+    viz.setCameraPose(0, 0, 0, 1, 0, 0, 0, 0, 1);
     viz.addModelFromPolyData(model, transform);
     viz.setRepresentationToSurfaceForAllActors();
 
