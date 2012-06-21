@@ -438,12 +438,13 @@ template<class PointT, class PointNormalT, class FeatureT>
           transform.translate(centroids_[i].getVector3fMap());
           pcl::transformPointCloud(model_centers, model_centers_transformed, transform);
 
+
           pcl::copyPointCloud(model_centers_transformed, model_centers_transformed_weighted);
 
           // TODO revise weighting function
           for (size_t k = 0; k < model_centers_transformed_weighted.size(); k++)
           {
-            model_centers_transformed_weighted.points[k].intensity = (1.0 / distances[j])
+            model_centers_transformed_weighted.points[k].intensity = exp(-(distances[j]*distances[j]))
                 * (1.0 / model_centers.size());
             voted_segment_idx_[class_name].push_back(i);
           }

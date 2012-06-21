@@ -44,9 +44,6 @@ int main(int argc, char** argv)
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
   pcl::io::loadPCDFile(scene_file_name, *cloud);
-
-  std::cerr << cloud->is_dense << std::endl;
-
   oc.setScene(cloud);
 
   oc.classify();
