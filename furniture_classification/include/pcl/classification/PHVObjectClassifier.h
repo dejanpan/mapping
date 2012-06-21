@@ -73,9 +73,10 @@ template<class PointT, class PointNormalT, class FeatureT>
     PHVObjectClassifier() :
       subsampling_resolution_(0.02f), mls_polynomial_order_(2), mls_search_radius_(0.06f), min_points_in_segment_(100),
           rg_residual_threshold_(0.05f), rg_smoothness_threshold_(40 * M_PI / 180), fe_k_neighbours_(10),
-          num_clusters_(40), num_neighbours_(1), cell_size_(0.01), window_size_(0.6f), local_maxima_threshold_(0.0f),
-          ransac_distance_threshold_(0.01f), ransac_probability_(0.9), ransac_num_iter_(100), debug_(false),
-          debug_folder_(""), mls_(new MovingLeastSquares<PointT, PointNormalT> )
+          num_clusters_(40), num_neighbours_(1), cell_size_(0.01), window_size_(0.6f), local_maxima_threshold_(0.4f),
+          ransac_distance_threshold_(0.01f), ransac_probability_(0.9), ransac_num_iter_(100),
+          ransac_result_threshold_(0.5), debug_(false), debug_folder_(""), mls_(new MovingLeastSquares<PointT,
+              PointNormalT> )
     {
 
       typedef pcl::PointCloud<FeatureT> PointFeatureCloud;
