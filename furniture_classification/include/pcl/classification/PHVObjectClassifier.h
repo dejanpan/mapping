@@ -27,7 +27,7 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 
-#include <pcl/sample_consensus/ransac.h>
+#include <ransac_simple.h>
 #include <sac_3dof.h>
 
 #include <boost/foreach.hpp>
@@ -147,9 +147,19 @@ template<class PointT, class PointNormalT, class FeatureT>
       return feature_estimator_;
     }
 
-    virtual void setScene(PointCloudConstPtr model)
+    virtual void setScene(PointCloudConstPtr model, float cut_off_distance = 2.5f)
     {
-      scene_ = estimateNormalsAndSubsample(model);
+      std::vector<int> idx;
+
+      pcl::PassThrough<PointT> pass;
+      pass.setInputCloud(model);
+      pass.setFilterFieldName("x");
+      pass.setFilterLimits(0, cut_off_distance);
+      pass.filter(idx);
+
+      PointCloudPtr model_cut(new PointCloud(*model, idx));
+
+      scene_ = estimateNormalsAndSubsample(model_cut);
       pcl::getMinMax3D<PointNormalT>(*scene_, min_scene_bound_, max_scene_bound_);
     }
 
@@ -192,10 +202,10 @@ template<class PointT, class PointNormalT, class FeatureT>
     void vote();
     Eigen::MatrixXf projectVotesToGrid(const pcl::PointCloud<pcl::PointXYZI> & model_centers);
     typename pcl::PointCloud<PointT>::Ptr findLocalMaximaInGrid(Eigen::MatrixXf grid);
-    vector<typename pcl::PointCloud<PointNormalT>::Ptr>
+    vector<boost::shared_ptr<std::vector<int> > >
     findVotedSegments(typename pcl::PointCloud<PointT>::Ptr local_maxima_, const string & class_name);
-    void fitModelsWithRansac(vector<PointNormalCloudPtr> & voted_segments_, const string class_name, vector<
-        PointNormalCloudPtr> & result_, vector<float> & scores_);
+    void fitModelsWithRansac(vector<boost::shared_ptr<std::vector<int> > > & voted_segments_, const string class_name,
+                             vector<PointNormalCloudPtr> & result_, vector<float> & scores_);
     void generateVisibilityScore(vector<PointNormalCloudPtr> & result_, vector<float> & scores_);
     bool intersectXY(const pcl::PointCloud<PointNormalT> & cloud1, const pcl::PointCloud<PointNormalT> & cloud2);
     vector<typename pcl::PointCloud<PointNormalT>::Ptr> removeIntersecting(vector<

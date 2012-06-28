@@ -155,10 +155,10 @@ template<class PointT, class PointNormalT, class FeatureT>
       Eigen::MatrixXf grid = projectVotesToGrid(it->second);
       PointCloudPtr local_maxima_ = findLocalMaximaInGrid(grid);
 
-      if(!local_maxima_->empty())
-      pcl::io::savePCDFileASCII(debug_folder_ + it->first + "_local_maxima.pcd", *local_maxima_);
+      if (!local_maxima_->empty())
+        pcl::io::savePCDFileASCII(debug_folder_ + it->first + "_local_maxima.pcd", *local_maxima_);
 
-      vector<PointNormalCloudPtr> voted_segments;
+      vector<boost::shared_ptr<std::vector<int> > > voted_segments;
       voted_segments = findVotedSegments(local_maxima_, it->first);
 
       vector<PointNormalCloudPtr> result;
@@ -166,7 +166,7 @@ template<class PointT, class PointNormalT, class FeatureT>
 
       fitModelsWithRansac(voted_segments, it->first, result, scores);
 
-      generateVisibilityScore(result, scores);
+      //generateVisibilityScore(result, scores);
       result = removeIntersecting(result, scores);
 
       found_objects_[it->first] = result;
@@ -438,14 +438,13 @@ template<class PointT, class PointNormalT, class FeatureT>
           transform.translate(centroids_[i].getVector3fMap());
           pcl::transformPointCloud(model_centers, model_centers_transformed, transform);
 
-
           pcl::copyPointCloud(model_centers_transformed, model_centers_transformed_weighted);
 
           // TODO revise weighting function
           for (size_t k = 0; k < model_centers_transformed_weighted.size(); k++)
           {
-            model_centers_transformed_weighted.points[k].intensity = exp(-(distances[j]*distances[j]))
-                * (1.0 / model_centers.size());
+            model_centers_transformed_weighted.points[k].intensity = exp(-(distances[j] * distances[j])) * (1.0
+                / model_centers.size());
             voted_segment_idx_[class_name].push_back(i);
           }
 
@@ -534,13 +533,13 @@ template<class PointT, class PointNormalT, class FeatureT>
   }
 
 template<class PointT, class PointNormalT, class FeatureT>
-  vector<typename pcl::PointCloud<PointNormalT>::Ptr> pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::findVotedSegments(
-                                                                                                                                  typename pcl::PointCloud<
-                                                                                                                                      PointT>::Ptr local_maxima_,
-                                                                                                                                  const string & class_name)
+  vector<boost::shared_ptr<std::vector<int> > > pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::findVotedSegments(
+                                                                                                                            typename pcl::PointCloud<
+                                                                                                                                PointT>::Ptr local_maxima_,
+                                                                                                                            const string & class_name)
   {
 
-    vector<PointNormalCloudPtr> voted_segments_;
+    vector<boost::shared_ptr<std::vector<int> > > voted_segments_;
 
     std::vector<std::set<int> > segment_combinations;
 
@@ -578,16 +577,32 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     for (size_t i = 0; i < segment_combinations.size(); i++)
     {
-      PointNormalCloudPtr cloud(new PointNormalCloud);
+      //PointNormalCloudPtr cloud(new PointNormalCloud);
+      boost::shared_ptr<std::vector<int> > cloud_idx(new std::vector<int>);
 
       for (std::set<int>::iterator it = segment_combinations[i].begin(); it != segment_combinations[i].end(); it++)
       {
-        PointNormalCloud segment(*scene_, *segment_indices_[*it]);
-        *cloud += segment;
+        //PointNormalCloud segment(*scene_, *segment_indices_[*it]);
+        cloud_idx->insert(cloud_idx->begin(), segment_indices_[*it]->begin(), segment_indices_[*it]->end());
+
+        //*cloud += segment;
       }
 
-      voted_segments_.push_back(cloud);
+      voted_segments_.push_back(cloud_idx);
 
+    }
+
+    if (debug_)
+    {
+
+      for (size_t i = 0; i < voted_segments_.size(); i++)
+      {
+        PointNormalCloud seg(*scene_, *voted_segments_[i]);
+        std::stringstream ss;
+        ss << debug_folder_ << class_name << "_segment_" << i << ".pcd";
+        std::cerr << "Writing to file " << ss.str() << std::endl;
+        pcl::io::savePCDFileASCII(ss.str(), seg);
+      }
     }
 
     return voted_segments_;
@@ -595,39 +610,33 @@ template<class PointT, class PointNormalT, class FeatureT>
   }
 
 template<class PointT, class PointNormalT, class FeatureT>
-  void pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::fitModelsWithRansac(
-                                                                                     vector<PointNormalCloudPtr> & voted_segments_,
-                                                                                     const string class_name,
-                                                                                     vector<PointNormalCloudPtr> & result_,
-                                                                                     vector<float> & scores_)
+  void pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::fitModelsWithRansac(vector<boost::shared_ptr<
+      std::vector<int> > > & voted_segments_, const string class_name, vector<PointNormalCloudPtr> & result_, vector<
+      float> & scores_)
   {
+
+    RandomSampleConsensusSimple<PointNormalT> ransac(subsampling_resolution_ * 2);
+
+    ransac.setScene(scene_);
+    ransac.setMaxIterations(ransac_num_iter_);
+    ransac.setWeight(ransac_probability_);
 
     BOOST_FOREACH(PointNormalCloudPtr & full_model, class_name_to_full_models_map_[class_name])
 {    for (size_t i = 0; i < voted_segments_.size(); i++)
     {
 
-      typename pcl::SampleConsensusModel3DOF<PointNormalT>::Ptr
-      model(
-          new pcl::SampleConsensusModel3DOF<PointNormalT>(
-              full_model));
+      ransac.setModel(full_model);
+      ransac.setSceneSegment(voted_segments_[i]);
 
-      // TODO dont use makeShared
-      model->setTarget(voted_segments_[i]);
-      pcl::RandomSampleConsensus<PointNormalT> ransac(model);
-
-      ransac.setDistanceThreshold(ransac_distance_threshold_);
-      ransac.setProbability(ransac_probability_);
-      ransac.setMaxIterations(ransac_num_iter_);
       ransac.computeModel();
 
-      std::vector<int> tmp1;
-      ransac.getInliers(tmp1);
-      float weight = ((float)tmp1.size()) / full_model->points.size();
+      float score = ransac.getBestScore();
 
-      if (weight > ransac_result_threshold_)
+      std::cerr << "Score " << score << std::endl;
+
+      if (score > ransac_result_threshold_)
       {
-        Eigen::VectorXf model_coefs;
-        ransac.getModelCoefficients(model_coefs);
+        Eigen::VectorXf model_coefs = ransac.getBestModelCoeficients();
 
         Eigen::Affine3f transform;
         transform.setIdentity();
@@ -638,7 +647,7 @@ template<class PointT, class PointNormalT, class FeatureT>
         pcl::transformPointCloudWithNormals(*full_model, *full_model_transformed, transform);
 
         result_.push_back(full_model_transformed);
-        scores_.push_back(1 - weight);
+        scores_.push_back(1 - score);
 
       }
     }
@@ -651,7 +660,7 @@ template<class PointT, class PointNormalT, class FeatureT>
                                                                                          vector<float> & scores_)
   {
 
-    pcl::octree::OctreePointCloudSearch<PointNormalT> octree(0.05f);
+    pcl::octree::OctreePointCloudSearch<PointNormalT> octree(subsampling_resolution_ * 2.5f);
     octree.setInputCloud(scene_);
     octree.addPointsFromInputCloud();
 

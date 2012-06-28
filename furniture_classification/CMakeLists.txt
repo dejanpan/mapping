@@ -40,8 +40,8 @@ rosbuild_link_boost(convert system filesystem)
 rosbuild_add_gtest(utest test/utest.cpp)
 target_link_libraries(utest training)
 
-rosbuild_add_executable(sac_test src/sac_test.cpp)
-target_link_libraries(sac_test vtkCommon vtkIO vtkFiltering vtkGraphics vtkRendering)
+#rosbuild_add_executable(sac_test src/sac_test.cpp)
+#target_link_libraries(sac_test vtkCommon vtkIO vtkFiltering vtkGraphics vtkRendering)
 
 rosbuild_add_executable(region_grow src/region_grow.cpp)
 target_link_libraries(region_grow vtkCommon vtkIO vtkFiltering vtkGraphics vtkRendering)

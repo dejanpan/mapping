@@ -11,6 +11,7 @@
 #include <pcl/search/kdtree.h>
 #include <pcl/surface/mls.h>
 #include <sac_3dof.h>
+#include <ransac_simple.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
 int main(int argc, char **argv)
@@ -45,10 +46,10 @@ int main(int argc, char **argv)
   pcl::SampleConsensusModel3DOF<pcl::PointNormal>::Ptr
                                                        model_3dof(
                                                                   new pcl::SampleConsensusModel3DOF<pcl::PointNormal>(
-                                                                                                                      model));
+                                                                                                                      model, 0.05f));
   model_3dof->setTarget(scene);
 
-  pcl::RandomSampleConsensus<pcl::PointNormal> ransac(model_3dof);
+  pcl::RandomSampleConsensusSimple<pcl::PointNormal> ransac(model_3dof);
   ransac.setDistanceThreshold(.01);
   ransac.setProbability(0.99);
   ransac.computeModel();

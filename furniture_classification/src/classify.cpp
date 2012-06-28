@@ -21,6 +21,7 @@
 #include <sac_3dof.h>
 #include <set>
 #include <pcl/io/pcd_io.h>
+#include <ransac_simple.h>
 
 int main(int argc, char** argv)
 {
@@ -44,7 +45,7 @@ int main(int argc, char** argv)
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
   pcl::io::loadPCDFile(scene_file_name, *cloud);
-  oc.setScene(cloud);
+  oc.setScene(cloud, 3);
 
   oc.classify();
 
