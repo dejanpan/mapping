@@ -26,10 +26,25 @@
 int main(int argc, char** argv)
 {
 
-  std::string database_dir = "data/database/";
-  std::string scene_file_name = "data/test/scenes/chairAndDesk1.pcd";
-  std::string debug_folder = "data/debug_classification/";
-  std::string output_dir = "data/result/";
+  if (argc < 5)
+  {
+    PCL_INFO ("Usage %s -scene_file_name /dir/with/pointclouds -database_dir /where/to/put/database [options]\n", argv[0]);
+    return -1;
+  }
+
+  std::string database_dir;
+  std::string scene_file_name;
+
+  pcl::console::parse_argument(argc, argv, "-database_dir", database_dir);
+  pcl::console::parse_argument(argc, argv, "-scene_file_name", scene_file_name);
+
+  std::vector<std::string> st;
+  boost::split(st, scene_file_name, boost::is_any_of("/"), boost::token_compress_on);
+  std::string scene_name = st.at(st.size() - 1);
+  scene_name = scene_name.substr(0, scene_name.size() - 4);
+
+  std::string debug_folder = scene_name + "_debug/";
+  std::string output_dir = scene_name + "_result/";
 
   pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, pcl::Histogram<25> > oc;
 
