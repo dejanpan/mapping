@@ -5,7 +5,7 @@
 + estimate normals first and then downsample
 - Remove floor
 + Discard votes under floor
-- In Ransac random rotation if normal points up
++ In Ransac random rotation if normal points up
 + Run 1000 iteration
 - Filter ransac hypothetis that are far from voted center
 - different window sizes and different thresholds

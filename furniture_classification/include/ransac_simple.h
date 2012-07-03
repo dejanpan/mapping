@@ -14,7 +14,8 @@ template<typename PointT>
   class RandomSampleConsensusSimple
   {
   public:
-    RandomSampleConsensusSimple(float octree_res): scene_octree_(octree_res)
+    RandomSampleConsensusSimple(float octree_res) :
+      scene_octree_(octree_res)
     {
       max_iterations_ = 10000;
       eps_ = 0.01;
@@ -36,7 +37,8 @@ template<typename PointT>
       scene_ = scene;
       scene_octree_.setInputCloud(scene_);
       scene_octree_.addPointsFromInputCloud();
-      std::cerr << "Tree depth " << scene_octree_.getTreeDepth () << " Scene size " << scene_->points.size() << std::endl;
+      std::cerr << "Tree depth " << scene_octree_.getTreeDepth() << " Scene size " << scene_->points.size()
+          << std::endl;
     }
 
     void setSceneSegment(boost::shared_ptr<std::vector<int> > idx)
@@ -54,7 +56,7 @@ template<typename PointT>
 
       best_score_ = 0;
 
-      int max_iter_all =  max_iterations_ * 10;
+      int max_iter_all = max_iterations_ * 10;
       int iter_all = 0;
 
       for (int i = 0; i < max_iterations_; i++)
@@ -62,20 +64,22 @@ template<typename PointT>
 
         int sample = scene_segment_idx_->at(rand() % scene_segment_idx_->size());
 
-        while (!isSampleGood(sample) && iter_all < max_iter_all)
-        {
-          iter_all++;
-          sample = scene_segment_idx_->at(rand() % scene_segment_idx_->size());
-        }
-
-        if(iter_all >= max_iter_all) continue;
+        //        while (!isSampleGood(sample) && iter_all < max_iter_all)
+        //        {
+        //          iter_all++;
+        //          sample = scene_segment_idx_->at(rand() % scene_segment_idx_->size());
+        //        }
+        //
+        //        if(iter_all >= max_iter_all) continue;
 
         Eigen::VectorXf model_coefficients;
-        while (!computeModelCoefficients(sample, model_coefficients) && iter_all < max_iter_all){
+        while (!computeModelCoefficients(sample, model_coefficients) && iter_all < max_iter_all)
+        {
           iter_all++;
         }
 
-        if(iter_all >= max_iter_all) continue;
+        if (iter_all >= max_iter_all)
+          continue;
 
         float score = countScore(model_coefficients);
 
@@ -113,8 +117,15 @@ template<typename PointT>
 
       model_coefficients[0] = model_point.x - scene_point.x;
       model_coefficients[1] = model_point.y - scene_point.y;
-      model_coefficients[2] = atan2(model_point.normal_y, model_point.normal_x) - atan2(scene_point.normal_y,
-                                                                                        scene_point.normal_x);
+
+      if (scene_point.z < 0.8)
+      {
+
+        model_coefficients[2] = atan2(model_point.normal_y, model_point.normal_x) - atan2(scene_point.normal_y,
+                                                                                          scene_point.normal_x);
+      } else {
+        model_coefficients[2] = ((double) rand())/RAND_MAX * M_2_PI;
+      }
       model_coefficients *= -1;
 
       return true;
@@ -143,17 +154,17 @@ template<typename PointT>
     float generateVisibilityScore(const pcl::PointCloud<PointT> & cloud)
     {
 
-//      pcl::visualization::PCLVisualizer viz;
-//
-//      viz.addPointCloud<PointT>(scene_);
-//
-//      typename pcl::PointCloud<PointT>::Ptr cloud_ptr = cloud.makeShared();
-//
-//      pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color(cloud_ptr, 255, 0, 0);
-//
-//      viz.addPointCloud<PointT>(cloud_ptr, single_color, "cloud1");
-//
-//      viz.spin();
+      //      pcl::visualization::PCLVisualizer viz;
+      //
+      //      viz.addPointCloud<PointT>(scene_);
+      //
+      //      typename pcl::PointCloud<PointT>::Ptr cloud_ptr = cloud.makeShared();
+      //
+      //      pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color(cloud_ptr, 255, 0, 0);
+      //
+      //      viz.addPointCloud<PointT>(cloud_ptr, single_color, "cloud1");
+      //
+      //      viz.spin();
 
       int free = 0, occupied = 0, occluded = 0;
       for (size_t j = 0; j < cloud.points.size(); j++)
@@ -202,8 +213,6 @@ template<typename PointT>
       //std::cerr << "Score " << occupied << " " << occluded << " " << free << std::endl;
       return (weight_ * occupied + occluded) / (weight_ * occupied + occluded + free);
 
-
-
     }
 
     bool isSampleGood(int sample) const
@@ -221,7 +230,8 @@ template<typename PointT>
       return best_score_;
     }
 
-    void setWeight(float weight){
+    void setWeight(float weight)
+    {
       weight_ = weight;
     }
 
