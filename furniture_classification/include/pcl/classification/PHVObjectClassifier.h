@@ -71,12 +71,12 @@ template<class PointT, class PointNormalT, class FeatureT>
     typedef typename ModelMapType::value_type ModelMapValueType;
 
     PHVObjectClassifier() :
-      subsampling_resolution_(0.02f), mls_polynomial_order_(2), mls_search_radius_(0.06f), min_points_in_segment_(100),
-          rg_residual_threshold_(0.05f), rg_smoothness_threshold_(40 * M_PI / 180), fe_k_neighbours_(10),
-          num_clusters_(40), num_neighbours_(1), cell_size_(0.01), window_size_(0.6f), local_maxima_threshold_(0.4f),
-          ransac_distance_threshold_(0.01f), ransac_probability_(0.9), ransac_num_iter_(100),
-          ransac_result_threshold_(0.5), debug_(false), debug_folder_(""), mls_(new MovingLeastSquares<PointT,
-              PointNormalT> )
+      subsampling_resolution_(0.02f), mls_polynomial_fit_(false), mls_polynomial_order_(2), mls_search_radius_(0.05f),
+          min_points_in_segment_(100), rg_residual_threshold_(0.05f), rg_smoothness_threshold_(40 * M_PI / 180),
+          fe_k_neighbours_(10), num_clusters_(40), num_neighbours_(1), cell_size_(0.01), window_size_(0.6f),
+          local_maxima_threshold_(0.4f), ransac_distance_threshold_(0.01f), ransac_vis_score_weight_(5),
+          ransac_num_iter_(1000), ransac_result_threshold_(0.5), debug_(false), debug_folder_(""),
+          mls_(new MovingLeastSquares<PointT, PointNormalT> )
     {
 
       typedef pcl::PointCloud<FeatureT> PointFeatureCloud;
@@ -214,6 +214,7 @@ template<class PointT, class PointNormalT, class FeatureT>
   public:
 
     float subsampling_resolution_;
+    bool mls_polynomial_fit_;
     int mls_polynomial_order_;
     float mls_search_radius_;
     int min_points_in_segment_;
@@ -227,7 +228,7 @@ template<class PointT, class PointNormalT, class FeatureT>
     float local_maxima_threshold_;
 
     float ransac_distance_threshold_;
-    float ransac_probability_;
+    float ransac_vis_score_weight_;
     int ransac_num_iter_;
     float ransac_result_threshold_;
 
@@ -279,6 +280,9 @@ template<class PT, class PNT, class FT>
     out << YAML::Key << "subsampling_resolution";
     out << YAML::Value << h.subsampling_resolution_;
 
+    out << YAML::Key << "mls_polynomial_fit";
+    out << YAML::Value << h.mls_polynomial_fit_;
+
     out << YAML::Key << "mls_polynomial_order";
     out << YAML::Value << h.mls_polynomial_order_;
 
@@ -315,8 +319,8 @@ template<class PT, class PNT, class FT>
     out << YAML::Key << "ransac_distance_threshold";
     out << YAML::Value << h.ransac_distance_threshold_;
 
-    out << YAML::Key << "ransac_probability";
-    out << YAML::Value << h.ransac_probability_;
+    out << YAML::Key << "ransac_vis_score_weight";
+    out << YAML::Value << h.ransac_vis_score_weight_;
 
     out << YAML::Key << "ransac_num_iter";
     out << YAML::Value << h.ransac_num_iter_;
@@ -484,6 +488,7 @@ template<class PT, class PNT, class FT>
 void operator >>(const YAML::Node& node, pcl::PHVObjectClassifier<PT, PNT, FT> & h)
 {
   node["subsampling_resolution"] >> h.subsampling_resolution_;
+  node["mls_polynomial_fit"] >> h.mls_polynomial_fit_;
   node["mls_polynomial_order"] >> h.mls_polynomial_order_;
   node["mls_search_radius"] >> h.mls_search_radius_;
   node["min_points_in_segment"] >> h.min_points_in_segment_;
@@ -499,7 +504,7 @@ void operator >>(const YAML::Node& node, pcl::PHVObjectClassifier<PT, PNT, FT> &
   node["local_maxima_threshold"] >> h.local_maxima_threshold_;
 
   node["ransac_distance_threshold"] >> h.ransac_distance_threshold_;
-  node["ransac_probability"] >> h.ransac_probability_;
+  node["ransac_vis_score_weight"] >> h.ransac_vis_score_weight_;
   node["ransac_num_iter"] >> h.ransac_num_iter_;
   node["ransac_result_threshold"] >> h.ransac_result_threshold_;
 

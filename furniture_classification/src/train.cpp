@@ -30,7 +30,7 @@ int main(int argc, char **argv)
   pcl::console::parse_argument(argc, argv, "-output_dir", output_dir);
 
   pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, pcl::Histogram<25> > oc;
-  oc.setDebugFolder("data/debug/");
+  oc.setDebugFolder("debug/");
   oc.setDebug(true);
 
   pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<25> >::Ptr feature_estimator(new pcl::SGFALLEstimation<

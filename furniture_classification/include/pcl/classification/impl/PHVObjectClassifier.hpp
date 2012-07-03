@@ -186,37 +186,37 @@ template<class PointT, class PointNormalT, class FeatureT>
     //pcl::removeNaNFromPointCloud(*cloud_orig, *cloud, idx);
 
     PointNormalCloudPtr cloud_with_normals(new PointNormalCloud);
-    PointCloudPtr cloud_downsampled(new PointCloud);
+    PointNormalCloudPtr cloud_downsampled(new PointNormalCloud);
 
-    pcl::VoxelGrid<PointT> grid;
-    grid.setInputCloud(cloud_orig);
-    grid.setLeafSize(subsampling_resolution_, subsampling_resolution_, subsampling_resolution_);
-    grid.filter(*cloud_downsampled);
+//    pcl::VoxelGrid<PointT> grid;
+//    grid.setInputCloud(cloud_orig);
+//    grid.setLeafSize(subsampling_resolution_, subsampling_resolution_, subsampling_resolution_);
+//    grid.filter(*cloud_downsampled);
 
     PointTreePtr tree(new PointTree);
 
     mls_->setComputeNormals(true);
 
-    mls_->setInputCloud(cloud_downsampled);
-    mls_->setPolynomialFit(true);
+    mls_->setInputCloud(cloud_orig);
+    mls_->setPolynomialFit(mls_polynomial_fit_);
     mls_->setPolynomialOrder(mls_polynomial_order_);
     mls_->setSearchMethod(tree);
     mls_->setSearchRadius(mls_search_radius_);
 
     this->mls_->process(*cloud_with_normals);
 
-    //pcl::VoxelGrid<PointNormalT> grid;
-    //grid.setInputCloud(cloud_with_normals);
-    //grid.setLeafSize(subsampling_resolution_, subsampling_resolution_, subsampling_resolution_);
-    //grid.filter(*cloud_downsampled);
+    pcl::VoxelGrid<PointNormalT> grid;
+    grid.setInputCloud(cloud_with_normals);
+    grid.setLeafSize(subsampling_resolution_, subsampling_resolution_, subsampling_resolution_);
+    grid.filter(*cloud_downsampled);
 
     //cloud_downsampled->is_dense = false;
     //pcl::removeNaNFromPointCloud(*cloud_downsampled, *cloud_downsampled, idx);
 
-    cloud_with_normals->sensor_origin_ = cloud_orig->sensor_origin_;
-    cloud_with_normals->sensor_orientation_ = cloud_orig->sensor_orientation_;
+    cloud_downsampled->sensor_origin_ = cloud_orig->sensor_origin_;
+    cloud_downsampled->sensor_orientation_ = cloud_orig->sensor_orientation_;
 
-    return cloud_with_normals;
+    return cloud_downsampled;
 
   }
 
@@ -472,7 +472,7 @@ template<class PointT, class PointNormalT, class FeatureT>
     {
       int vote_x = (model_centers.points[i].x - min_scene_bound_.x) / cell_size_;
       int vote_y = (model_centers.points[i].y - min_scene_bound_.y) / cell_size_;
-      if ((vote_x >= 0) && (vote_y >= 0) && (vote_x < image_x_width) && (vote_y < image_y_width))
+      if ((vote_x >= 0) && (vote_y >= 0) && (vote_x < image_x_width) && (vote_y < image_y_width) && (model_centers.points[i].z >= 0))
         grid(vote_x, vote_y) += model_centers.points[i].intensity;
     }
 
@@ -619,7 +619,7 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     ransac.setScene(scene_);
     ransac.setMaxIterations(ransac_num_iter_);
-    ransac.setWeight(ransac_probability_);
+    ransac.setWeight(ransac_vis_score_weight_);
 
     BOOST_FOREACH(PointNormalCloudPtr & full_model, class_name_to_full_models_map_[class_name])
 {    for (size_t i = 0; i < voted_segments_.size(); i++)
