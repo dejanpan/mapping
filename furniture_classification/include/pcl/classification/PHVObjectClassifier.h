@@ -71,7 +71,7 @@ template<class PointT, class PointNormalT, class FeatureT>
     typedef typename ModelMapType::value_type ModelMapValueType;
 
     PHVObjectClassifier() :
-      subsampling_resolution_(0.02f), mls_polynomial_fit_(false), mls_polynomial_order_(2), mls_search_radius_(0.05f),
+      subsampling_resolution_(0.005f), mls_polynomial_fit_(false), mls_polynomial_order_(2), mls_search_radius_(0.05f),
           min_points_in_segment_(100), rg_residual_threshold_(0.05f), rg_smoothness_threshold_(40 * M_PI / 180),
           fe_k_neighbours_(10), num_clusters_(40), num_neighbours_(1), cell_size_(0.01), window_size_(0.6f),
           local_maxima_threshold_(0.4f), ransac_distance_threshold_(0.01f), ransac_vis_score_weight_(5),

@@ -3,7 +3,7 @@
 + Decrease radius to 5 cm
 + Decrese voxel grid size to 5mm
 + estimate normals first and then downsample
-- Remove floor
+? Remove floor (Should I smooth image before floor remove?)
 + Discard votes under floor
 + In Ransac random rotation if normal points up
 + Run 1000 iteration

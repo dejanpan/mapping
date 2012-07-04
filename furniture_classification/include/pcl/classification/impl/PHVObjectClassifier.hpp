@@ -153,9 +153,20 @@ template<class PointT, class PointNormalT, class FeatureT>
       pcl::io::savePCDFileASCII(debug_folder_ + it->first + "_votes.pcd", it->second);
 
       Eigen::MatrixXf grid = projectVotesToGrid(it->second);
+
+      if (debug_)
+      {
+        Eigen::MatrixXi img = (grid * 255.0 / grid.maxCoeff()).cast<int> ();
+
+        std::string filename = debug_folder_ + it->first + "_local_maxima.pgm";
+        std::ofstream f(filename.c_str());
+        f << "P2\n" << grid.cols() << " " << grid.rows() << "\n255\n";
+        f << img;
+      }
+
       PointCloudPtr local_maxima_ = findLocalMaximaInGrid(grid);
 
-      if (!local_maxima_->empty())
+      if (debug_ && !local_maxima_->empty())
         pcl::io::savePCDFileASCII(debug_folder_ + it->first + "_local_maxima.pcd", *local_maxima_);
 
       vector<boost::shared_ptr<std::vector<int> > > voted_segments;
@@ -188,10 +199,10 @@ template<class PointT, class PointNormalT, class FeatureT>
     PointNormalCloudPtr cloud_with_normals(new PointNormalCloud);
     PointNormalCloudPtr cloud_downsampled(new PointNormalCloud);
 
-//    pcl::VoxelGrid<PointT> grid;
-//    grid.setInputCloud(cloud_orig);
-//    grid.setLeafSize(subsampling_resolution_, subsampling_resolution_, subsampling_resolution_);
-//    grid.filter(*cloud_downsampled);
+    //    pcl::VoxelGrid<PointT> grid;
+    //    grid.setInputCloud(cloud_orig);
+    //    grid.setLeafSize(subsampling_resolution_, subsampling_resolution_, subsampling_resolution_);
+    //    grid.filter(*cloud_downsampled);
 
     PointTreePtr tree(new PointTree);
 
@@ -472,7 +483,8 @@ template<class PointT, class PointNormalT, class FeatureT>
     {
       int vote_x = (model_centers.points[i].x - min_scene_bound_.x) / cell_size_;
       int vote_y = (model_centers.points[i].y - min_scene_bound_.y) / cell_size_;
-      if ((vote_x >= 0) && (vote_y >= 0) && (vote_x < image_x_width) && (vote_y < image_y_width) && (model_centers.points[i].z >= 0))
+      if ((vote_x >= 0) && (vote_y >= 0) && (vote_x < image_x_width) && (vote_y < image_y_width)
+          && (model_centers.points[i].z >= 0))
         grid(vote_x, vote_y) += model_centers.points[i].intensity;
     }
 

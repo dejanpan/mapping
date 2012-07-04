@@ -14,6 +14,7 @@
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/extract_indices.h>
 
 #include <pcl/filters/voxel_grid.h>
 
@@ -59,10 +60,18 @@ int main(int argc, char** argv)
 
   seg.setModelType(pcl::SACMODEL_PLANE);
   seg.setMethodType(pcl::SAC_RANSAC);
-  seg.setDistanceThreshold(0.01);
+  seg.setDistanceThreshold(0.05);
+  seg.setProbability(0.99);
 
   seg.setInputCloud(cloud_transformed.makeShared());
   seg.segment(*inliers, *coefficients);
+
+  pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+
+  extract.setInputCloud(cloud_transformed.makeShared());
+  extract.setIndices(inliers);
+  extract.setNegative(true);
+  extract.filter(cloud_transformed);
 
   std::cout << "Z vector: " << coefficients->values[0] << " " << coefficients->values[1] << " "
       << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
