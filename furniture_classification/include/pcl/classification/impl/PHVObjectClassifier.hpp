@@ -126,6 +126,24 @@ template<class PointT, class PointNormalT, class FeatureT>
 
   database_.clear();
 
+  if(debug_)
+  {
+
+    for(int i=0; i<num_clusters_; i++)
+    {
+      std::stringstream ss;
+      ss << debug_folder_ << "Cluster" << i << "/";
+
+      boost::filesystem::path output_path(ss.str());
+      if (boost::filesystem::exists(output_path))
+      {
+        boost::filesystem::remove_all(output_path);
+      }
+
+      boost::filesystem::create_directories(output_path);
+    }
+  }
+
   for (size_t i = 0; i < cluster_labels.size(); i++)
   {
     database_[cluster_centers[cluster_labels[i]]][classes_[i]].points.push_back(centroids_[i]);
@@ -135,6 +153,14 @@ template<class PointT, class PointNormalT, class FeatureT>
     database_[cluster_centers[cluster_labels[i]]][classes_[i]].is_dense = true;
 
     ransac_result_threshold_[classes_[i]] = 0.5;
+
+    if(debug_)
+    {
+      std::stringstream ss;
+      ss << debug_folder_ << "Cluster" << cluster_labels[i] << "/Segment" << i << ".pcd";
+      pcl::io::savePCDFileASCII(ss.str(), *segment_pointclouds_[i]);
+
+    }
 
   }
 
@@ -351,6 +377,12 @@ template<class PointT, class PointNormalT, class FeatureT>
     features_.push_back(feature.points[0]);
     centroids_.points.push_back(centroid_point);
     classes_.push_back(class_name);
+
+    if(debug_)
+    {
+      PointNormalCloudPtr segm(new PointNormalCloud(*cloud, *idx));
+      segment_pointclouds_.push_back(segm);
+    }
 
   }
 

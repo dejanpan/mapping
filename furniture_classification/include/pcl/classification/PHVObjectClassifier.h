@@ -247,6 +247,7 @@ template<class PointT, class PointNormalT, class FeatureT>
     vector<FeatureT> features_;
     PointCloud centroids_;
     vector<std::string> classes_;
+    vector<PointNormalCloudPtr> segment_pointclouds_;
     vector<boost::shared_ptr<vector<int> > > segment_indices_;
 
     PointNormalCloudPtr scene_;

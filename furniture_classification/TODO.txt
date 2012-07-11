@@ -12,7 +12,6 @@
 
 - write clustering info into file
 
-
 - Add RSD and ESF features
-
+- Dump clusteing information
 
