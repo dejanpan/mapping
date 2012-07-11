@@ -60,7 +60,7 @@ int main(int argc, char** argv)
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
   pcl::io::loadPCDFile(scene_file_name, *cloud);
-  oc.setScene(cloud, 3);
+  oc.setScene(cloud, 2.4);
 
   oc.classify();
 

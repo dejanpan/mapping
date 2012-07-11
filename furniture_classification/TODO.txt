@@ -3,11 +3,16 @@
 + Decrease radius to 5 cm
 + Decrese voxel grid size to 5mm
 + estimate normals first and then downsample
-? Remove floor (Should I smooth image before floor remove?)
++ Remove floor
 + Discard votes under floor
 + In Ransac random rotation if normal points up
 + Run 1000 iteration
 - Filter ransac hypothetis that are far from voted center
-- different window sizes and different thresholds
++ different window sizes and different thresholds
 
-- write clustering info
+- write clustering info into file
+
+
+- Add RSD and ESF features
+
+

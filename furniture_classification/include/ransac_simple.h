@@ -235,6 +235,10 @@ template<typename PointT>
       weight_ = weight;
     }
 
+    typename pcl::PointCloud<PointT>::Ptr getModel(){
+      return model_;
+    }
+
     pcl::octree::OctreePointCloudSearch<PointT> scene_octree_;
     typename pcl::PointCloud<PointT>::Ptr scene_;
     boost::shared_ptr<std::vector<int> > scene_segment_idx_;

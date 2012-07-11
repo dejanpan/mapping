@@ -73,10 +73,9 @@ template<class PointT, class PointNormalT, class FeatureT>
     PHVObjectClassifier() :
       subsampling_resolution_(0.005f), mls_polynomial_fit_(false), mls_polynomial_order_(2), mls_search_radius_(0.05f),
           min_points_in_segment_(100), rg_residual_threshold_(0.05f), rg_smoothness_threshold_(40 * M_PI / 180),
-          fe_k_neighbours_(10), num_clusters_(40), num_neighbours_(1), cell_size_(0.01), window_size_(0.6f),
-          local_maxima_threshold_(0.4f), ransac_distance_threshold_(0.01f), ransac_vis_score_weight_(5),
-          ransac_num_iter_(1000), ransac_result_threshold_(0.5), debug_(false), debug_folder_(""),
-          mls_(new MovingLeastSquares<PointT, PointNormalT> )
+          fe_k_neighbours_(10), num_clusters_(40), num_neighbours_(1), cell_size_(0.01), local_maxima_threshold_(0.4f),
+          ransac_distance_threshold_(0.01f), ransac_vis_score_weight_(5), ransac_num_iter_(1000), debug_(false),
+          debug_folder_(""), mls_(new MovingLeastSquares<PointT, PointNormalT> )
     {
 
       typedef pcl::PointCloud<FeatureT> PointFeatureCloud;
@@ -201,11 +200,13 @@ template<class PointT, class PointNormalT, class FeatureT>
     void clusterFeatures(vector<FeatureT> & cluster_centers, vector<int> & cluster_labels);
     void vote();
     Eigen::MatrixXf projectVotesToGrid(const pcl::PointCloud<pcl::PointXYZI> & model_centers);
-    typename pcl::PointCloud<PointT>::Ptr findLocalMaximaInGrid(Eigen::MatrixXf grid);
+    typename pcl::PointCloud<PointT>::Ptr findLocalMaximaInGrid(Eigen::MatrixXf grid, float window_size);
     vector<boost::shared_ptr<std::vector<int> > >
-    findVotedSegments(typename pcl::PointCloud<PointT>::Ptr local_maxima_, const string & class_name);
+        findVotedSegments(typename pcl::PointCloud<PointT>::Ptr local_maxima_, const string & class_name,
+                          float window_size);
     void fitModelsWithRansac(vector<boost::shared_ptr<std::vector<int> > > & voted_segments_, const string class_name,
-                             vector<PointNormalCloudPtr> & result_, vector<float> & scores_);
+                             RandomSampleConsensusSimple<PointNormalT> & ransac, vector<PointNormalCloudPtr> & result_,
+                             vector<float> & scores_);
     void generateVisibilityScore(vector<PointNormalCloudPtr> & result_, vector<float> & scores_);
     bool intersectXY(const pcl::PointCloud<PointNormalT> & cloud1, const pcl::PointCloud<PointNormalT> & cloud2);
     vector<typename pcl::PointCloud<PointNormalT>::Ptr> removeIntersecting(vector<
@@ -224,13 +225,11 @@ template<class PointT, class PointNormalT, class FeatureT>
     int num_clusters_;
     int num_neighbours_;
     float cell_size_;
-    float window_size_;
     float local_maxima_threshold_;
 
     float ransac_distance_threshold_;
     float ransac_vis_score_weight_;
     int ransac_num_iter_;
-    float ransac_result_threshold_;
 
     bool debug_;
     string debug_folder_;
@@ -254,6 +253,8 @@ template<class PointT, class PointNormalT, class FeatureT>
     PointNormalT min_scene_bound_, max_scene_bound_;
     map<string, pcl::PointCloud<pcl::PointXYZI> > votes_;
     map<string, vector<int> > voted_segment_idx_;
+
+    map<string, float> ransac_result_threshold_;
 
     map<string, vector<PointNormalCloudPtr> > found_objects_;
 
@@ -310,9 +311,6 @@ template<class PT, class PNT, class FT>
     out << YAML::Key << "cell_size";
     out << YAML::Value << h.cell_size_;
 
-    out << YAML::Key << "window_size";
-    out << YAML::Value << h.window_size_;
-
     out << YAML::Key << "local_maxima_threshold";
     out << YAML::Value << h.local_maxima_threshold_;
 
@@ -325,14 +323,14 @@ template<class PT, class PNT, class FT>
     out << YAML::Key << "ransac_num_iter";
     out << YAML::Value << h.ransac_num_iter_;
 
-    out << YAML::Key << "ransac_result_threshold";
-    out << YAML::Value << h.ransac_result_threshold_;
-
     out << YAML::Key << "debug";
     out << YAML::Value << h.debug_;
 
     out << YAML::Key << "debug_folder";
     out << YAML::Value << h.debug_folder_;
+
+    out << YAML::Key << "ransac_result_threshold";
+    out << YAML::Value << h.ransac_result_threshold_;
 
     out << YAML::Key << "database";
     out << YAML::Value << h.database_;
@@ -500,7 +498,6 @@ void operator >>(const YAML::Node& node, pcl::PHVObjectClassifier<PT, PNT, FT> &
 
   node["num_neighbours"] >> h.num_neighbours_;
   node["cell_size"] >> h.cell_size_;
-  node["window_size"] >> h.window_size_;
   node["local_maxima_threshold"] >> h.local_maxima_threshold_;
 
   node["ransac_distance_threshold"] >> h.ransac_distance_threshold_;

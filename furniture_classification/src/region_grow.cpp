@@ -12,6 +12,7 @@
 #include <pcl/segmentation/region_growing_rgb.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/filters/voxel_grid.h>
 
 int main(int argc, char **argv)
 {
@@ -25,18 +26,30 @@ int main(int argc, char **argv)
   std::string filename;
   pcl::console::parse_argument(argc, argv, "-input_file", filename);
 
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_orig(new pcl::PointCloud<pcl::PointXYZRGBA>);
   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
   pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>());
-  pcl::io::loadPCDFile(filename, *cloud);
+  pcl::io::loadPCDFile(filename, *cloud_orig);
+
+  std::cerr << "Loaded file" << std::endl;
+
+  pcl::VoxelGrid<pcl::PointXYZRGBA> grid;
+  grid.setInputCloud(cloud_orig);
+  grid.setLeafSize(0.01f, 0.01f, 0.01f);
+  grid.filter(*cloud);
 
   // Create a KD-Tree
   pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGBA>);
+
+  std::cerr << "Created tree" << std::endl;
 
   pcl::NormalEstimation<pcl::PointXYZRGBA, pcl::Normal> ne;
   ne.setInputCloud(cloud);
   ne.setSearchMethod(tree);
   ne.setRadiusSearch(0.03);
   ne.compute(*cloud_normals);
+
+  std::cerr << "Computed normals" << std::endl;
 
   pcl::RegionGrowingRGB<pcl::PointXYZRGBA> region_growing;
   region_growing.setCloud(cloud);
@@ -59,6 +72,8 @@ int main(int argc, char **argv)
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr segments;
   segments = region_growing.getColoredCloud();
+
+  pcl::io::savePCDFile("result.pcd", *segments);
 
   pcl::visualization::PCLVisualizer viz;
   viz.initCameraParameters();
