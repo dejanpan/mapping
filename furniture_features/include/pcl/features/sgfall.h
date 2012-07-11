@@ -48,6 +48,8 @@
 #include <pcl/features/sgf7.h>
 #include <pcl/features/sgf8.h>
 #include <pcl/features/sgf9.h>
+//#include <pcl/features/rsd.h>
+#include <pcl/features/esf.h>
 
 namespace pcl
 {
@@ -242,6 +244,23 @@ template<typename PointInT, typename PointOutT>
         sgfs.points[0].histogram[feature_counter + n] = sgf9s->points[0].histogram[n];
       }
       feature_counter += pcl::SGF9_SIZE;
+
+      /////////////////////////////////////////////////////////////////////////////////////
+      // Feature ESF
+
+
+//      pcl::PointCloud<pcl::ESFSignature640> pc;
+//
+//      pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640> e;
+//      e.setInputCloud(input_);
+//      e.setIndices(indices_);
+//      e.compute(pc);
+//
+//      for (int n = 0; n < 640; ++n)
+//      {
+//        sgfs.points[0].histogram[feature_counter + n] = pc.points[0].histogram[n];
+//      }
+//      feature_counter += 640;
 
     }
     /////////////////////////////////////////////////////////////////////////////
