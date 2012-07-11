@@ -23,6 +23,12 @@
 #include <pcl/io/pcd_io.h>
 #include <ransac_simple.h>
 
+//typedef pcl::Histogram<pcl::SGFALL_SIZE> FeatureType;
+//typedef pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<pcl::SGFALL_SIZE> > FeatureEstimatorType;
+
+typedef pcl::ESFSignature640 FeatureType;
+typedef pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640 > FeatureEstimatorType;
+
 int main(int argc, char** argv)
 {
 
@@ -46,10 +52,9 @@ int main(int argc, char** argv)
   std::string debug_folder = scene_name + "_debug/";
   std::string output_dir = scene_name + "_result/";
 
-  pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, pcl::Histogram<25> > oc;
+  pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, FeatureType > oc;
 
-  pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<25> >::Ptr feature_estimator(new pcl::SGFALLEstimation<
-      pcl::PointNormal, pcl::Histogram<25> >);
+  pcl::SGFALLEstimation<pcl::PointNormal, FeatureType >::Ptr feature_estimator(new FeatureEstimatorType);
   oc.setFeatureEstimator(feature_estimator);
 
   oc.setDatabaseDir(database_dir);

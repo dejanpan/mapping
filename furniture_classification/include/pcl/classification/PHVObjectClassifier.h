@@ -391,6 +391,57 @@ void operator >>(const YAML::Node& node, pcl::Histogram<N> & h)
   }
 }
 
+YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::ESFSignature640 & h)
+{
+  out << YAML::Flow << YAML::BeginSeq;
+  for (int j = 0; j < 640; j++)
+  {
+    out << h.histogram[j];
+  }
+  out << YAML::EndSeq << YAML::Block;
+  return out;
+}
+
+void operator >>(const YAML::Node& node, pcl::ESFSignature640 & h)
+{
+  for (int j = 0; j < 640; j++)
+  {
+    node[j] >> h.histogram[j];
+  }
+}
+
+
+YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PointCloud<pcl::ESFSignature640> & cloud)
+{
+  out << YAML::BeginSeq;
+  for (size_t i = 0; i < cloud.points.size(); i++)
+  {
+    out << YAML::Flow << YAML::BeginSeq << cloud.points[i]
+    << YAML::EndSeq << YAML::Block;
+  }
+  out << YAML::EndSeq;
+
+  return out;
+}
+
+void operator >>(const YAML::Node& node, pcl::PointCloud<pcl::ESFSignature640> & cloud)
+{
+  cloud.clear();
+
+  for (size_t i = 0; i < node.size(); i++)
+  {
+    pcl::ESFSignature640 point;
+    node[i] >> point;
+    cloud.points.push_back(point);
+
+  }
+
+  cloud.width = cloud.points.size();
+  cloud.height = 1;
+  cloud.is_dense = true;
+}
+
+
 template<typename PointT>
 YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PointCloud<PointT> & cloud)
 {

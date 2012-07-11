@@ -142,6 +142,35 @@ template<class PointT, class PointNormalT, class FeatureT>
 
       boost::filesystem::create_directories(output_path);
     }
+
+    std::ofstream f((debug_folder_+"features.txt").c_str());
+
+    size_t N = sizeof(features_[0].histogram)/sizeof(float);
+
+    for(size_t i=0; i<features_.size(); i++)
+    {
+      for(size_t j=0; j<N; j++)
+      {
+        f << features_[i].histogram[j] << " ";
+      }
+
+      f << "\n";
+
+    }
+
+    f.close();
+
+    std::ofstream f2((debug_folder_+"classnames.txt").c_str());
+
+    for(size_t i=0; i<classes_.size(); i++)
+    {
+
+      f2 << classes_[i] << "\n";
+
+    }
+
+    f2.close();
+
   }
 
   for (size_t i = 0; i < cluster_labels.size(); i++)

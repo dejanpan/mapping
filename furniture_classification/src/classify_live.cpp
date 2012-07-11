@@ -12,8 +12,8 @@ public:
     std::string database_dir = "data/database/";
     std::string debug_folder = "data/debug_classification/";
 
-    pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<25> >::Ptr feature_estimator(new pcl::SGFALLEstimation<
-        pcl::PointNormal, pcl::Histogram<25> >);
+    pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<pcl::SGFALL_SIZE> >::Ptr feature_estimator(new pcl::SGFALLEstimation<
+        pcl::PointNormal, pcl::Histogram<pcl::SGFALL_SIZE> >);
     oc.setFeatureEstimator(feature_estimator);
 
     oc.setDatabaseDir(database_dir);
@@ -168,7 +168,7 @@ pcl::visualization::CloudViewer viewer;
 
 bool classify;
 bool classificaton_running;
-pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, pcl::Histogram<25> > oc;
+pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, pcl::Histogram<pcl::SGFALL_SIZE> > oc;
 pcl::Grabber* interface;
 
 };

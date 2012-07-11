@@ -12,6 +12,6 @@
 
 - write clustering info into file
 
-- Add RSD and ESF features
-- Dump clusteing information
+- Add RSD and ESF and PFH and VFH features. RSD is disabled in pcl. (http://dev.pointclouds.org/issues/625)
++ Dump clusteing information
 

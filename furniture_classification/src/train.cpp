@@ -10,6 +10,13 @@
 #include <pcl/console/parse.h>
 #include <pcl/classification/PHVObjectClassifier.h>
 
+//typedef pcl::Histogram<pcl::SGFALL_SIZE> FeatureType;
+//typedef pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<pcl::SGFALL_SIZE> > FeatureEstimatorType;
+
+typedef pcl::ESFSignature640 FeatureType;
+typedef pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640 > FeatureEstimatorType;
+
+
 int main(int argc, char **argv)
 {
 
@@ -29,12 +36,11 @@ int main(int argc, char **argv)
   pcl::console::parse_argument(argc, argv, "-input_dir", input_dir);
   pcl::console::parse_argument(argc, argv, "-output_dir", output_dir);
 
-  pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, pcl::Histogram<25> > oc;
+  pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, FeatureType > oc;
   oc.setDebugFolder("debug/");
   oc.setDebug(true);
 
-  pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<25> >::Ptr feature_estimator(new pcl::SGFALLEstimation<
-      pcl::PointNormal, pcl::Histogram<25> >);
+  pcl::Feature<pcl::PointNormal, FeatureType >::Ptr feature_estimator(new FeatureEstimatorType);
   oc.setFeatureEstimator(feature_estimator);
 
   //PCL_INFO("Processing following files:\n");
