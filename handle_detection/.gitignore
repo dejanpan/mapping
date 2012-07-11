@@ -1,0 +1,8 @@
+msg/HandleDetectionAction.msg
+msg/HandleDetectionActionFeedback.msg
+msg/HandleDetectionActionGoal.msg
+msg/HandleDetectionActionResult.msg
+msg/HandleDetectionFeedback.msg
+msg/HandleDetectionGoal.msg
+msg/HandleDetectionResult.msg
+src/handle_detection
