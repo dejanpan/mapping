@@ -26,6 +26,7 @@
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/features/feature.h>
 
 #include <ransac_simple.h>
 #include <sac_3dof.h>
@@ -74,7 +75,7 @@ template<class PointT, class PointNormalT, class FeatureT>
       subsampling_resolution_(0.005f), mls_polynomial_fit_(false), mls_polynomial_order_(2), mls_search_radius_(0.05f),
           min_points_in_segment_(100), rg_residual_threshold_(0.05f), rg_smoothness_threshold_(40 * M_PI / 180),
           fe_k_neighbours_(10), num_clusters_(40), num_neighbours_(1), cell_size_(0.01), local_maxima_threshold_(0.4f),
-          ransac_distance_threshold_(0.01f), ransac_vis_score_weight_(5), ransac_num_iter_(1000), debug_(false),
+          ransac_distance_threshold_(0.01f), ransac_vis_score_weight_(5), ransac_num_iter_(200), debug_(false),
           debug_folder_(""), mls_(new MovingLeastSquares<PointT, PointNormalT> )
     {
 
@@ -393,12 +394,12 @@ void operator >>(const YAML::Node& node, pcl::Histogram<N> & h)
 
 YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::ESFSignature640 & h)
 {
-  out << YAML::Flow << YAML::BeginSeq;
+  out << YAML::BeginSeq;
   for (int j = 0; j < 640; j++)
   {
     out << h.histogram[j];
   }
-  out << YAML::EndSeq << YAML::Block;
+  out << YAML::EndSeq ;
   return out;
 }
 
@@ -410,16 +411,33 @@ void operator >>(const YAML::Node& node, pcl::ESFSignature640 & h)
   }
 }
 
+YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::VFHSignature308 & h)
+{
+  out << YAML::Flow << YAML::BeginSeq;
+  for (int j = 0; j < 308; j++)
+  {
+    out << h.histogram[j];
+  }
+  out << YAML::EndSeq << YAML::Block;
+  return out;
+}
+
+void operator >>(const YAML::Node& node, pcl::VFHSignature308 & h)
+{
+  for (int j = 0; j < 308; j++)
+  {
+    node[j] >> h.histogram[j];
+  }
+}
 
 YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PointCloud<pcl::ESFSignature640> & cloud)
 {
-  out << YAML::BeginSeq;
+  out << YAML::Flow << YAML::BeginSeq;
   for (size_t i = 0; i < cloud.points.size(); i++)
   {
-    out << YAML::Flow << YAML::BeginSeq << cloud.points[i]
-    << YAML::EndSeq << YAML::Block;
+    out << cloud.points[i];
   }
-  out << YAML::EndSeq;
+  out << YAML::EndSeq << YAML::Block;
 
   return out;
 }
@@ -431,7 +449,7 @@ void operator >>(const YAML::Node& node, pcl::PointCloud<pcl::ESFSignature640> &
   for (size_t i = 0; i < node.size(); i++)
   {
     pcl::ESFSignature640 point;
-    node[i] >> point;
+    node[i]["cluster_center"] >> point;
     cloud.points.push_back(point);
 
   }
@@ -441,6 +459,34 @@ void operator >>(const YAML::Node& node, pcl::PointCloud<pcl::ESFSignature640> &
   cloud.is_dense = true;
 }
 
+YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PointCloud<pcl::VFHSignature308> & cloud)
+{
+  out << YAML::BeginSeq;
+  for (size_t i = 0; i < cloud.points.size(); i++)
+  {
+    out << cloud.points[i];
+  }
+  out << YAML::EndSeq;
+
+  return out;
+}
+
+void operator >>(const YAML::Node& node, pcl::PointCloud<pcl::VFHSignature308> & cloud)
+{
+  cloud.clear();
+
+  for (size_t i = 0; i < node.size(); i++)
+  {
+    pcl::VFHSignature308 point;
+    node[i]["cluster_center"] >> point;
+    cloud.points.push_back(point);
+
+  }
+
+  cloud.width = cloud.points.size();
+  cloud.height = 1;
+  cloud.is_dense = true;
+}
 
 template<typename PointT>
 YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PointCloud<PointT> & cloud)
@@ -560,11 +606,11 @@ void operator >>(const YAML::Node& node, pcl::PHVObjectClassifier<PT, PNT, FT> &
   node["debug"] >> h.debug_;
   node["debug_folder"] >> h.debug_folder_;
 
-  node["database"] >> h.database_;
-  node["database"] >> *(h.database_features_cloud_);
-
   node["min_feature"] >> h.min_;
   node["max_feature"] >> h.max_;
+
+  node["database"] >> h.database_;
+  node["database"] >> *(h.database_features_cloud_);
 
   map<string, vector<string> > full_models_locations;
   node["full_models"] >> full_models_locations;

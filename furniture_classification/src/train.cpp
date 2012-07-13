@@ -9,12 +9,16 @@
 #include <pcl/features/sgfall.h>
 #include <pcl/console/parse.h>
 #include <pcl/classification/PHVObjectClassifier.h>
+#include <pcl/features/vfh.h>
 
-//typedef pcl::Histogram<pcl::SGFALL_SIZE> FeatureType;
-//typedef pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<pcl::SGFALL_SIZE> > FeatureEstimatorType;
+typedef pcl::Histogram<pcl::SGFALL_SIZE> FeatureType;
+typedef pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<pcl::SGFALL_SIZE> > FeatureEstimatorType;
 
-typedef pcl::ESFSignature640 FeatureType;
-typedef pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640 > FeatureEstimatorType;
+//typedef pcl::ESFSignature640 FeatureType;
+//typedef pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640 > FeatureEstimatorType;
+
+//typedef pcl::VFHSignature308 FeatureType;
+//typedef pcl::VFHEstimation<pcl::PointNormal, pcl::PointNormal, pcl::VFHSignature308 > FeatureEstimatorType;
 
 
 int main(int argc, char **argv)

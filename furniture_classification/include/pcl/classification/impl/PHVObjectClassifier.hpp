@@ -119,13 +119,6 @@ template<class PointT, class PointNormalT, class FeatureT>
 
   normalizeFeatures(features_);
 
-  vector<FeatureT> cluster_centers;
-  vector<int> cluster_labels;
-
-  clusterFeatures(cluster_centers, cluster_labels);
-
-  database_.clear();
-
   if(debug_)
   {
 
@@ -173,15 +166,26 @@ template<class PointT, class PointNormalT, class FeatureT>
 
   }
 
+  vector<FeatureT> cluster_centers;
+  vector<int> cluster_labels;
+
+  clusterFeatures(cluster_centers, cluster_labels);
+
+  database_.clear();
+
   for (size_t i = 0; i < cluster_labels.size(); i++)
   {
-    database_[cluster_centers[cluster_labels[i]]][classes_[i]].points.push_back(centroids_[i]);
-    database_[cluster_centers[cluster_labels[i]]][classes_[i]].width
-    = database_[cluster_centers[cluster_labels[i]]][classes_[i]].points.size();
-    database_[cluster_centers[cluster_labels[i]]][classes_[i]].height = 1;
-    database_[cluster_centers[cluster_labels[i]]][classes_[i]].is_dense = true;
 
-    ransac_result_threshold_[classes_[i]] = 0.5;
+    FeatureT cluster_center = cluster_centers[cluster_labels[i]];
+    std::string classname = classes_[i];
+
+    database_[cluster_center][classname].points.push_back(centroids_[i]);
+    database_[cluster_center][classname].width
+    = database_[cluster_center][classname].points.size();
+    database_[cluster_center][classname].height = 1;
+    database_[cluster_center][classname].is_dense = true;
+
+    ransac_result_threshold_[classname] = 0.5;
 
     if(debug_)
     {
@@ -389,6 +393,15 @@ template<class PointT, class PointNormalT, class FeatureT>
     feature_estimator_->setSearchMethod(tree);
     feature_estimator_->setKSearch(fe_k_neighbours_);
 
+    typename pcl::FeatureFromNormals<PointNormalT, PointNormalT, FeatureT>::Ptr f = boost::dynamic_pointer_cast<
+        pcl::FeatureFromNormals<PointNormalT, PointNormalT, FeatureT> >(feature_estimator_);
+
+    if (f)
+    {
+      f ->setInputNormals(cloud);
+      f->setKSearch(20);
+    }
+
     BOOST_FOREACH(const boost::shared_ptr<vector<int> > & idx, segment_indices)
 {   // compute deature for segment
     pcl::PointCloud<FeatureT> feature;
@@ -459,8 +472,10 @@ template<class PointT, class PointNormalT, class FeatureT>
     {
       for (int j = 0; j < N; j++)
       {
-        features[i].histogram[j] = (features[i].histogram[j] - min_.histogram[j]) / (max_.histogram[j]
-            - min_.histogram[j]);
+        if ((max_.histogram[j] - min_.histogram[j]) != 0) {
+          features[i].histogram[j] = (features[i].histogram[j] - min_.histogram[j]) / (max_.histogram[j]
+              - min_.histogram[j]);
+        }
       }
     }
 
@@ -491,8 +506,10 @@ template<class PointT, class PointNormalT, class FeatureT>
     {
       for (int j = 0; j < N; j++)
       {
+        if ((max_.histogram[j] - min_.histogram[j]) != 0) {
         features[i].histogram[j] = (features[i].histogram[j] - min.histogram[j])
             / (max.histogram[j] - min.histogram[j]);
+        }
       }
     }
 
