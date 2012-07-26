@@ -24,14 +24,59 @@
 #include <ransac_simple.h>
 #include <pcl/features/vfh.h>
 
-typedef pcl::Histogram<pcl::SGFALL_SIZE> FeatureType;
-typedef pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<pcl::SGFALL_SIZE> > FeatureEstimatorType;
+template<class FeatureType, class FeatureEstimatorType>
+  void classify(string database_dir, string scene_file_name)
+  {
 
-//typedef pcl::ESFSignature640 FeatureType;
-//typedef pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640 > FeatureEstimatorType;
+    std::vector<std::string> st;
+    boost::split(st, scene_file_name, boost::is_any_of("/"), boost::token_compress_on);
+    std::string scene_name = st.at(st.size() - 1);
+    scene_name = scene_name.substr(0, scene_name.size() - 4);
 
-//typedef pcl::VFHSignature308 FeatureType;
-//typedef pcl::VFHEstimation<pcl::PointNormal, pcl::PointNormal, pcl::VFHSignature308 > FeatureEstimatorType;
+    std::string debug_folder = scene_name + "_debug/";
+    std::string output_dir = scene_name + "_result/";
+
+    pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, FeatureType> oc;
+
+    typename pcl::Feature<pcl::PointNormal, FeatureType>::Ptr feature_estimator(new FeatureEstimatorType);
+    oc.setFeatureEstimator(feature_estimator);
+
+    oc.setDatabaseDir(database_dir);
+    oc.loadFromFile();
+
+    oc.setDebugFolder(debug_folder);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+
+    pcl::io::loadPCDFile(scene_file_name, *cloud);
+    oc.setScene(cloud, 2.4);
+
+    oc.classify();
+
+    map<string, vector<pcl::PointCloud<pcl::PointNormal>::Ptr> > objects = oc.getFoundObjects();
+
+    typedef typename map<string, vector<pcl::PointCloud<pcl::PointNormal>::Ptr> >::value_type vt;
+
+    boost::filesystem::path out_path(output_dir);
+
+    if (boost::filesystem::exists(out_path))
+    {
+      boost::filesystem::remove_all(out_path);
+    }
+
+    boost::filesystem::create_directories(out_path);
+
+    BOOST_FOREACH(vt &v, objects)
+{    for(size_t i=0; i<v.second.size(); i++)
+    {
+      std::stringstream ss;
+      ss << output_dir << v.first << i << ".pcd";
+      std::cerr << "Writing to file " << ss.str() << std::endl;
+      pcl::io::savePCDFileASCII(ss.str(), *v.second[i]);
+    }
+  }
+
+}
 
 int main(int argc, char** argv)
 {
@@ -44,58 +89,36 @@ int main(int argc, char** argv)
 
   std::string database_dir;
   std::string scene_file_name;
+  std::string features = "sgf";
 
   pcl::console::parse_argument(argc, argv, "-database_dir", database_dir);
   pcl::console::parse_argument(argc, argv, "-scene_file_name", scene_file_name);
 
-  std::vector<std::string> st;
-  boost::split(st, scene_file_name, boost::is_any_of("/"), boost::token_compress_on);
-  std::string scene_name = st.at(st.size() - 1);
-  scene_name = scene_name.substr(0, scene_name.size() - 4);
+  pcl::console::parse_argument(argc, argv, "-features", features);
 
-  std::string debug_folder = scene_name + "_debug/";
-  std::string output_dir = scene_name + "_result/";
-
-  pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, FeatureType > oc;
-
-  pcl::Feature<pcl::PointNormal, FeatureType >::Ptr feature_estimator(new FeatureEstimatorType);
-  oc.setFeatureEstimator(feature_estimator);
-
-  oc.setDatabaseDir(database_dir);
-  oc.loadFromFile();
-
-  oc.setDebugFolder(debug_folder);
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-
-  pcl::io::loadPCDFile(scene_file_name, *cloud);
-  oc.setScene(cloud, 2.4);
-
-  oc.classify();
-
-  map<string, vector<pcl::PointCloud<pcl::PointNormal>::Ptr> > objects = oc.getFoundObjects();
-
-  typedef typename map<string, vector<pcl::PointCloud<pcl::PointNormal>::Ptr> >::value_type vt;
-
-  boost::filesystem::path out_path(output_dir);
-
-  if (boost::filesystem::exists(out_path))
+  if (features == "sgf")
   {
-    boost::filesystem::remove_all(out_path);
+    classify<pcl::Histogram<pcl::SGFALL_SIZE>,
+        pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<pcl::SGFALL_SIZE> > > (database_dir, scene_file_name
+
+    );
+  }
+  else if (features == "vfh")
+  {
+    classify<pcl::ESFSignature640, pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640> > (database_dir,
+                                                                                                 scene_file_name);
+  }
+  else if (features == "esf")
+  {
+    classify<pcl::VFHSignature308, pcl::VFHEstimation<pcl::PointNormal, pcl::PointNormal, pcl::VFHSignature308> > (
+                                                                                                                   database_dir,
+                                                                                                                   scene_file_name);
+  }
+  else
+  {
+    std::cerr << "Unknown feature type " << features << " specified" << std::endl;
   }
 
-  boost::filesystem::create_directories(out_path);
-
-  BOOST_FOREACH(vt &v, objects)
-{  for(size_t i=0; i<v.second.size(); i++)
-  {
-    std::stringstream ss;
-    ss << output_dir << v.first << i << ".pcd";
-    std::cerr << "Writing to file " << ss.str() << std::endl;
-    pcl::io::savePCDFileASCII(ss.str(), *v.second[i]);
-  }
-}
-
-return 0;
+  return 0;
 }
 

@@ -680,6 +680,7 @@ template<class PointT, class PointNormalT, class FeatureT>
     min = grid.minCoeff();
 
     float threshold = min + (max - min) * local_maxima_threshold_;
+    //float threshold = local_maxima_threshold_;
 
     int window_size_pixels = window_size / cell_size_;
 
@@ -738,7 +739,9 @@ template<class PointT, class PointNormalT, class FeatureT>
     max = grid.maxCoeff();
     min = grid.minCoeff();
 
+    //std::cerr << min << " " << max << std::endl;
     float threshold = min + (max - min) * local_maxima_threshold_;
+    //float threshold = local_maxima_threshold_;
 
     int window_size_pixels = window_size / cell_size_;
 
