@@ -10,8 +10,8 @@
 - Filter ransac hypothetis that are far from voted center
 + different window sizes and different thresholds
 
-- write clustering info into file
++ write clustering info into file
 
-- Add RSD and ESF and PFH and VFH features. RSD is disabled in pcl. (http://dev.pointclouds.org/issues/625)
++ Add RSD and ESF and PFH and VFH features. RSD is disabled in pcl. (http://dev.pointclouds.org/issues/625)
 + Dump clusteing information
 

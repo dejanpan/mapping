@@ -219,14 +219,16 @@ template<class PointT, class PointNormalT, class FeatureT>
       std::cerr << "Checking for " << it->first << std::endl;
       pcl::io::savePCDFileASCII(debug_folder_ + it->first + "_votes.pcd", it->second);
 
-      Eigen::MatrixXf grid = projectVotesToGrid(it->second);
+      int grid_center_x, grid_center_y;
+      Eigen::MatrixXf grid = projectVotesToGrid(it->second, grid_center_x, grid_center_y);
 
       if (debug_)
       {
         Eigen::MatrixXi img = (grid * 255.0 / grid.maxCoeff()).cast<int> ();
 
-        std::string filename = debug_folder_ + it->first + "_votes.pgm";
-        std::ofstream f(filename.c_str());
+        std::stringstream filename;
+        filename << debug_folder_ << it->first << "_center_" << grid_center_x << "_" << grid_center_y << ".pgm";
+        std::ofstream f(filename.str().c_str());
         f << "P2\n" << grid.cols() << " " << grid.rows() << "\n255\n";
         f << img;
       }
@@ -259,6 +261,63 @@ template<class PointT, class PointNormalT, class FeatureT>
     result = removeIntersecting(result, scores);
 
     found_objects_[it->first] = result;
+
+  }
+
+}
+
+template<class PointT, class PointNormalT, class FeatureT>
+  void pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::eval_clustering(
+                                                                                 const std::string & classname,
+                                                                                 const float search_radius,
+                                                                                 double &tp, double &fn, double &fp)
+  {
+    appendFeaturesFromCloud(scene_, "Scene", 0);
+    normalizeFeaturesWithCurrentMinMax(features_);
+    vote();
+
+    for (std::map<std::string, pcl::PointCloud<pcl::PointXYZI> >::const_iterator it = votes_.begin(); it
+        != votes_.end(); it++)
+    {
+
+      //std::cerr << "Checking for " << it->first << std::endl;
+      //pcl::io::savePCDFileASCII(debug_folder_ + it->first + "_votes.pcd", it->second);
+
+      int grid_center_x, grid_center_y;
+      Eigen::MatrixXf grid = projectVotesToGrid(it->second, grid_center_x, grid_center_y);
+
+      BOOST_FOREACH(PointNormalCloudPtr & full_model, class_name_to_full_models_map_[it->first])
+{      PointNormalT minp, maxp;
+      pcl::getMinMax3D<PointNormalT>(*full_model, minp, maxp);
+      float window_size = std::max((maxp.x - minp.x),(maxp.y - minp.y))/2;
+
+      Eigen::ArrayXXi local_max = getLocalMaximaGrid(grid, window_size);
+
+      int ctp, cfp, cfn;
+      int search_radius_pixels = search_radius/cell_size_;
+
+      if (it->first == classname)
+      {
+
+        Eigen::ArrayXXi true_region = local_max.block(grid_center_x - search_radius_pixels, grid_center_y - search_radius_pixels, 2 * search_radius_pixels
+                                                      + 1, 2 * search_radius_pixels + 1);
+
+        ctp = (true_region == 1).count();
+        cfn = (ctp == 0);
+        cfp = (local_max == 1).count() - ctp;
+
+      } else {
+        cfp = (local_max == 1).count();
+        ctp = 0;
+        cfn = 0;
+      }
+
+      tp += ctp;
+      fp += cfp;
+      fn += cfn;
+
+
+    }
 
   }
 
@@ -472,7 +531,8 @@ template<class PointT, class PointNormalT, class FeatureT>
     {
       for (int j = 0; j < N; j++)
       {
-        if ((max_.histogram[j] - min_.histogram[j]) != 0) {
+        if ((max_.histogram[j] - min_.histogram[j]) != 0)
+        {
           features[i].histogram[j] = (features[i].histogram[j] - min_.histogram[j]) / (max_.histogram[j]
               - min_.histogram[j]);
         }
@@ -506,9 +566,10 @@ template<class PointT, class PointNormalT, class FeatureT>
     {
       for (int j = 0; j < N; j++)
       {
-        if ((max_.histogram[j] - min_.histogram[j]) != 0) {
-        features[i].histogram[j] = (features[i].histogram[j] - min.histogram[j])
-            / (max.histogram[j] - min.histogram[j]);
+        if ((max_.histogram[j] - min_.histogram[j]) != 0)
+        {
+          features[i].histogram[j] = (features[i].histogram[j] - min.histogram[j]) / (max.histogram[j]
+              - min.histogram[j]);
         }
       }
     }
@@ -581,7 +642,7 @@ template<class PointT, class PointNormalT, class FeatureT>
 
 template<class PointT, class PointNormalT, class FeatureT>
   Eigen::MatrixXf pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::projectVotesToGrid(const pcl::PointCloud<
-      pcl::PointXYZI> & model_centers)
+      pcl::PointXYZI> & model_centers, int & grid_center_x, int & grid_center_y)
   {
 
     Eigen::MatrixXf grid;
@@ -599,6 +660,9 @@ template<class PointT, class PointNormalT, class FeatureT>
           && (model_centers.points[i].z >= 0))
         grid(vote_x, vote_y) += model_centers.points[i].intensity;
     }
+
+    grid_center_x = -min_scene_bound_.x / cell_size_;
+    grid_center_y = -min_scene_bound_.y / cell_size_;
 
     return grid;
   }
@@ -659,6 +723,57 @@ template<class PointT, class PointNormalT, class FeatureT>
     local_maxima->is_dense = true;
 
     return local_maxima;
+
+  }
+
+template<class PointT, class PointNormalT, class FeatureT>
+  typename Eigen::ArrayXXi pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::getLocalMaximaGrid(
+                                                                                                        Eigen::MatrixXf & grid,
+                                                                                                        float window_size)
+  {
+
+    Eigen::ArrayXXi local_max = Eigen::ArrayXXi::Zero(grid.rows(), grid.cols());
+
+    float max, min;
+    max = grid.maxCoeff();
+    min = grid.minCoeff();
+
+    float threshold = min + (max - min) * local_maxima_threshold_;
+
+    int window_size_pixels = window_size / cell_size_;
+
+    if (window_size_pixels >= std::min(grid.cols() - 3, grid.rows() - 3))
+    {
+      window_size_pixels = std::min(grid.cols() - 3, grid.rows() - 3);
+    }
+
+    // Make window_size_pixels even
+    if (window_size_pixels % 2 == 0)
+      window_size_pixels++;
+
+    int side = window_size_pixels / 2;
+
+    for (int i = side; i < (grid.rows() - side); i++)
+    {
+      for (int j = side; j < (grid.cols() - side); j++)
+      {
+
+        float max;
+        Eigen::MatrixXf window = grid.block(i - side, j - side, window_size_pixels, window_size_pixels);
+        max = window.maxCoeff();
+
+        assert(window.cols() == window_size_pixels);
+        assert(window.rows() == window_size_pixels);
+
+        // if max of the window is in its center then this point is local maxima
+        if ((max == grid(i, j)) && (max > 0) && (max > threshold))
+        {
+          local_max(i,j) = 1;
+        }
+      }
+    }
+
+    return local_max;
 
   }
 

@@ -63,3 +63,7 @@ rosbuild_add_executable(classify_live src/classify_live.cpp)
 target_link_libraries(classify_live furniture_classification)
 target_link_libraries(classify_live vtkCommon vtkIO vtkFiltering vtkGraphics)
 
+rosbuild_add_executable(eval_clustering src/eval_clustering.cpp)
+target_link_libraries(eval_clustering furniture_classification)
+rosbuild_link_boost(eval_clustering system filesystem)
+

@@ -18,25 +18,30 @@ int main(int argc, char **argv)
 {
   if (argc < 3)
   {
-    PCL_INFO ("Usage %s -input_file cloud.pcd \n", argv[0]);
+    PCL_INFO ("Usage %s -input_file cloud.pcd -distance_thresh 0.01 -angle_thresh 30 \n", argv[0]);
 
     return -1;
   }
 
   std::string filename;
+  float distance_thresh = 0.01;
+  float angle_thresh = 0.01;
+
   pcl::console::parse_argument(argc, argv, "-input_file", filename);
+  pcl::console::parse_argument(argc, argv, "-distance_thresh", distance_thresh);
+  pcl::console::parse_argument(argc, argv, "-angle_thresh", distance_thresh);
 
   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_orig(new pcl::PointCloud<pcl::PointXYZRGBA>);
   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
   pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>());
-  pcl::io::loadPCDFile(filename, *cloud_orig);
+  pcl::io::loadPCDFile(filename, *cloud);
 
   std::cerr << "Loaded file" << std::endl;
 
-  pcl::VoxelGrid<pcl::PointXYZRGBA> grid;
-  grid.setInputCloud(cloud_orig);
-  grid.setLeafSize(0.01f, 0.01f, 0.01f);
-  grid.filter(*cloud);
+  //pcl::VoxelGrid<pcl::PointXYZRGBA> grid;
+  //grid.setInputCloud(cloud_orig);
+  //grid.setLeafSize(0.01f, 0.01f, 0.01f);
+  //grid.filter(*cloud);
 
   // Create a KD-Tree
   pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGBA>);
@@ -46,7 +51,7 @@ int main(int argc, char **argv)
   pcl::NormalEstimation<pcl::PointXYZRGBA, pcl::Normal> ne;
   ne.setInputCloud(cloud);
   ne.setSearchMethod(tree);
-  ne.setRadiusSearch(0.03);
+  ne.setRadiusSearch(0.01);
   ne.compute(*cloud_normals);
 
   std::cerr << "Computed normals" << std::endl;
@@ -57,15 +62,16 @@ int main(int argc, char **argv)
   region_growing.setNeighbourSearchMethod(tree);
 
   region_growing.setResidualTest(true);
-  region_growing.setResidualThreshold(0.1);
+  region_growing.setResidualThreshold(distance_thresh);
 
-  region_growing.setCurvatureTest(false);
-  region_growing.setCurvatureThreshold(0.05);
+  region_growing.setCurvatureTest(true);
+  region_growing.setCurvatureThreshold(0.04);
 
-  region_growing.setSmoothMode(true);
-  region_growing.setSmoothnessThreshold(80 * M_PI / 180);
 
-  region_growing.setPointColorThreshold(10.0);
+  region_growing.setSmoothMode(false);
+  region_growing.setSmoothnessThreshold(angle_thresh * M_PI/180);
+
+  region_growing.setPointColorThreshold(100.0);
   region_growing.setRegionColorThreshold(200.0);
 
   region_growing.segmentPoints();

@@ -137,6 +137,16 @@ template<class PointT, class PointNormalT, class FeatureT>
       return debug_folder_;
     }
 
+    void setNumberOfClusters(int num_clusters)
+    {
+      num_clusters_ = num_clusters;
+    }
+
+    int getNumberOfClusters()
+    {
+      return num_clusters_;
+    }
+
     void setFeatureEstimator(FeatureEstimatorType feature_estimator)
     {
       feature_estimator_ = feature_estimator;
@@ -147,6 +157,16 @@ template<class PointT, class PointNormalT, class FeatureT>
       return feature_estimator_;
     }
 
+    void setLocalMaximaThreshold(float t)
+    {
+      local_maxima_threshold_ = t;
+    }
+
+    float getLocalMaximaThreshold()
+    {
+      return local_maxima_threshold_;
+    }
+
     virtual void setScene(PointCloudConstPtr model, float cut_off_distance = 2.5f)
     {
       std::vector<int> idx;
@@ -154,7 +174,7 @@ template<class PointT, class PointNormalT, class FeatureT>
       pcl::PassThrough<PointT> pass;
       pass.setInputCloud(model);
       pass.setFilterFieldName("x");
-      pass.setFilterLimits(0, cut_off_distance);
+      pass.setFilterLimits(-cut_off_distance, cut_off_distance);
       pass.filter(idx);
 
       PointCloudPtr model_cut(new PointCloud(*model, idx));
@@ -185,6 +205,8 @@ template<class PointT, class PointNormalT, class FeatureT>
       return found_objects_;
     }
 
+    void eval_clustering(const std::string & classname, const float search_radius, double &tp, double &fn, double &fp);
+
     template<class PT, class PNT, class FT>
       friend YAML::Emitter& operator <<(YAML::Emitter& out, const PHVObjectClassifier<PT, PNT, FT> & h);
 
@@ -200,7 +222,8 @@ template<class PointT, class PointNormalT, class FeatureT>
     void normalizeFeaturesWithCurrentMinMax(std::vector<FeatureT> & features);
     void clusterFeatures(vector<FeatureT> & cluster_centers, vector<int> & cluster_labels);
     void vote();
-    Eigen::MatrixXf projectVotesToGrid(const pcl::PointCloud<pcl::PointXYZI> & model_centers);
+    Eigen::MatrixXf projectVotesToGrid(const pcl::PointCloud<pcl::PointXYZI> & model_centers, int & grid_center_x,
+                                       int & grid_center_y);
     typename pcl::PointCloud<PointT>::Ptr findLocalMaximaInGrid(Eigen::MatrixXf grid, float window_size);
     vector<boost::shared_ptr<std::vector<int> > >
         findVotedSegments(typename pcl::PointCloud<PointT>::Ptr local_maxima_, const string & class_name,
@@ -212,6 +235,7 @@ template<class PointT, class PointNormalT, class FeatureT>
     bool intersectXY(const pcl::PointCloud<PointNormalT> & cloud1, const pcl::PointCloud<PointNormalT> & cloud2);
     vector<typename pcl::PointCloud<PointNormalT>::Ptr> removeIntersecting(vector<
         typename pcl::PointCloud<PointNormalT>::Ptr> & result_, vector<float> & scores_);
+    typename Eigen::ArrayXXi getLocalMaximaGrid(Eigen::MatrixXf & grid, float window_size);
 
   public:
 
@@ -399,7 +423,7 @@ YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::ESFSignature640 & h)
   {
     out << h.histogram[j];
   }
-  out << YAML::EndSeq ;
+  out << YAML::EndSeq;
   return out;
 }
 

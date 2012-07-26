@@ -36,9 +36,11 @@ int main(int argc, char **argv)
 
   std::string input_dir;
   std::string output_dir;
+  int num_clusters = 40;
 
   pcl::console::parse_argument(argc, argv, "-input_dir", input_dir);
   pcl::console::parse_argument(argc, argv, "-output_dir", output_dir);
+  pcl::console::parse_argument(argc, argv, "-num_clusters", num_clusters);
 
   pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, FeatureType > oc;
   oc.setDebugFolder("debug/");
@@ -80,7 +82,7 @@ int main(int argc, char **argv)
   }
 
 }
-
+oc.setNumberOfClusters(num_clusters);
 oc.computeClassifier();
 oc.setDatabaseDir(output_dir);
 oc.saveToFile();
