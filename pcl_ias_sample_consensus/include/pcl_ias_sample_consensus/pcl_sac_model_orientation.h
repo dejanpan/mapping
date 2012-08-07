@@ -1,6 +1,7 @@
 #ifndef PCL_IAS_SAMPLE_CONSENSUS_SACMODELORIENTATION_H_
 #define PCL_IAS_SAMPLE_CONSENSUS_SACMODELORIENTATION_H_
 
+#include <ros/assert.h>
 // SaC
 #include <pcl/sample_consensus/sac_model.h>
 #include <pcl/sample_consensus/model_types.h>
