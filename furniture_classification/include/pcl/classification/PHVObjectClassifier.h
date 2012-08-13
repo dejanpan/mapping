@@ -37,10 +37,12 @@
 #include <yaml-cpp/yaml.h>
 
 #include <map>
+#include <set>
 
 using std::map;
 using std::string;
 using std::vector;
+using std::set;
 
 namespace pcl
 {
@@ -98,6 +100,7 @@ template<class PointT, class PointNormalT, class FeatureT>
     }
 
     virtual void computeClassifier();
+    void computeExternalClassifier(const std::string & labels);
 
     virtual bool isClassifierComputed()
     {

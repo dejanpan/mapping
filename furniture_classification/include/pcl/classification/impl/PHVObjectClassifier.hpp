@@ -164,6 +164,17 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     f2.close();
 
+    std::ofstream f3((debug_folder_+"centroids.txt").c_str());
+
+    for(size_t i=0; i<centroids_.size(); i++)
+    {
+
+      f3 << centroids_.points[i].x << " " << centroids_.points[i].y << " " << centroids_.points[i].z << "\n";
+
+    }
+
+    f3.close();
+
   }
 
   vector<FeatureT> cluster_centers;
@@ -194,6 +205,139 @@ template<class PointT, class PointNormalT, class FeatureT>
       pcl::io::savePCDFileASCII(ss.str(), *segment_pointclouds_[i]);
 
     }
+
+  }
+
+}
+
+template<class PointT, class PointNormalT, class FeatureT>
+  void pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::computeExternalClassifier(const std::string & labels)
+  {
+
+    BOOST_FOREACH(ModelMapValueType &v, class_name_to_partial_views_map_)
+{    int view_num_counter = 0;
+
+    for(size_t i=0; i<v.second.size(); i++)
+    {
+      appendFeaturesFromCloud(v.second[i], v.first, view_num_counter);
+      view_num_counter++;
+
+    }
+
+  }
+
+  // Transform to model centroinds in local coordinate frame of the segment
+  centroids_.getMatrixXfMap() *= -1;
+
+  normalizeFeatures(features_);
+
+  for(int i=0; i<num_clusters_; i++)
+  {
+    std::stringstream ss;
+    ss << debug_folder_ << "Cluster" << i << "/";
+
+    boost::filesystem::path output_path(ss.str());
+    if (boost::filesystem::exists(output_path))
+    {
+      boost::filesystem::remove_all(output_path);
+    }
+
+    boost::filesystem::create_directories(output_path);
+  }
+
+  std::ofstream f((debug_folder_+"features.txt").c_str());
+
+  size_t N = sizeof(features_[0].histogram)/sizeof(float);
+
+  for(size_t i=0; i<features_.size(); i++)
+  {
+    for(size_t j=0; j<N; j++)
+    {
+      f << features_[i].histogram[j] << " ";
+    }
+
+    f << "\n";
+
+  }
+
+  f.close();
+
+  std::ofstream f2((debug_folder_+"classnames.txt").c_str());
+
+  for(size_t i=0; i<classes_.size(); i++)
+  {
+
+    f2 << classes_[i] << "\n";
+
+  }
+
+  f2.close();
+
+  std::ofstream f3((debug_folder_+"centroids.txt").c_str());
+
+  for(size_t i=0; i<centroids_.size(); i++)
+  {
+
+    f3 << centroids_.points[i].x << " " << centroids_.points[i].y << " " << centroids_.points[i].z << "\n";
+
+  }
+
+  f3.close();
+
+  vector<int> cluster_labels;
+  set<int> unique_cluster_labels;
+  vector<FeatureT> cluster_centers();
+
+  std::ifstream f4(labels.c_str());
+
+  for(size_t i=0; i<features_.size(); i++)
+  {
+    int l;
+    f4 >> l;
+    cluster_labels.push_back(l);
+    unique_cluster_labels.insert(l);
+  }
+
+  for(set<int>::iterator it=unique_cluster_labels.begin(); it != unique_cluster_labels.end(); it++)
+  {
+    int N = sizeof(FeatureT)/sizeof(float);
+    FeatureT c;
+    int num_clusters = 0;
+
+    map<string, PointCloud> map;
+
+    for(int j=0; j<N; j++)
+    {
+      c.histogram[j] = 0;
+    }
+
+    for(size_t i=0; i<features_.size(); i++)
+    {
+      if(cluster_labels[i] == *it)
+      {
+        for(int j=0; j<N; j++)
+        {
+          c.histogram[j] += features_[i].histogram[j];
+
+        }
+
+        map[classes_[i]].points.push_back(centroids_.points[i]);
+        map[classes_[i]].width
+        = map[classes_[i]].points.size();
+        map[classes_[i]].height = 1;
+        map[classes_[i]].is_dense = true;
+
+        ransac_result_threshold_[classes_[i]] = 0.5;
+        num_clusters ++;
+      }
+    }
+
+    for(int j=0; j<N; j++)
+    {
+      c.histogram[j] = c.histogram[j]/num_clusters;
+    }
+
+    database_[c] = map;
 
   }
 
@@ -267,10 +411,9 @@ template<class PointT, class PointNormalT, class FeatureT>
 }
 
 template<class PointT, class PointNormalT, class FeatureT>
-  void pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::eval_clustering(
-                                                                                 const std::string & classname,
-                                                                                 const float search_radius,
-                                                                                 double &tp, double &fn, double &fp)
+  void pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::eval_clustering(const std::string & classname,
+                                                                                 const float search_radius, double &tp,
+                                                                                 double &fn, double &fp)
   {
     appendFeaturesFromCloud(scene_, "Scene", 0);
     normalizeFeaturesWithCurrentMinMax(features_);
@@ -300,13 +443,15 @@ template<class PointT, class PointNormalT, class FeatureT>
       {
 
         Eigen::ArrayXXi true_region = local_max.block(grid_center_x - search_radius_pixels, grid_center_y - search_radius_pixels, 2 * search_radius_pixels
-                                                      + 1, 2 * search_radius_pixels + 1);
+            + 1, 2 * search_radius_pixels + 1);
 
         ctp = (true_region == 1).count();
         cfn = (ctp == 0);
         cfp = (local_max == 1).count() - ctp;
 
-      } else {
+      }
+      else
+      {
         cfp = (local_max == 1).count();
         ctp = 0;
         cfn = 0;
@@ -315,7 +460,6 @@ template<class PointT, class PointNormalT, class FeatureT>
       tp += ctp;
       fp += cfp;
       fn += cfn;
-
 
     }
 
@@ -771,7 +915,7 @@ template<class PointT, class PointNormalT, class FeatureT>
         // if max of the window is in its center then this point is local maxima
         if ((max == grid(i, j)) && (max > 0) && (max > threshold))
         {
-          local_max(i,j) = 1;
+          local_max(i, j) = 1;
         }
       }
     }

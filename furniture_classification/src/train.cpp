@@ -55,7 +55,8 @@ template<class FeatureType, class FeatureEstimatorType>
 
   }
   oc.setNumberOfClusters(num_clusters);
-  oc.computeClassifier();
+  oc.computeExternalClassifier("furniture_part_labels_40min_ARI0.048079_lambda4_init47_links0_clusters40_iter1.txt");
+  //oc.computeClassifier();
   oc.setDatabaseDir(output_dir);
   oc.saveToFile();
 }

@@ -26,12 +26,20 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 
-include_directories ("/usr/include/openni/")
 
+#find_package(PCL 1.7 REQUIRED)
+#include_directories(${PCL_INCLUDE_DIRS})
+#link_directories(${PCL_LIBRARY_DIRS})
+#add_definitions(${PCL_DEFINITIONS})
+
+#message("PCL_LIBRARIES - ${PCL_LIBRARIES}")
+
+include_directories ("/usr/include/openni/")
 
 rosbuild_add_executable(scan src/scan.cpp)
 rosbuild_link_boost(scan system filesystem)
 target_link_libraries(scan vtkCommon vtkIO vtkFiltering vtkGraphics vtkRendering)
+#target_link_libraries(scan pcl_common pcl_io pcl_visualization)
 
 rosbuild_add_executable(convert src/convert.cpp)
 rosbuild_link_boost(convert system filesystem)
@@ -58,6 +66,7 @@ rosbuild_link_boost(train system filesystem)
 rosbuild_add_executable(classify src/classify.cpp)
 target_link_libraries(classify furniture_classification)
 rosbuild_link_boost(classify system filesystem)
+#target_link_libraries(classify pcl_common pcl_io pcl_visualization pcl_segmentation pcl_surface pcl_filters pcl_search pcl_octree)
 
 rosbuild_add_executable(classify_live src/classify_live.cpp)
 target_link_libraries(classify_live furniture_classification)
