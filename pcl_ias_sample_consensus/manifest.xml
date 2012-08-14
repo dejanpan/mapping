@@ -9,7 +9,6 @@
 
   <depend package="pcl" />
   <depend package="roscpp" />
-  <depend package="eigen" />
   
   <export>
     <cpp cflags="-I${prefix}/include/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lpcl_ias_sample_consensus"/>
