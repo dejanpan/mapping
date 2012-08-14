@@ -55,8 +55,8 @@ template<class FeatureType, class FeatureEstimatorType>
 
   }
   oc.setNumberOfClusters(num_clusters);
-  oc.computeExternalClassifier("furniture_part_labels_40min_ARI0.048079_lambda4_init47_links0_clusters40_iter1.txt");
-  //oc.computeClassifier();
+  //oc.computeExternalClassifier("furniture_part_labels_40min_ARI0.048079_lambda4_init47_links0_clusters40_iter1.txt");
+  oc.computeClassifier();
   oc.setDatabaseDir(output_dir);
   oc.saveToFile();
 }
@@ -92,12 +92,12 @@ int main(int argc, char **argv)
                                                                                                                           output_dir,
                                                                                                                           num_clusters);
   }
-  else if (features == "vfh")
+  else if (features == "esf")
   {
     train<pcl::ESFSignature640, pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640> > (input_dir, output_dir,
                                                                                               num_clusters);
   }
-  else if (features == "esf")
+  else if (features == "vfh")
   {
     train<pcl::VFHSignature308, pcl::VFHEstimation<pcl::PointNormal, pcl::PointNormal, pcl::VFHSignature308> > (
                                                                                                                 input_dir,

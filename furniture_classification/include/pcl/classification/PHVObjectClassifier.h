@@ -219,7 +219,7 @@ template<class PointT, class PointNormalT, class FeatureT>
     estimateNormalsAndSubsample(typename pcl::PointCloud<PointT>::ConstPtr cloud_orig);
     void getSegmentsFromCloud(PointNormalCloudPtr cloud_with_normals,
                               vector<boost::shared_ptr<vector<int> > > & segment_indices, pcl::PointCloud<
-                                  pcl::PointXYZRGB>::Ptr & colored_segments);
+                                  pcl::PointXYZRGBNormal>::Ptr & colored_segments);
     void appendFeaturesFromCloud(PointNormalCloudPtr & cloud, const string & class_name, const int i);
     void normalizeFeatures(std::vector<FeatureT> & features);
     void normalizeFeaturesWithCurrentMinMax(std::vector<FeatureT> & features);

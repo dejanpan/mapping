@@ -41,6 +41,7 @@ template<class FeatureType, class FeatureEstimatorType>
     typename pcl::Feature<pcl::PointNormal, FeatureType>::Ptr feature_estimator(new FeatureEstimatorType);
     oc.setFeatureEstimator(feature_estimator);
 
+    oc.setDebug(false);
     oc.setDatabaseDir(database_dir);
     oc.loadFromFile();
 
@@ -103,12 +104,12 @@ int main(int argc, char** argv)
 
     );
   }
-  else if (features == "vfh")
+  else if (features == "esf")
   {
     classify<pcl::ESFSignature640, pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640> > (database_dir,
                                                                                                  scene_file_name);
   }
-  else if (features == "esf")
+  else if (features == "vfh")
   {
     classify<pcl::VFHSignature308, pcl::VFHEstimation<pcl::PointNormal, pcl::PointNormal, pcl::VFHSignature308> > (
                                                                                                                    database_dir,

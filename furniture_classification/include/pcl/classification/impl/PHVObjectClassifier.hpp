@@ -517,7 +517,7 @@ template<class PointT, class PointNormalT, class FeatureT>
                                                                                       PointNormalCloudPtr cloud_with_normals,
                                                                                       vector<boost::shared_ptr<vector<
                                                                                           int> > > & segment_indices,
-                                                                                      pcl::PointCloud<pcl::PointXYZRGB>::Ptr & colored_segments)
+                                                                                      pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr & colored_segments)
   {
 
     segment_indices.clear();
@@ -564,7 +564,20 @@ template<class PointT, class PointNormalT, class FeatureT>
       valid_segment_indices.insert(valid_segment_indices.begin(), i->begin(), i->end());
     }
 
-    colored_segments.reset(new pcl::PointCloud<pcl::PointXYZRGB>(*colored_segments_all, valid_segment_indices));
+    colored_segments.reset(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+
+    for(size_t i=0; i<valid_segment_indices.size(); i++){
+      pcl::PointXYZRGBNormal p;
+      p.x = colored_segments_all->points[i].x;
+      p.y = colored_segments_all->points[i].y;
+      p.z = colored_segments_all->points[i].z;
+      p.normal_x = normals->points[i].normal_x;
+      p.normal_y = normals->points[i].normal_y;
+      p.normal_z = normals->points[i].normal_z;
+      p.rgb = colored_segments_all->points[i].rgb;
+      colored_segments->push_back(p);
+    }
+
 
   }
 
@@ -584,7 +597,7 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     }
 
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr colored_segments;
+    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr colored_segments;
     vector<boost::shared_ptr<vector<int> > > segment_indices;
     getSegmentsFromCloud(cloud, segment_indices, colored_segments);
 
@@ -592,9 +605,11 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     PointNormalTreePtr tree(new PointNormalTree);
 
-    feature_estimator_->setInputCloud(cloud);
+
+
     feature_estimator_->setSearchMethod(tree);
     feature_estimator_->setKSearch(fe_k_neighbours_);
+    feature_estimator_->setInputCloud(cloud);
 
     typename pcl::FeatureFromNormals<PointNormalT, PointNormalT, FeatureT>::Ptr f = boost::dynamic_pointer_cast<
         pcl::FeatureFromNormals<PointNormalT, PointNormalT, FeatureT> >(feature_estimator_);
@@ -608,6 +623,8 @@ template<class PointT, class PointNormalT, class FeatureT>
     BOOST_FOREACH(const boost::shared_ptr<vector<int> > & idx, segment_indices)
 {   // compute deature for segment
     pcl::PointCloud<FeatureT> feature;
+    //PointNormalCloudPtr p(new PointNormalCloud(*cloud, *idx));
+    //feature_estimator_->setInputCloud(p);
     feature_estimator_->setIndices(idx);
     feature_estimator_->compute(feature);
 

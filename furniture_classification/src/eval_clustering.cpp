@@ -113,12 +113,12 @@ int main(int argc, char** argv)
 
     );
   }
-  else if (features == "vfh")
+  else if (features == "esf")
   {
     eval_clustering<pcl::ESFSignature640, pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640> > (database_dir,
                                                                                                         scans_dir);
   }
-  else if (features == "esf")
+  else if (features == "vfh")
   {
     eval_clustering<pcl::VFHSignature308, pcl::VFHEstimation<pcl::PointNormal, pcl::PointNormal, pcl::VFHSignature308> > (
                                                                                                                           database_dir,
