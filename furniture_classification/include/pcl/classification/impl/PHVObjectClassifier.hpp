@@ -10,6 +10,7 @@
 
 #include <pcl/classification/PHVObjectClassifier.h>
 #include <opencv2/core/core.hpp>
+#include <pcl/features/vfh.h>
 
 template<class FeatureT>
   cv::Mat transform_to_mat(const std::vector<FeatureT> & features)
@@ -566,8 +567,9 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     colored_segments.reset(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
 
-    for(size_t i=0; i<valid_segment_indices.size(); i++){
+    for(size_t j=0; j<valid_segment_indices.size(); j++){
       pcl::PointXYZRGBNormal p;
+      int i = valid_segment_indices[j];
       p.x = colored_segments_all->points[i].x;
       p.y = colored_segments_all->points[i].y;
       p.z = colored_segments_all->points[i].z;
@@ -577,6 +579,9 @@ template<class PointT, class PointNormalT, class FeatureT>
       p.rgb = colored_segments_all->points[i].rgb;
       colored_segments->push_back(p);
     }
+
+    colored_segments->sensor_origin_ = cloud_with_normals->sensor_origin_;
+    colored_segments->sensor_orientation_ = cloud_with_normals->sensor_orientation_;
 
 
   }
@@ -611,13 +616,14 @@ template<class PointT, class PointNormalT, class FeatureT>
     feature_estimator_->setKSearch(fe_k_neighbours_);
     feature_estimator_->setInputCloud(cloud);
 
-    typename pcl::FeatureFromNormals<PointNormalT, PointNormalT, FeatureT>::Ptr f = boost::dynamic_pointer_cast<
-        pcl::FeatureFromNormals<PointNormalT, PointNormalT, FeatureT> >(feature_estimator_);
+    typename pcl::VFHEstimation<PointNormalT, PointNormalT, FeatureT>::Ptr f = boost::dynamic_pointer_cast<
+        pcl::VFHEstimation<PointNormalT, PointNormalT, FeatureT> >(feature_estimator_);
 
     if (f)
     {
       f ->setInputNormals(cloud);
       f->setKSearch(20);
+      f->setViewPoint(cloud->sensor_origin_[0], cloud->sensor_origin_[1], cloud->sensor_origin_[2]);
     }
 
     BOOST_FOREACH(const boost::shared_ptr<vector<int> > & idx, segment_indices)
