@@ -11,9 +11,8 @@
 #include <pcl/classification/PHVObjectClassifier.h>
 #include <pcl/features/vfh.h>
 
-
 template<class FeatureType, class FeatureEstimatorType>
-  void train(string input_dir, string output_dir, int num_clusters)
+  void train(string input_dir, string output_dir, int num_clusters, const std::string & extermal_classifier_file)
   {
     pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, FeatureType> oc;
     oc.setDebugFolder("debug/");
@@ -55,8 +54,14 @@ template<class FeatureType, class FeatureEstimatorType>
 
   }
   oc.setNumberOfClusters(num_clusters);
-  //oc.computeExternalClassifier("furniture_part_labels_40min_ARI0.048079_lambda4_init47_links0_clusters40_iter1.txt");
-  oc.computeClassifier();
+  if (extermal_classifier_file != "")
+  {
+    oc.computeExternalClassifier(extermal_classifier_file);
+  }
+  else
+  {
+    oc.computeClassifier();
+  }
   oc.setDatabaseDir(output_dir);
   oc.saveToFile();
 }
@@ -79,30 +84,35 @@ int main(int argc, char **argv)
   std::string output_dir;
   int num_clusters = 40;
   std::string features = "sgf";
+  std::string extermal_classifier_file = "";
 
   pcl::console::parse_argument(argc, argv, "-input_dir", input_dir);
   pcl::console::parse_argument(argc, argv, "-output_dir", output_dir);
   pcl::console::parse_argument(argc, argv, "-num_clusters", num_clusters);
   pcl::console::parse_argument(argc, argv, "-features", features);
+  pcl::console::parse_argument(argc, argv, "-extermal_classifier_file", extermal_classifier_file);
 
   if (features == "sgf")
   {
     train<pcl::Histogram<pcl::SGFALL_SIZE>, pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<pcl::SGFALL_SIZE> > > (
                                                                                                                           input_dir,
                                                                                                                           output_dir,
-                                                                                                                          num_clusters);
+                                                                                                                          num_clusters,
+                                                                                                                          extermal_classifier_file);
   }
   else if (features == "esf")
   {
     train<pcl::ESFSignature640, pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640> > (input_dir, output_dir,
-                                                                                              num_clusters);
+                                                                                              num_clusters,
+                                                                                              extermal_classifier_file);
   }
   else if (features == "vfh")
   {
     train<pcl::VFHSignature308, pcl::VFHEstimation<pcl::PointNormal, pcl::PointNormal, pcl::VFHSignature308> > (
                                                                                                                 input_dir,
                                                                                                                 output_dir,
-                                                                                                                num_clusters);
+                                                                                                                num_clusters,
+                                                                                                                extermal_classifier_file);
   }
   else
   {

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-for features in "esf" "sgf" "vfh"
+for features in "sgf" "vfh" "esf"
 do
 	for num_clusters in 20 40 60 80 100
 	do

@@ -211,8 +211,8 @@ template<typename PointT>
       }
 
       //std::cerr << "Score " << occupied << " " << occluded << " " << free << std::endl;
-      return (weight_ * occupied + occluded) / (weight_ * occupied + occluded + free);
-
+      //return (weight_ * occupied + occluded) / (weight_ * occupied + occluded + free);
+      return (weight_ * occupied + occluded) / (weight_ * occupied + occluded + weight_*free);
     }
 
     bool isSampleGood(int sample) const

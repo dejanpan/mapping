@@ -287,6 +287,8 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     map<string, vector<PointNormalCloudPtr> > found_objects_;
 
+    std::string external_classifier_;
+
     FeatureT min_;
     FeatureT max_;
 
@@ -360,6 +362,9 @@ template<class PT, class PNT, class FT>
 
     out << YAML::Key << "ransac_result_threshold";
     out << YAML::Value << h.ransac_result_threshold_;
+
+    out << YAML::Key << "external_classifier";
+    out << YAML::Value << h.external_classifier_;
 
     out << YAML::Key << "database";
     out << YAML::Value << h.database_;
@@ -617,6 +622,8 @@ void operator >>(const YAML::Node& node, pcl::PHVObjectClassifier<PT, PNT, FT> &
   node["min_points_in_segment"] >> h.min_points_in_segment_;
   node["rg_residual_threshold"] >> h.rg_residual_threshold_;
   node["rg_smoothness_threshold"] >> h.rg_smoothness_threshold_;
+  node["external_classifier"] >> h.external_classifier_;
+
 
   node["fe_k_neighbours"] >> h.fe_k_neighbours_;
   node["num_clusters"] >> h.num_clusters_;

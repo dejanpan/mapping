@@ -291,56 +291,58 @@ template<class PointT, class PointNormalT, class FeatureT>
 
   std::ifstream f4(labels.c_str());
 
-  for(size_t i=0; i<features_.size(); i++)
+  pcl::PointCloud<FeatureT> mat;
+
+  std::cerr << "Matrix:\n" << mat << std::endl;
+
+  int feature_size = sizeof(features_[0].histogram)/sizeof(float);
+
+  while(f4)
   {
-    int l;
-    f4 >> l;
-    cluster_labels.push_back(l);
-    unique_cluster_labels.insert(l);
+    FeatureT ff;
+    for(int i=0; i<feature_size; i++)
+    {
+      if (f4.peek() == ',')
+      {
+        f4.ignore();
+      }
+      f4 >> ff.histogram[i];
+    }
+    mat.push_back(ff);
   }
 
-  for(set<int>::iterator it=unique_cluster_labels.begin(); it != unique_cluster_labels.end(); it++)
+  int cluster_size = mat.size();
+  num_clusters_ = cluster_size;
+
+  for(size_t i=0; i<features_.size(); i++)
   {
-    int N = sizeof(FeatureT)/sizeof(float);
-    FeatureT c;
-    int num_clusters = 0;
+    Eigen::ArrayXf res(cluster_size);
 
-    map<string, PointCloud> map;
-
-    for(int j=0; j<N; j++)
+    for(size_t j=0; j<cluster_size; j++)
     {
-      c.histogram[j] = 0;
-    }
-
-    for(size_t i=0; i<features_.size(); i++)
-    {
-      if(cluster_labels[i] == *it)
+      for(size_t k=0; k<feature_size; k++)
       {
-        for(int j=0; j<N; j++)
-        {
-          c.histogram[j] += features_[i].histogram[j];
-
-        }
-
-        map[classes_[i]].points.push_back(centroids_.points[i]);
-        map[classes_[i]].width
-        = map[classes_[i]].points.size();
-        map[classes_[i]].height = 1;
-        map[classes_[i]].is_dense = true;
-
-        ransac_result_threshold_[classes_[i]] = 0.5;
-        num_clusters ++;
+        res[j] += mat[j].histogram[k] * features_[i].histogram[k];
       }
     }
 
-    for(int j=0; j<N; j++)
+    int cluster_idx;
+    res.maxCoeff(&cluster_idx);
+    FeatureT ff;
+
+    for(size_t k=0; k<feature_size; k++)
     {
-      c.histogram[j] = c.histogram[j]/num_clusters;
+      ff.histogram[k] = 0;
     }
 
-    database_[c] = map;
+    ff.histogram[0] = cluster_idx;
+
+    database_[ff][classes_[i]].push_back(centroids_.points[i]);
+    ransac_result_threshold_[classes_[i]] = 0.5;
 
   }
+
+  external_classifier_ = labels;
 
 }
 
@@ -503,6 +505,16 @@ template<class PointT, class PointNormalT, class FeatureT>
     grid.setLeafSize(subsampling_resolution_, subsampling_resolution_, subsampling_resolution_);
     grid.filter(*cloud_downsampled);
 
+    Eigen::Vector4f so = cloud_orig->sensor_origin_;
+    //std::cerr << "Model viewpoint\n" << so << std::endl;
+    for (size_t i = 0; i < cloud_downsampled->points.size(); i++)
+    {
+
+      pcl::flipNormalTowardsViewpoint(cloud_downsampled->points[i], so[0], so[1], so[2],
+                                      cloud_downsampled->points[i].normal_x, cloud_downsampled->points[i].normal_y,
+                                      cloud_downsampled->points[i].normal_z);
+    }
+
     //cloud_downsampled->is_dense = false;
     //pcl::removeNaNFromPointCloud(*cloud_downsampled, *cloud_downsampled, idx);
 
@@ -518,7 +530,8 @@ template<class PointT, class PointNormalT, class FeatureT>
                                                                                       PointNormalCloudPtr cloud_with_normals,
                                                                                       vector<boost::shared_ptr<vector<
                                                                                           int> > > & segment_indices,
-                                                                                      pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr & colored_segments)
+                                                                                      pcl::PointCloud<
+                                                                                          pcl::PointXYZRGBNormal>::Ptr & colored_segments)
   {
 
     segment_indices.clear();
@@ -567,7 +580,8 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     colored_segments.reset(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
 
-    for(size_t j=0; j<valid_segment_indices.size(); j++){
+    for(size_t j=0; j<valid_segment_indices.size(); j++)
+    {
       pcl::PointXYZRGBNormal p;
       int i = valid_segment_indices[j];
       p.x = colored_segments_all->points[i].x;
@@ -582,7 +596,6 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     colored_segments->sensor_origin_ = cloud_with_normals->sensor_origin_;
     colored_segments->sensor_orientation_ = cloud_with_normals->sensor_orientation_;
-
 
   }
 
@@ -609,8 +622,6 @@ template<class PointT, class PointNormalT, class FeatureT>
     segment_indices_ = segment_indices;
 
     PointNormalTreePtr tree(new PointNormalTree);
-
-
 
     feature_estimator_->setSearchMethod(tree);
     feature_estimator_->setKSearch(fe_k_neighbours_);
