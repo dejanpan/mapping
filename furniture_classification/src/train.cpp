@@ -16,7 +16,7 @@ template<class FeatureType, class FeatureEstimatorType>
   {
     pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, FeatureType> oc;
     oc.setDebugFolder("debug/");
-    oc.setDebug(true);
+    //oc.setDebug(true);
 
     typename pcl::Feature<pcl::PointNormal, FeatureType>::Ptr feature_estimator(new FeatureEstimatorType);
     oc.setFeatureEstimator(feature_estimator);

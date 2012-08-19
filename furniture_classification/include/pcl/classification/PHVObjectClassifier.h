@@ -213,6 +213,11 @@ template<class PointT, class PointNormalT, class FeatureT>
     template<class PT, class PNT, class FT>
       friend YAML::Emitter& operator <<(YAML::Emitter& out, const PHVObjectClassifier<PT, PNT, FT> & h);
 
+    void eval_clustering_external(const std::string & classname, const float search_radius, double &tp, double &fn,
+                                  double &fp, const std::string & matrix);
+
+    void vote_external(const std::string & matrix);
+
   protected:
 
     typename pcl::PointCloud<PointNormalT>::Ptr
@@ -623,7 +628,6 @@ void operator >>(const YAML::Node& node, pcl::PHVObjectClassifier<PT, PNT, FT> &
   node["rg_residual_threshold"] >> h.rg_residual_threshold_;
   node["rg_smoothness_threshold"] >> h.rg_smoothness_threshold_;
   node["external_classifier"] >> h.external_classifier_;
-
 
   node["fe_k_neighbours"] >> h.fe_k_neighbours_;
   node["num_clusters"] >> h.num_clusters_;

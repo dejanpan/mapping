@@ -293,30 +293,68 @@ template<class PointT, class PointNormalT, class FeatureT>
 
   pcl::PointCloud<FeatureT> mat;
 
-  std::cerr << "Matrix:\n" << mat << std::endl;
-
   int feature_size = sizeof(features_[0].histogram)/sizeof(float);
 
-  while(f4)
+  string line;
+  while (getline( f4, line ))
   {
+
+    // now we'll use a stringstream to separate the fields out of the line
+    stringstream ss( line );
+    string field;
     FeatureT ff;
-    for(int i=0; i<feature_size; i++)
+    int i=0;
+
+    while (getline( ss, field, ',' ))
     {
-      if (f4.peek() == ',')
-      {
-        f4.ignore();
-      }
-      f4 >> ff.histogram[i];
+      // for each field we wish to convert it to a double
+      // (since we require that the CSV contains nothing but floating-point values)
+      stringstream fs( field );
+      float v = 0;
+      fs >> v;
+      ff.histogram[i] = v;
+      i++;
     }
-    mat.push_back(ff);
+    mat.points.push_back( ff );
+    mat.width = mat.points.size();
+    mat.height = 1;
   }
+
+  //std::cerr << "Matrix:\n" << mat << std::endl;
+
+  //  while(f4)
+  //  {
+  //    FeatureT ff;
+  //    for(int i=0; i<feature_size; i++)
+  //    {
+  //      if (f4.peek() == ',')
+  //      {
+  //        f4.ignore();
+  //      }
+  //      f4 >> ff.histogram[i];
+  //    }
+  //    mat.push_back(ff);
+  //  }
+  //
+  //  std::ofstream f5("mat.txt");
+  //  for(int i=0; i<mat.points.size(); i++)
+  //  {
+  //    for(int j=0; j<feature_size; i++)
+  //    {
+  //      f5 << mat.points[i].histogram[j] << ",";
+  //    }
+  //    f5 << "\n";
+  //  }
+  //  f5.close();
+
+  //TODO check code
 
   int cluster_size = mat.size();
   num_clusters_ = cluster_size;
 
   for(size_t i=0; i<features_.size(); i++)
   {
-    Eigen::ArrayXf res(cluster_size);
+    Eigen::ArrayXf res = Eigen::ArrayXf::Zero(cluster_size);
 
     for(size_t j=0; j<cluster_size; j++)
     {
@@ -328,6 +366,7 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     int cluster_idx;
     res.maxCoeff(&cluster_idx);
+    //std::cerr << "Cluster number " << cluster_idx << std::endl;
     FeatureT ff;
 
     for(size_t k=0; k<feature_size; k++)
@@ -339,6 +378,14 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     database_[ff][classes_[i]].push_back(centroids_.points[i]);
     ransac_result_threshold_[classes_[i]] = 0.5;
+
+    if(debug_)
+    {
+      std::stringstream ss;
+      ss << debug_folder_ << "Cluster" << cluster_idx << "/Segment" << i << ".pcd";
+      pcl::io::savePCDFileASCII(ss.str(), *segment_pointclouds_[i]);
+
+    }
 
   }
 
@@ -421,6 +468,66 @@ template<class PointT, class PointNormalT, class FeatureT>
     appendFeaturesFromCloud(scene_, "Scene", 0);
     normalizeFeaturesWithCurrentMinMax(features_);
     vote();
+
+    for (std::map<std::string, pcl::PointCloud<pcl::PointXYZI> >::const_iterator it = votes_.begin(); it
+        != votes_.end(); it++)
+    {
+
+      //std::cerr << "Checking for " << it->first << std::endl;
+      //pcl::io::savePCDFileASCII(debug_folder_ + it->first + "_votes.pcd", it->second);
+
+      int grid_center_x, grid_center_y;
+      Eigen::MatrixXf grid = projectVotesToGrid(it->second, grid_center_x, grid_center_y);
+
+      BOOST_FOREACH(PointNormalCloudPtr & full_model, class_name_to_full_models_map_[it->first])
+{      PointNormalT minp, maxp;
+      pcl::getMinMax3D<PointNormalT>(*full_model, minp, maxp);
+      float window_size = std::max((maxp.x - minp.x),(maxp.y - minp.y))/2;
+
+      Eigen::ArrayXXi local_max = getLocalMaximaGrid(grid, window_size);
+
+      int ctp, cfp, cfn;
+      int search_radius_pixels = search_radius/cell_size_;
+
+      if (it->first == classname)
+      {
+
+        Eigen::ArrayXXi true_region = local_max.block(grid_center_x - search_radius_pixels, grid_center_y - search_radius_pixels, 2 * search_radius_pixels
+            + 1, 2 * search_radius_pixels + 1);
+
+        ctp = (true_region == 1).count();
+        cfn = (ctp == 0);
+        cfp = (local_max == 1).count() - ctp;
+
+      }
+      else
+      {
+        cfp = (local_max == 1).count();
+        ctp = 0;
+        cfn = 0;
+      }
+
+      tp += ctp;
+      fp += cfp;
+      fn += cfn;
+
+    }
+
+  }
+
+}
+
+template<class PointT, class PointNormalT, class FeatureT>
+  void pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::eval_clustering_external(
+                                                                                          const std::string & classname,
+                                                                                          const float search_radius,
+                                                                                          double &tp, double &fn,
+                                                                                          double &fp,
+                                                                                          const std::string & matrix)
+  {
+    appendFeaturesFromCloud(scene_, "Scene", 0);
+    normalizeFeaturesWithCurrentMinMax(features_);
+    vote_external(matrix);
 
     for (std::map<std::string, pcl::PointCloud<pcl::PointXYZI> >::const_iterator it = votes_.begin(); it
         != votes_.end(); it++)
@@ -812,6 +919,125 @@ template<class PointT, class PointNormalT, class FeatureT>
 
           votes_[class_name] += model_centers_transformed_weighted;
         }
+      }
+
+    }
+
+  }
+
+template<class PointT, class PointNormalT, class FeatureT>
+  void pcl::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::vote_external(const std::string & matrix)
+  {
+
+    std::ifstream f4(matrix.c_str());
+
+    pcl::PointCloud<FeatureT> mat;
+
+    int feature_size = sizeof(features_[0].histogram) / sizeof(float);
+
+    string line;
+    while (getline(f4, line))
+    {
+
+      // now we'll use a stringstream to separate the fields out of the line
+      stringstream ss(line);
+      string field;
+      FeatureT ff;
+      int i = 0;
+
+      while (getline(ss, field, ','))
+      {
+        // for each field we wish to convert it to a double
+        // (since we require that the CSV contains nothing but floating-point values)
+        stringstream fs(field);
+        float v = 0;
+        fs >> v;
+        ff.histogram[i] = v;
+        i++;
+      }
+      mat.points.push_back(ff);
+      mat.width = mat.points.size();
+      mat.height = 1;
+    }
+
+    //pcl::search::KdTree<FeatureT> feature_search;
+    //feature_search.setInputCloud(database_features_cloud_);
+
+    for (size_t i = 0; i < features_.size(); i++)
+    {
+      //std::vector<int> indices;
+      //std::vector<float> distances;
+      //feature_search.nearestKSearch(features_[i], num_neighbours_, indices, distances);
+
+      Eigen::ArrayXf res = Eigen::ArrayXf::Zero(mat.points.size());
+
+      for (size_t j = 0; j < mat.points.size(); j++)
+      {
+        for (size_t k = 0; k < feature_size; k++)
+        {
+          res[j] += mat[j].histogram[k] * features_[i].histogram[k];
+        }
+      }
+
+      int cluster_idx;
+      res.maxCoeff(&cluster_idx);
+      //std::cerr << "Cluster number " << cluster_idx << std::endl;
+      FeatureT ff;
+
+      for (size_t k = 0; k < feature_size; k++)
+      {
+        ff.histogram[k] = 0;
+      }
+
+      ff.histogram[0] = cluster_idx;
+
+      float prob = exp(res[cluster_idx])/res.exp().sum();
+
+      if (debug_)
+      {
+        std::stringstream ss;
+        ss << debug_folder_ << "Segment" << i << ".pcd";
+        PointNormalCloud p(*scene_, *segment_indices_[i]);
+        pcl::io::savePCDFileASCII(ss.str(), p);
+      }
+
+      //for (size_t j = 0; j < indices.size(); j++)
+      //{
+
+        //FeatureT closest_cluster = database_features_cloud_->at(indices[j]);
+        for (std::map<std::string, pcl::PointCloud<pcl::PointXYZ> >::const_iterator it =
+            database_[ff].begin(); it != database_[ff].end(); it++)
+        {
+
+          std::string class_name = it->first;
+          PointCloud model_centers = it->second;
+          PointCloud model_centers_transformed;
+          pcl::PointCloud<pcl::PointXYZI> model_centers_transformed_weighted;
+
+          Eigen::Affine3f transform;
+          transform.setIdentity();
+          transform.translate(centroids_[i].getVector3fMap());
+          pcl::transformPointCloud(model_centers, model_centers_transformed, transform);
+
+          pcl::copyPointCloud(model_centers_transformed, model_centers_transformed_weighted);
+
+          // TODO revise weighting function
+          for (size_t k = 0; k < model_centers_transformed_weighted.size(); k++)
+          {
+            model_centers_transformed_weighted.points[k].intensity = prob * (1.0
+                / model_centers.size());
+            voted_segment_idx_[class_name].push_back(i);
+          }
+
+//          if (debug_)
+//          {
+//            std::stringstream ss;
+//            ss << debug_folder_ << "Segment" << i << "_neighbour" << j << "_" << class_name << "_votes.pcd";
+//            pcl::io::savePCDFileASCII(ss.str(), model_centers_transformed_weighted);
+//          }
+
+          votes_[class_name] += model_centers_transformed_weighted;
+        //}
       }
 
     }
