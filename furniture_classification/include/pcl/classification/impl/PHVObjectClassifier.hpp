@@ -287,7 +287,7 @@ template<class PointT, class PointNormalT, class FeatureT>
 
   vector<int> cluster_labels;
   set<int> unique_cluster_labels;
-  vector<FeatureT> cluster_centers();
+  vector<FeatureT> cluster_centers;
 
   std::ifstream f4(labels.c_str());
 
@@ -295,25 +295,41 @@ template<class PointT, class PointNormalT, class FeatureT>
 
   int feature_size = sizeof(features_[0].histogram)/sizeof(float);
 
-  string line;
-  while (getline( f4, line ))
+  std::string line;
+  while (std::getline( f4, line ))
+  //while(f4)
+
   {
 
     // now we'll use a stringstream to separate the fields out of the line
-    stringstream ss( line );
-    string field;
+    //std::stringstream ss( line );
+    //std::string field;
     FeatureT ff;
-    int i=0;
+    //int i=0;
 
-    while (getline( ss, field, ',' ))
+
+    std::vector<std::string> st;
+    boost::split(st, line, boost::is_any_of(","), boost::token_compress_on);
+
+    //std::cerr << "Feature size " << feature_size << " Vector size " << st.size() <<  std::endl;
+
+
+    //while (std::getline( ss, field, ',' ))
+    for(size_t i=0; i<feature_size; i++)
     {
       // for each field we wish to convert it to a double
       // (since we require that the CSV contains nothing but floating-point values)
-      stringstream fs( field );
-      float v = 0;
-      fs >> v;
-      ff.histogram[i] = v;
-      i++;
+
+      //std::stringstream fs( field );
+      //float v = 0;
+      //fs >> v;
+      //float v;
+      //char tmp;
+      //f4 >> v;
+      //f4 >> tmp;
+      //std::cerr << i << " " << st[i] << std::endl;
+      ff.histogram[i] = atof(st[i].c_str());
+      //i++;
     }
     mat.points.push_back( ff );
     mat.width = mat.points.size();
@@ -935,30 +951,70 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     int feature_size = sizeof(features_[0].histogram) / sizeof(float);
 
-    string line;
-    while (getline(f4, line))
+    std::string line;
+    while (std::getline(f4, line))
+    //while(f4)
     {
 
       // now we'll use a stringstream to separate the fields out of the line
-      stringstream ss(line);
-      string field;
+      //std::stringstream ss( line );
+      //std::string field;
       FeatureT ff;
-      int i = 0;
+      //int i=0;
 
-      while (getline(ss, field, ','))
+
+      std::vector<std::string> st;
+      boost::split(st, line, boost::is_any_of(","), boost::token_compress_on);
+
+      //std::cerr << "Feature size " << feature_size << " Vector size " << st.size() <<  std::endl;
+
+
+      //while (std::getline( ss, field, ',' ))
+      for (size_t i = 0; i < feature_size; i++)
       {
         // for each field we wish to convert it to a double
         // (since we require that the CSV contains nothing but floating-point values)
-        stringstream fs(field);
-        float v = 0;
-        fs >> v;
-        ff.histogram[i] = v;
-        i++;
+
+        //std::stringstream fs( field );
+        //float v = 0;
+        //fs >> v;
+        //float v;
+        //char tmp;
+        //f4 >> v;
+        //f4 >> tmp;
+        //std::cerr << i << " " << st[i] << std::endl;
+        ff.histogram[i] = atof(st[i].c_str());
+        //i++;
       }
       mat.points.push_back(ff);
       mat.width = mat.points.size();
       mat.height = 1;
     }
+
+//    string line;
+//    while (getline(f4, line))
+//    {
+//
+//      // now we'll use a stringstream to separate the fields out of the line
+//      stringstream ss(line);
+//      string field;
+//      FeatureT ff;
+//      int i = 0;
+//
+//      while (getline(ss, field, ','))
+//      {
+//        // for each field we wish to convert it to a double
+//        // (since we require that the CSV contains nothing but floating-point values)
+//        stringstream fs(field);
+//        float v = 0;
+//        fs >> v;
+//        ff.histogram[i] = v;
+//        i++;
+//      }
+//      mat.points.push_back(ff);
+//      mat.width = mat.points.size();
+//      mat.height = 1;
+//    }
 
     //pcl::search::KdTree<FeatureT> feature_search;
     //feature_search.setInputCloud(database_features_cloud_);
@@ -991,7 +1047,7 @@ template<class PointT, class PointNormalT, class FeatureT>
 
       ff.histogram[0] = cluster_idx;
 
-      float prob = exp(res[cluster_idx])/res.exp().sum();
+      float prob = exp(res[cluster_idx]) / res.exp().sum();
 
       if (debug_)
       {
@@ -1004,39 +1060,38 @@ template<class PointT, class PointNormalT, class FeatureT>
       //for (size_t j = 0; j < indices.size(); j++)
       //{
 
-        //FeatureT closest_cluster = database_features_cloud_->at(indices[j]);
-        for (std::map<std::string, pcl::PointCloud<pcl::PointXYZ> >::const_iterator it =
-            database_[ff].begin(); it != database_[ff].end(); it++)
+      //FeatureT closest_cluster = database_features_cloud_->at(indices[j]);
+      for (std::map<std::string, pcl::PointCloud<pcl::PointXYZ> >::const_iterator it = database_[ff].begin(); it
+          != database_[ff].end(); it++)
+      {
+
+        std::string class_name = it->first;
+        PointCloud model_centers = it->second;
+        PointCloud model_centers_transformed;
+        pcl::PointCloud<pcl::PointXYZI> model_centers_transformed_weighted;
+
+        Eigen::Affine3f transform;
+        transform.setIdentity();
+        transform.translate(centroids_[i].getVector3fMap());
+        pcl::transformPointCloud(model_centers, model_centers_transformed, transform);
+
+        pcl::copyPointCloud(model_centers_transformed, model_centers_transformed_weighted);
+
+        // TODO revise weighting function
+        for (size_t k = 0; k < model_centers_transformed_weighted.size(); k++)
         {
+          model_centers_transformed_weighted.points[k].intensity = prob * (1.0 / model_centers.size());
+          voted_segment_idx_[class_name].push_back(i);
+        }
 
-          std::string class_name = it->first;
-          PointCloud model_centers = it->second;
-          PointCloud model_centers_transformed;
-          pcl::PointCloud<pcl::PointXYZI> model_centers_transformed_weighted;
+        //          if (debug_)
+        //          {
+        //            std::stringstream ss;
+        //            ss << debug_folder_ << "Segment" << i << "_neighbour" << j << "_" << class_name << "_votes.pcd";
+        //            pcl::io::savePCDFileASCII(ss.str(), model_centers_transformed_weighted);
+        //          }
 
-          Eigen::Affine3f transform;
-          transform.setIdentity();
-          transform.translate(centroids_[i].getVector3fMap());
-          pcl::transformPointCloud(model_centers, model_centers_transformed, transform);
-
-          pcl::copyPointCloud(model_centers_transformed, model_centers_transformed_weighted);
-
-          // TODO revise weighting function
-          for (size_t k = 0; k < model_centers_transformed_weighted.size(); k++)
-          {
-            model_centers_transformed_weighted.points[k].intensity = prob * (1.0
-                / model_centers.size());
-            voted_segment_idx_[class_name].push_back(i);
-          }
-
-//          if (debug_)
-//          {
-//            std::stringstream ss;
-//            ss << debug_folder_ << "Segment" << i << "_neighbour" << j << "_" << class_name << "_votes.pcd";
-//            pcl::io::savePCDFileASCII(ss.str(), model_centers_transformed_weighted);
-//          }
-
-          votes_[class_name] += model_centers_transformed_weighted;
+        votes_[class_name] += model_centers_transformed_weighted;
         //}
       }
 

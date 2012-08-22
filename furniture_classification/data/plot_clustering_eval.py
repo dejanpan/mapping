@@ -12,11 +12,15 @@ plt.ylabel('Recall')
 l = []
 
 for file in os.listdir('.'):
-    if fnmatch.fnmatch(file, 'res.*.txt'):
+    if fnmatch.fnmatch(file, 'res.sgf.*.txt'):
         f = file.split('.')
+	print file
 	data = np.loadtxt(file, dtype=np.float32)
 	plt.plot(1-data[:,4],data[:,5])
-	l.append(f[1] + ' ' + f[2] + ' clusters')
+	if(len(f) == 4):
+		l.append(f[1] + ' ' + f[2] + ' clusters')
+	else:
+		l.append(f[2] + '.' + f[3])
 
 plt.legend(l, loc=2)
 plt.savefig('res.png')

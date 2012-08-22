@@ -1,9 +1,9 @@
 #!/bin/bash
 
 
-MODELS=~/Downloads/renewplots/*
+MODELS=~/Downloads/urgent/*
 
-for features in "sgf"
+for features in "vfh"
 do
 	for f in $MODELS
 	do
