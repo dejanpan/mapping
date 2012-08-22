@@ -544,6 +544,12 @@ template<class PointT, class PointNormalT, class FeatureT>
                                                                                           double &fp,
                                                                                           const std::string & matrix)
   {
+
+  features_.clear();
+  classes_.clear();
+  centroids_.clear();
+
+
     appendFeaturesFromCloud(scene_, "Scene", 0);
     normalizeFeaturesWithCurrentMinMax(features_);
     vote_external(matrix);
