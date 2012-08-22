@@ -292,6 +292,7 @@ template<class PointT, class PointNormalT, class FeatureT>
   std::ifstream f4(labels.c_str());
 
   pcl::PointCloud<FeatureT> mat;
+  vector<float> bias;
 
   int feature_size = sizeof(features_[0].histogram)/sizeof(float);
 
@@ -313,6 +314,7 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     //std::cerr << "Feature size " << feature_size << " Vector size " << st.size() <<  std::endl;
 
+    bias.push_back(atof(st[0].c_str()));
 
     //while (std::getline( ss, field, ',' ))
     for(size_t i=0; i<feature_size; i++)
@@ -328,7 +330,7 @@ template<class PointT, class PointNormalT, class FeatureT>
       //f4 >> v;
       //f4 >> tmp;
       //std::cerr << i << " " << st[i] << std::endl;
-      ff.histogram[i] = atof(st[i].c_str());
+      ff.histogram[i] = atof(st[i+1].c_str());
       //i++;
     }
     mat.points.push_back( ff );
@@ -374,6 +376,7 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     for(size_t j=0; j<cluster_size; j++)
     {
+      res[j] += bias[j];
       for(size_t k=0; k<feature_size; k++)
       {
         res[j] += mat[j].histogram[k] * features_[i].histogram[k];
@@ -948,6 +951,7 @@ template<class PointT, class PointNormalT, class FeatureT>
     std::ifstream f4(matrix.c_str());
 
     pcl::PointCloud<FeatureT> mat;
+    std::vector<float> bias;
 
     int feature_size = sizeof(features_[0].histogram) / sizeof(float);
 
@@ -969,6 +973,8 @@ template<class PointT, class PointNormalT, class FeatureT>
       //std::cerr << "Feature size " << feature_size << " Vector size " << st.size() <<  std::endl;
 
 
+      bias.push_back(atof(st[0].c_str()));
+
       //while (std::getline( ss, field, ',' ))
       for (size_t i = 0; i < feature_size; i++)
       {
@@ -983,7 +989,7 @@ template<class PointT, class PointNormalT, class FeatureT>
         //f4 >> v;
         //f4 >> tmp;
         //std::cerr << i << " " << st[i] << std::endl;
-        ff.histogram[i] = atof(st[i].c_str());
+        ff.histogram[i] = atof(st[i+1].c_str());
         //i++;
       }
       mat.points.push_back(ff);
@@ -1029,6 +1035,7 @@ template<class PointT, class PointNormalT, class FeatureT>
 
       for (size_t j = 0; j < mat.points.size(); j++)
       {
+        res[j] += bias[j];
         for (size_t k = 0; k < feature_size; k++)
         {
           res[j] += mat[j].histogram[k] * features_[i].histogram[k];
