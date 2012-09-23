@@ -41,7 +41,7 @@ template<class FeatureType, class FeatureEstimatorType>
     typename pcl::Feature<pcl::PointNormal, FeatureType>::Ptr feature_estimator(new FeatureEstimatorType);
     oc.setFeatureEstimator(feature_estimator);
 
-    oc.setDebug(false);
+    oc.setDebug(true);
     oc.setDatabaseDir(database_dir);
     oc.loadFromFile();
 

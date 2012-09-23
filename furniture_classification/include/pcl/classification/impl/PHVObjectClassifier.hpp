@@ -54,7 +54,7 @@ template<class PointT, class PointNormalT, class FeatureT>
     cv::Mat centers(num_clusters_, featureLength, feature_vectors.type()), labels;
 
     cv::kmeans(feature_vectors, num_clusters_, labels, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1.0),
-               3, cv::KMEANS_PP_CENTERS, centers);
+               4, cv::KMEANS_RANDOM_CENTERS, centers);
 
     transform_to_features(centers, cluster_centers);
     cluster_labels = labels;
