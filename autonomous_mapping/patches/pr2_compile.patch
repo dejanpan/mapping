@@ -1,0 +1,26 @@
+diff --git a/autonomous_mapping/CMakeLists.txt b/autonomous_mapping/CMakeLists.txt
+index 8420085..7f868c0 100644
+--- a/autonomous_mapping/CMakeLists.txt
++++ b/autonomous_mapping/CMakeLists.txt
+@@ -29,7 +29,7 @@ rosbuild_add_library(AutonomousExploration src/autonomous_exploration.cpp)
+ #rosbuild_link_boost(${PROJECT_NAME} thread)
+ 
+ # ------ [ Segmentation
+-rosbuild_add_executable(segmentation_of_pointcloud src/segmentation/segmentation_of_pointcloud.cpp)
++#rosbuild_add_executable(segmentation_of_pointcloud src/segmentation/segmentation_of_pointcloud.cpp)
+ 
+ rosbuild_add_executable(segment_difference src/segmentation/segment_differences.cpp)
+ 
+diff --git a/autonomous_mapping/manifest.xml b/autonomous_mapping/manifest.xml
+index 1937724..2729993 100644
+--- a/autonomous_mapping/manifest.xml
++++ b/autonomous_mapping/manifest.xml
+@@ -24,7 +24,7 @@
+   <depend package="pr2_msgs"/>
+   <depend package="terminal_tools"/>
+   <depend package="pcl_visualization"/>
+-  <depend package="pcl_ias_sample_consensus"/>
++  <!-- <depend package="pcl_ias_sample_consensus"/> -->
+   <!--<depend package="pcl_cloud_algos"/>-->
+   <export>
+     <nodelet plugin="${prefix}/nodelets.xml" />

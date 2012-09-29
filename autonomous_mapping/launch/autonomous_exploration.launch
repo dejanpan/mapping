@@ -1,0 +1,14 @@
+<launch>
+<!-- PCL Manager -->
+  <node pkg="nodelet" type="nodelet" name="autonomous_exploration_pcl_manager" args="manager" output="screen"/>
+  <!--node pkg="pointcloud_registration" type="pointcloud_registration" name="pointcloud_registration" output="screen" respawn="false" launch-prefix="xterm -e gdb -args"-->
+  
+ <node pkg="nodelet" type="nodelet" name="autonomous_exploration" output="screen"  args="load autonomous_mapping/AutonomousExploration    autonomous_exploration_pcl_manager">
+    
+    <!-- Topic to subscribe for the pose --> 
+    <param name="subscribe_pose_topic" value="/nbv_pose"/>
+    <param name="publish_cloud_incrementally" value="true"/>
+ 
+ </node>
+
+</launch>

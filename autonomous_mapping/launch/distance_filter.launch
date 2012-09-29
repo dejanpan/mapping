@@ -1,0 +1,18 @@
+<launch>
+ <!-- PCL Manager -->
+  <node pkg="nodelet" type="nodelet" name="distance_filter_pcl_manager" args="manager" output="screen" /> <!--launch-prefix="xterm -e gdb -args"-->
+ <node pkg="nodelet" type="nodelet" name="distance_filter_downsample" args="load pcl/VoxelGrid distance_filter_pcl_manager" output="screen">
+    <remap from="~input" to="/autonomous_exploration/pointcloud"/>
+    <remap from="~output" to="/nbv_cloud"/>
+    <!--rosparam>
+      leaf_size: 0.02
+      filter_field_name: z
+      filter_limit_min: -1.0
+      filter_limit_max: 100.0 
+      
+    </rosparam-->
+  </node>
+ <node pkg="nodelet" type="nodelet" name="distance_filter" output="screen"  args="load autonomous_mapping/DistanceFilter distance_filter_pcl_manager" >
+  <param name="input_cloud_topic" value="/nbv_cloud"/>
+ </node> 
+</launch>
