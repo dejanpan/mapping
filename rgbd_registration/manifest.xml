@@ -1,0 +1,20 @@
+<package>
+  <description brief="rgbd_registration">
+
+     rgbd_registration
+
+  </description>
+  <author>Ross Kidson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/frame_alignment</url>
+
+  <depend package="pcl"/>
+  <depend package="roscpp"/>
+
+  <!-- <rosdep name="eigen"/> -->
+  <depend package="opencv2"/> 
+
+</package>
+
+
