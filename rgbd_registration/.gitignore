@@ -1,1 +1,5 @@
 /pcds
+.cproject
+.project
+.pydevproject
+cmake_install.cmake
