@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/ServerSiftGPU
+END
+ServerSiftGPU.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/ServerSiftGPU/ServerSiftGPU.cpp
+END
+ServerSiftGPU.h
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/ServerSiftGPU/ServerSiftGPU.h
+END
+server.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/ServerSiftGPU/server.cpp
+END

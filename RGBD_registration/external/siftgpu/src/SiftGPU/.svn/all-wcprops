@@ -1,0 +1,227 @@
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU
+END
+SiftPyramid.h
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/SiftPyramid.h
+END
+ShaderMan.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/ShaderMan.cpp
+END
+PyramidCU.h
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/PyramidCU.h
+END
+GlobalUtil.h
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/GlobalUtil.h
+END
+SiftMatchCU.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/SiftMatchCU.cpp
+END
+FrameBufferObject.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/FrameBufferObject.cpp
+END
+SiftGPU.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/SiftGPU.cpp
+END
+CLTexImage.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/CLTexImage.cpp
+END
+SiftMatch.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/SiftMatch.cpp
+END
+ProgramGPU.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/ProgramGPU.cpp
+END
+ProgramCU.cu
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/ProgramCU.cu
+END
+PyramidCL.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/PyramidCL.cpp
+END
+GLTexImage.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/GLTexImage.cpp
+END
+ProgramCG.h
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/ProgramCG.h
+END
+PyramidGL.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/PyramidGL.cpp
+END
+ProgramCL.h
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/ProgramCL.h
+END
+SiftPyramid.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/SiftPyramid.cpp
+END
+PyramidCU.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/PyramidCU.cpp
+END
+ProgramGLSL.h
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/ProgramGLSL.h
+END
+GlobalUtil.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/GlobalUtil.cpp
+END
+CuTexImage.h
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/CuTexImage.h
+END
+ProgramCU.h
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/ProgramCU.h
+END
+ShaderMan.h
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/ShaderMan.h
+END
+SiftMatchCU.h
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/SiftMatchCU.h
+END
+FrameBufferObject.h
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/FrameBufferObject.h
+END
+ProgramCG.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/ProgramCG.cpp
+END
+SiftGPU.h
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/SiftGPU.h
+END
+ProgramCL.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/ProgramCL.cpp
+END
+CLTexImage.h
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/CLTexImage.h
+END
+SiftMatch.h
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/SiftMatch.h
+END
+ProgramGPU.h
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/ProgramGPU.h
+END
+PyramidCL.h
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/PyramidCL.h
+END
+ProgramGLSL.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/ProgramGLSL.cpp
+END
+LiteWindow.h
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/LiteWindow.h
+END
+CuTexImage.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/CuTexImage.cpp
+END
+GLTexImage.h
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/GLTexImage.h
+END
+PyramidGL.h
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/external/siftgpu/src/SiftGPU/PyramidGL.h
+END

@@ -1,0 +1,62 @@
+<!-- This file demonstrates the parameters that can be set via the parameter server.
+     The settings here typically show the default values (c.f. parameter_server.cpp)
+     All parameters are included in this launch file-->
+<launch>
+   <node pkg="RGBD_registration" type="joint_optimization" name="RGBD_registration" cwd="node" required="false" output="screen" launch-prefix="$(find RGBD_registration)/exec_in_dir.sh results ">
+    <!-- Input data settings-->
+    <param name="config/source_cloud_filename" value="../pcds/node_0.pcd" />
+    <param name="config/target_cloud_filename" value="../pcds/node_5.pcd" />
+
+    <!-- Visual Features -->
+    <param name="config/feature_extractor" value="SIFT"/> <!-- SIFT or SURF -->
+    <param name="config/feature_descriptor" value="SIFT"/> <!-- SIFT or SURF -->
+    <param name="config/descriptor_matcher" value="FLANN"/> <!-- Bruteforce or FLANN -->
+    
+    <!-- RANSAC parameters -->
+    
+    <!-- minimum 'good' feature points used to match frames -->
+    <param name="config/minimum_inliers" value="50"/>
+    
+    <!-- inlier distance for feature points -->
+    <param name="config/max_dist_for_inliers" value="0.03"/>
+      
+    <!-- number of iterations -->
+    <param name="config/ransac_iterations" value="1000"/>
+      
+    <!-- save an image to disk of extracted features -->
+    <param name="config/save_features_image" value="true"/>
+    
+    <!-- saves pointclouds of source and target and transformed features to file -->
+    <param name="config/save_all_pointclouds" value="true"/>
+      
+    <!-- display the features and matches before and after ransac -->
+    <param name="config/show_feature_matching" value="false"/>
+      
+    <!-- joint icp settings -->
+      
+    <!-- utilizes all cores for calculating normals -->
+    <param name="config/use_openmp_normal_calculation" value="true"/>
+      
+    <!-- weighting between dense and visual features. 1.0 = features, 0.0 = ICP -->
+    <param name="config/alpha" value="0.5"/>
+      
+    <!-- used when finding dense correspondences. Correspondences with higher distances will be ignored -->
+    <param name="config/max_correspondence_dist" value="0.05"/>
+      
+    <!-- (ICP end criterion 1) Maximum number of iterations -->
+    <param name="config/max_iterations" value="75"/>
+      
+    <!-- (ICP end criterion 2) When the change in transformation between iterations falls below this number, end iterating -->
+    <param name="config/transformation_epsilon" value="1e-8"/>
+      
+    <!-- (ICP end criterion 3) When the distance error function falls below this number, end iterating -->
+    <param name="config/euclidean_fitness_epsilon" value="0"/>
+      
+    <!-- Utilizes the transformation obtained from RANSAC as a starting point. Disable this when lacking feature matches -->
+    <param name="config/use_ransac_to_initialize_icp" value="false"/>
+      
+    <!-- Enabling this will output debugging info about how the ICP is converging. -->
+    <param name="config/enable_pcl_debug_verbosity" value="true"/>
+      
+  </node>
+</launch>

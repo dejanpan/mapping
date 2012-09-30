@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/seie2011fall/!svn/ver/514/kidson/RGBD_registration/src
+END
+parameter_server.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/seie2011fall/!svn/ver/514/kidson/RGBD_registration/src/parameter_server.cpp
+END
+transformation_estimation_wdf.hpp
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/seie2011fall/!svn/ver/510/kidson/RGBD_registration/src/transformation_estimation_wdf.hpp
+END
+RGB_feature_matcher.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/seie2011fall/!svn/ver/512/kidson/RGBD_registration/src/RGB_feature_matcher.cpp
+END
+ransac_transformation.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/seie2011fall/!svn/ver/512/kidson/RGBD_registration/src/ransac_transformation.cpp
+END
+pcl_utils.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/seie2011fall/!svn/ver/512/kidson/RGBD_registration/src/pcl_utils.cpp
+END
+sift_gpu_wrapper.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/seie2011fall/!svn/ver/512/kidson/RGBD_registration/src/sift_gpu_wrapper.cpp
+END
+RGB_feature_detection.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/seie2011fall/!svn/ver/512/kidson/RGBD_registration/src/RGB_feature_detection.cpp
+END
+joint_optimize_wrapper.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/seie2011fall/!svn/ver/514/kidson/RGBD_registration/src/joint_optimize_wrapper.cpp
+END
+main.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/seie2011fall/!svn/ver/512/kidson/RGBD_registration/src/main.cpp
+END
