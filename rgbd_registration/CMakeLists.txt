@@ -29,6 +29,14 @@ LINK_DIRECTORIES(${LIBRARY_OUTPUT_PATH})
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 
 
+rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/roboearth_0.pcd pcds/roboearth_0.pcd 8944ac283544c8349f6cade6bbf5ac78)
+rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/roboearth_1.pcd pcds/roboearth_1.pcd 4170df1b473b0709c2251dc40bad6bb7)
+rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/roboearth_2.pcd pcds/roboearth_2.pcd 0164f1b01567f637cb0956f6f3a3df40)
+rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/roboearth_3.pcd pcds/roboearth_3.pcd 0014eb663fabf4fe56b555244bee21b3)
+rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/roboearth_4.pcd pcds/roboearth_4.pcd de98b3298aac778cfd0b2626627082ed)
+rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/roboearth_5.pcd pcds/roboearth_5.pcd f579676755a20cc7f3e71ac47746ffb0)
+rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/roboearth_6.pcd pcds/roboearth_6.pcd 3b71b68b7f3fd6b6af904ef719852eea)
+
 ############# SiftGPU ###################
 
 set(USE_SIFT_GPU        0)

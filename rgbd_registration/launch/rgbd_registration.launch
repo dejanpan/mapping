@@ -4,8 +4,8 @@
 <launch>
    <node pkg="rgbd_registration" type="joint_optimization" name="rgbd_registration" cwd="node" required="false" output="screen" launch-prefix="$(find rgbd_registration)/exec_in_dir.sh results ">
     <!-- Input data settings-->
-    <param name="config/source_cloud_filename" value="../pcds/node_11.pcd" />
-    <param name="config/target_cloud_filename" value="../pcds/node_8.pcd" />
+    <param name="config/source_cloud_filename" value="../pcds/roboearth_0.pcd" />
+    <param name="config/target_cloud_filename" value="../pcds/roboearth_1.pcd" />
 
     <!-- Visual Features -->
     <param name="config/feature_extractor" value="SIFT"/> <!-- SIFT or SURF -->

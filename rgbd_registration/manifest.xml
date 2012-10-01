@@ -7,7 +7,7 @@
   <author>Ross Kidson</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/frame_alignment</url>
+  <url>http://ros.org/wiki/rgbd_registration</url>
 
   <depend package="pcl"/>
   <depend package="roscpp"/>
