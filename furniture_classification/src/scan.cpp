@@ -5,27 +5,28 @@
  *      Author: vsu
  */
 
+#include <pcl17/console/print.h>
 #include <iostream>
 #include <boost/filesystem.hpp>
 #include <boost/random.hpp>
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
-#include <pcl/console/parse.h>
-#include <pcl/io/vtk_lib_io.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/common/transforms.h>
-#include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/filters/voxel_grid.h>
+#include <pcl17/point_types.h>
+#include <pcl17/point_cloud.h>
+#include <pcl17/console/parse.h>
+#include <pcl17/io/vtk_lib_io.h>
+#include <pcl17/io/pcd_io.h>
+#include <pcl17/common/transforms.h>
+#include <pcl17/visualization/pcl_visualizer.h>
+#include <pcl17/filters/voxel_grid.h>
 
-#include <pcl/sample_consensus/ransac.h>
-#include <pcl/search/kdtree.h>
-#include <pcl/surface/mls.h>
+#include <pcl17/sample_consensus/ransac.h>
+#include <pcl17/search/kdtree.h>
+#include <pcl17/surface/mls.h>
 
 #include <vtkTriangle.h>
 #include <vtkTriangleFilter.h>
 #include <vtkPolyDataMapper.h>
 
-void addNoise(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, double noise_std)
+void addNoise(pcl17::PointCloud<pcl17::PointXYZ>::Ptr cloud, double noise_std)
 {
 
   boost::mt19937 rng(static_cast<unsigned int> (std::time(0)));
@@ -39,8 +40,8 @@ void addNoise(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, double noise_std)
 
 }
 
-void moveToNewCenterAndAlign(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
-                             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_transformed, double new_center[3],
+void moveToNewCenterAndAlign(pcl17::PointCloud<pcl17::PointXYZ>::Ptr cloud,
+                             pcl17::PointCloud<pcl17::PointXYZ>::Ptr cloud_transformed, double new_center[3],
                              double tilt_angle)
 {
 
@@ -57,7 +58,7 @@ void moveToNewCenterAndAlign(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
 
   view_transform.matrix() = change_coords.matrix() * view_transform.matrix();
 
-  pcl::transformPointCloud(*cloud, *cloud_transformed, view_transform);
+  pcl17::transformPointCloud(*cloud, *cloud_transformed, view_transform);
 
   cloud_transformed->sensor_origin_ = view_transform *  Eigen::Vector4f(0, 0, 0, 1);
   cloud_transformed->sensor_orientation_ = view_transform.rotate(Eigen::AngleAxisf(M_PI, Eigen::Vector3f(0, 0, 1))).rotation();
@@ -114,7 +115,7 @@ inline void randPSurface(vtkPolyData * polydata, std::vector<double> * cumulativ
 }
 
 void uniform_sampling(vtkSmartPointer<vtkPolyData> polydata, size_t n_samples,
-                      pcl::PointCloud<pcl::PointXYZ> & cloud_out)
+                      pcl17::PointCloud<pcl17::PointXYZ> & cloud_out)
 {
   polydata->BuildCells();
   vtkSmartPointer<vtkCellArray> cells = polydata->GetPolys();
@@ -150,7 +151,7 @@ void uniform_sampling(vtkSmartPointer<vtkPolyData> polydata, size_t n_samples,
 // End of code from mesh_sampling.cpp
 
 void createFullModelPointcloud(vtkSmartPointer<vtkPolyData> polydata, size_t n_samples,
-                               pcl::PointCloud<pcl::PointXYZ> & cloud_out)
+                               pcl17::PointCloud<pcl17::PointXYZ> & cloud_out)
 {
 
   vtkSmartPointer<vtkTriangleFilter> triangleFilter = vtkSmartPointer<vtkTriangleFilter>::New();
@@ -172,8 +173,8 @@ int main(int argc, char** argv)
 
   if (argc < 5)
   {
-    PCL_INFO ("Usage %s -input_dir /dir/with/models -output_dir /output/dir [options]\n", argv[0]);
-    PCL_INFO (" * where options are:\n"
+    PCL17_INFO ("Usage %s -input_dir /dir/with/models -output_dir /output/dir [options]\n", argv[0]);
+    PCL17_INFO (" * where options are:\n"
         "         -height <X>            : simulate scans with sensor mounted on height X\n"
         "         -noise_std <X>         : std of gaussian noise added to pointcloud. Default value 0.0001.\n"
         "         -distance <X>          : simulate scans with object located on a distance X. Can be used multiple times. Default value 4.\n"
@@ -194,19 +195,19 @@ int main(int argc, char** argv)
   std::vector<double> shift;
   int full_model_n_points = 30000;
 
-  pcl::console::parse_argument(argc, argv, "-input_dir", input_dir);
-  pcl::console::parse_argument(argc, argv, "-output_dir", output_dir);
-  pcl::console::parse_argument(argc, argv, "-num_views", num_views);
-  pcl::console::parse_argument(argc, argv, "-height", height);
-  pcl::console::parse_argument(argc, argv, "-noise_std", noise_std);
-  pcl::console::parse_multiple_arguments(argc, argv, "-distance", distances);
-  pcl::console::parse_multiple_arguments(argc, argv, "-tilt", tilt);
-  pcl::console::parse_multiple_arguments(argc, argv, "-shift", shift);
+  pcl17::console::parse_argument(argc, argv, "-input_dir", input_dir);
+  pcl17::console::parse_argument(argc, argv, "-output_dir", output_dir);
+  pcl17::console::parse_argument(argc, argv, "-num_views", num_views);
+  pcl17::console::parse_argument(argc, argv, "-height", height);
+  pcl17::console::parse_argument(argc, argv, "-noise_std", noise_std);
+  pcl17::console::parse_multiple_arguments(argc, argv, "-distance", distances);
+  pcl17::console::parse_multiple_arguments(argc, argv, "-tilt", tilt);
+  pcl17::console::parse_multiple_arguments(argc, argv, "-shift", shift);
 
-  PCL_INFO("distances size: %d\n", distances.size());
+  PCL17_INFO("distances size: %d\n", distances.size());
   for (size_t i = 0; i < distances.size(); i++)
   {
-    PCL_INFO("distance: %f\n", distances[i]);
+    PCL17_INFO("distance: %f\n", distances[i]);
   }
 
   // Set default values if user didn't provide any
@@ -221,14 +222,14 @@ int main(int argc, char** argv)
   boost::filesystem::path input_path(input_dir);
   if (!boost::filesystem::exists(input_path))
   {
-    PCL_ERROR("Input directory doesnt exists.");
+    PCL17_ERROR("Input directory doesnt exists.");
     return -1;
   }
 
   // Check if input path is a directory
   if (!boost::filesystem::is_directory(input_path))
   {
-    PCL_ERROR("%s is not directory.", input_path.c_str());
+    PCL17_ERROR("%s is not directory.", input_path.c_str());
     return -1;
   }
 
@@ -238,14 +239,14 @@ int main(int argc, char** argv)
   {
     if (!boost::filesystem::create_directories(output_path))
     {
-      PCL_ERROR ("Error creating directory %s.\n", output_path.c_str ());
+      PCL17_ERROR ("Error creating directory %s.\n", output_path.c_str ());
       return -1;
     }
   }
 
   // Find all .vtk files in the input directory
   std::vector<std::string> files_to_process;
-  PCL_INFO("Processing following files:\n");
+  PCL17_INFO("Processing following files:\n");
   boost::filesystem::directory_iterator end_iter;
   for (boost::filesystem::directory_iterator iter(input_path); iter != end_iter; iter++)
   {
@@ -256,7 +257,7 @@ int main(int argc, char** argv)
       if (file.extension() == ".vtk")
       {
         files_to_process.push_back(file.c_str());
-        PCL_INFO("\t%s\n", file.c_str());
+        PCL17_INFO("\t%s\n", file.c_str());
       }
     }
 
@@ -265,7 +266,7 @@ int main(int argc, char** argv)
   // Check if there are any .vtk files to process
   if (files_to_process.size() == 0)
   {
-    PCL_ERROR("Directory %s has no .vtk files.", input_path.c_str());
+    PCL17_ERROR("Directory %s has no .vtk files.", input_path.c_str());
     return -1;
   }
 
@@ -275,7 +276,7 @@ int main(int argc, char** argv)
     vtkSmartPointer<vtkPolyData> model;
     vtkSmartPointer<vtkPolyDataReader> reader = vtkPolyDataReader::New();
     vtkSmartPointer<vtkTransform> transform = vtkTransform::New();
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
+    pcl17::PointCloud<pcl17::PointXYZ>::Ptr cloud(new pcl17::PointCloud<pcl17::PointXYZ>());
 
     // Compute output directory for this model
     std::vector<std::string> st;
@@ -291,7 +292,7 @@ int main(int argc, char** argv)
     {
       if (!boost::filesystem::create_directories(dirpath))
       {
-        PCL_ERROR ("Error creating directory %s.\n", dirpath.c_str ());
+        PCL17_ERROR ("Error creating directory %s.\n", dirpath.c_str ());
         return -1;
       }
     }
@@ -300,7 +301,7 @@ int main(int argc, char** argv)
     reader->SetFileName(files_to_process.at(i).c_str());
     reader->Update();
     model = reader->GetOutput();
-    PCL_INFO("Number of points %d\n",model->GetNumberOfPoints());
+    PCL17_INFO("Number of points %d\n",model->GetNumberOfPoints());
 
     // Coumpute bounds and center of the model
     double bounds[6];
@@ -311,10 +312,10 @@ int main(int argc, char** argv)
     model->GetCenter(center);
 
     createFullModelPointcloud(model, full_model_n_points, *cloud);
-    pcl::io::savePCDFile(dirname + "/full.pcd", *cloud);
+    pcl17::io::savePCDFile(dirname + "/full.pcd", *cloud);
 
     // Initialize PCLVisualizer. Add model to scene.
-    pcl::visualization::PCLVisualizer viz;
+    pcl17::visualization::PCLVisualizer viz;
     viz.initCameraParameters();
     viz.updateCamera();
     viz.setCameraPosition(0, 0, 0, 1, 0, 0, 0, 0, 1);
@@ -356,15 +357,15 @@ int main(int argc, char** argv)
             transform->TransformPoint(center, new_center);
 
             // Shift origin of the poincloud to the model center and align with initial coordinate system.
-            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_transformed(new pcl::PointCloud<pcl::PointXYZ>());
+            pcl17::PointCloud<pcl17::PointXYZ>::Ptr cloud_transformed(new pcl17::PointCloud<pcl17::PointXYZ>());
             moveToNewCenterAndAlign(cloud, cloud_transformed, new_center, tilt[tilt_index]);
 
             // Compute file name for this pointcloud and save it
             std::stringstream ss;
             ss << dirname << "/rotation" << angle << "_distance" << distances[distance_index] << "_tilt"
                 << tilt[tilt_index] << "_shift" << shift[shift_index] << ".pcd";
-            PCL_INFO("Writing %d points to file %s\n", cloud->points.size(), ss.str().c_str());
-            pcl::io::savePCDFile(ss.str(), *cloud_transformed);
+            PCL17_INFO("Writing %d points to file %s\n", cloud->points.size(), ss.str().c_str());
+            pcl17::io::savePCDFile(ss.str(), *cloud_transformed);
 
             // increment angle by step
             angle += angle_step;

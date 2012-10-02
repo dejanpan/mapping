@@ -8,7 +8,7 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/furniture_classification</url>
-  <depend package="pcl16"/>
+  <depend package="pcl17"/>
   <depend package="opencv2"/>
   <depend package="furniture_features"/>
   <rosdep name="yaml-cpp" />

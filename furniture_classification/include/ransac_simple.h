@@ -1,14 +1,14 @@
 #ifndef PCL_SAMPLE_CONSENSUS_RANSAC_SIMPLE_H_
 #define PCL_SAMPLE_CONSENSUS_RANSAC_SIMPLE_H_
 
-#include <pcl/sample_consensus/sac.h>
-#include <pcl/sample_consensus/sac_model.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/octree/octree_search.h>
-#include <pcl/common/transforms.h>
-#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl17/sample_consensus/sac.h>
+#include <pcl17/sample_consensus/sac_model.h>
+#include <pcl17/filters/passthrough.h>
+#include <pcl17/octree/octree_search.h>
+#include <pcl17/common/transforms.h>
+#include <pcl17/visualization/pcl_visualizer.h>
 
-namespace pcl
+namespace pcl17
 {
 template<typename PointT>
   class RandomSampleConsensusSimple
@@ -32,7 +32,7 @@ template<typename PointT>
       return max_iterations_;
     }
 
-    void setScene(typename pcl::PointCloud<PointT>::Ptr & scene)
+    void setScene(typename pcl17::PointCloud<PointT>::Ptr & scene)
     {
       scene_ = scene;
       scene_octree_.setInputCloud(scene_);
@@ -46,7 +46,7 @@ template<typename PointT>
       scene_segment_idx_ = idx;
     }
 
-    void setModel(typename pcl::PointCloud<PointT>::Ptr & model)
+    void setModel(typename pcl17::PointCloud<PointT>::Ptr & model)
     {
       model_ = model;
     }
@@ -100,7 +100,7 @@ template<typename PointT>
       // Select points with the same height
       std::vector<int> idx;
 
-      pcl::PassThrough<PointT> pass;
+      pcl17::PassThrough<PointT> pass;
       pass.setInputCloud(model_);
       pass.setFilterFieldName("z");
       pass.setFilterLimits(scene_point.z - eps_, scene_point.z + eps_);
@@ -134,14 +134,14 @@ template<typename PointT>
 
     float countScore(const Eigen::VectorXf & model_coefficients)
     {
-      pcl::PointCloud<PointT> transformed_model;
+      pcl17::PointCloud<PointT> transformed_model;
 
       Eigen::Affine3f transform;
       transform.setIdentity();
       transform.translate(Eigen::Vector3f(model_coefficients[0], model_coefficients[1], 0));
       transform.rotate(Eigen::AngleAxisf(model_coefficients[2], Eigen::Vector3f(0, 0, 1)));
 
-      pcl::transformPointCloudWithNormals(*model_, transformed_model, transform);
+      pcl17::transformPointCloudWithNormals(*model_, transformed_model, transform);
 
       float score = generateVisibilityScore(transformed_model);
 
@@ -151,16 +151,16 @@ template<typename PointT>
 
     }
 
-    float generateVisibilityScore(const pcl::PointCloud<PointT> & cloud)
+    float generateVisibilityScore(const pcl17::PointCloud<PointT> & cloud)
     {
 
-      //      pcl::visualization::PCLVisualizer viz;
+      //      pcl17::visualization::PCLVisualizer viz;
       //
       //      viz.addPointCloud<PointT>(scene_);
       //
-      //      typename pcl::PointCloud<PointT>::Ptr cloud_ptr = cloud.makeShared();
+      //      typename pcl17::PointCloud<PointT>::Ptr cloud_ptr = cloud.makeShared();
       //
-      //      pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color(cloud_ptr, 255, 0, 0);
+      //      pcl17::visualization::PointCloudColorHandlerCustom<PointT> single_color(cloud_ptr, 255, 0, 0);
       //
       //      viz.addPointCloud<PointT>(cloud_ptr, single_color, "cloud1");
       //
@@ -235,14 +235,14 @@ template<typename PointT>
       weight_ = weight;
     }
 
-    typename pcl::PointCloud<PointT>::Ptr getModel(){
+    typename pcl17::PointCloud<PointT>::Ptr getModel(){
       return model_;
     }
 
-    pcl::octree::OctreePointCloudSearch<PointT> scene_octree_;
-    typename pcl::PointCloud<PointT>::Ptr scene_;
+    pcl17::octree::OctreePointCloudSearch<PointT> scene_octree_;
+    typename pcl17::PointCloud<PointT>::Ptr scene_;
     boost::shared_ptr<std::vector<int> > scene_segment_idx_;
-    typename pcl::PointCloud<PointT>::Ptr model_;
+    typename pcl17::PointCloud<PointT>::Ptr model_;
 
     Eigen::VectorXf best_model_coefficients_;
     float best_score_;
