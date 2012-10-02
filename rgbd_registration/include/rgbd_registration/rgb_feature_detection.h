@@ -21,21 +21,20 @@ class RGBFeatureDetection
 
     cv::Mat restoreCVMatFromPointCloud (PointCloudConstPtr cloud_in);
 
-    void projectFeaturesTo3D (std::vector<cv::KeyPoint>& feature_locations_2d,
-        std::vector<Eigen::Vector4f> & feature_locations_3d,
+    void projectFeaturesTo3D (std::vector<cv::KeyPoint>& feature_locations_2d, std::vector<
+        Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f> > & feature_locations_3d,
         const PointCloudConstPtr point_cloud);
 
-    void detectFeatures(const cv::Mat& input_image,
-        std::vector<cv::KeyPoint>& keypoints);
+    void detectFeatures (const cv::Mat& input_image, std::vector<cv::KeyPoint>& keypoints);
 
-    void extractFeatures(const cv::Mat& input_image,
-        std::vector<cv::KeyPoint>& keypoints, cv::Mat& descriptors);
+    void extractFeatures (const cv::Mat& input_image, std::vector<cv::KeyPoint>& keypoints,
+        cv::Mat& descriptors);
 
-    void findMatches (const cv::Mat& source_descriptors,
-        const cv::Mat& target_descriptors, std::vector<cv::DMatch>& good_matches);
+    void findMatches (const cv::Mat& source_descriptors, const cv::Mat& target_descriptors,
+        std::vector<cv::DMatch>& good_matches);
 
     void OutlierRemoval (const std::vector<cv::DMatch>& matches,
-         std::vector<cv::DMatch>& good_matches);
+        std::vector<cv::DMatch>& good_matches);
 
   private:
     int image_counter_;

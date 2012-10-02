@@ -19,15 +19,15 @@
 int main (int argc, char** argv)
 {
   ros::init (argc, argv, "rgbd_registration");
-  if(!ros::master::check())
+  if (!ros::master::check ())
   {
     ROS_ERROR("roscore not running. stop.");
-    exit(0);
+    exit (0);
   }
 
   std::string source_filename, target_filename;
-  source_filename = ParameterServer::instance()->get<std::string>("source_cloud_filename");
-  target_filename = ParameterServer::instance()->get<std::string>("target_cloud_filename");
+  source_filename = ParameterServer::instance ()->get<std::string> ("source_cloud_filename");
+  target_filename = ParameterServer::instance ()->get<std::string> ("target_cloud_filename");
   ROS_INFO_STREAM("[main] Source pointcloud file: " << source_filename);
   ROS_INFO_STREAM("[main] Target pointclout file: " << target_filename);
 
@@ -39,7 +39,8 @@ int main (int argc, char** argv)
 
   // Extract 2d RGB features, match them between two frames and project them into 3d.  Use Ransac
   // to filter out outliers and obtain a transformation between the 2 point clouds
-  std::vector<Eigen::Vector4f> source_feature_3d_locations, target_feature_3d_locations;
+  std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f> >
+      source_feature_3d_locations, target_feature_3d_locations;
   Eigen::Matrix4f ransac_trafo, joint_opt_trafo;
   RGBFeatureMatcher point_cloud_matcher (source_cloud_ptr, target_cloud_ptr);
   if (!point_cloud_matcher.getMatches (source_feature_3d_locations, target_feature_3d_locations,

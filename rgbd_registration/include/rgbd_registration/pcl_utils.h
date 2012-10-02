@@ -11,7 +11,6 @@
 #include "rgbd_registration/typedefs.h"
 #include <pcl/kdtree/kdtree_flann.h>
 
-
 void calculatePointCloudNormals (const PointCloudConstPtr input_cloud_ptr,
     PointCloudNormalsPtr output_cloud_ptr);
 
@@ -28,20 +27,22 @@ void transformAndWriteToFile (const PointCloudConstPtr cloud_in, const Eigen::Ma
 void transformAndWriteToFile (const PointCloudConstPtr cloud_in, const std::vector<int>& indices,
     const Eigen::Matrix4f& trafo);
 
-
 // ----------- TODO: Template ---------------------------------
 void writePCDToFile (const std::string& fileName, const PointCloudNormalsConstPtr cloud_ptr);
 
 void writePCDToFile (const std::string& fileName, const PointCloudNormalsConstPtr cloud_ptr,
     const std::vector<int>& indices);
-void transformAndWriteToFile (const PointCloudNormalsConstPtr cloud_in, const Eigen::Matrix4f& trafo);
-
-void transformAndWriteToFile (const PointCloudNormalsConstPtr cloud_in, const std::vector<int>& indices,
+void transformAndWriteToFile (const PointCloudNormalsConstPtr cloud_in,
     const Eigen::Matrix4f& trafo);
 
-template <class pointT>
-inline void getIndicesFromMatches (typename pcl::PointCloud<pointT>::Ptr cloud_ptr, const std::vector<
-    Eigen::Vector4f>& point_locations, std::vector<int>& indices)
+void transformAndWriteToFile (const PointCloudNormalsConstPtr cloud_in,
+    const std::vector<int>& indices, const Eigen::Matrix4f& trafo);
+
+template<class pointT>
+inline void getIndicesFromMatches (
+    typename pcl::PointCloud<pointT>::Ptr cloud_ptr,
+    const std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f> >& point_locations,
+    std::vector<int>& indices)
 {
   pcl::KdTreeFLANN<pointT> kdtreeNN;
   std::vector<int> pointIdxNKNSearch (1);

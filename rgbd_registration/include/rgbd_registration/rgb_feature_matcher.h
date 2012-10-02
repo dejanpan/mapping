@@ -18,8 +18,8 @@ class RGBFeatureMatcher
 
     RGBFeatureMatcher (PointCloudPtr source_cloud_ptr, PointCloudPtr target_cloud_ptr);
 
-    RGBFeatureMatcher (PointCloudPtr source_cloud_ptr,
-        PointCloudPtr target_cloud_ptr, const cv::Mat& source_image, const cv::Mat& target_image);
+    RGBFeatureMatcher (PointCloudPtr source_cloud_ptr, PointCloudPtr target_cloud_ptr,
+        const cv::Mat& source_image, const cv::Mat& target_image);
 
     virtual ~RGBFeatureMatcher ();
 
@@ -40,8 +40,11 @@ class RGBFeatureMatcher
     void OutlierRemoval (const std::vector<cv::DMatch>& matches,
         std::vector<cv::DMatch>& good_matches);
 
-    bool getMatches (std::vector<Eigen::Vector4f>& source_inlier_3d_locations, std::vector<
-        Eigen::Vector4f>& target_inlier_3d_locations, Eigen::Matrix4f& ransac_trafo);
+    bool
+        getMatches (
+            std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f> >& source_inlier_3d_locations,
+            std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f> >& target_inlier_3d_locations,
+            Eigen::Matrix4f& ransac_trafo);
 
   private:
     PointCloudConstPtr source_cloud_ptr_, target_cloud_ptr_;

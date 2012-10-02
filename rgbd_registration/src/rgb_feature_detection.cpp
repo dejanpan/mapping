@@ -17,8 +17,8 @@
 
 #include <ros/console.h>
 
-RGBFeatureDetection::RGBFeatureDetection ():
-image_counter_(0)
+RGBFeatureDetection::RGBFeatureDetection () :
+  image_counter_ (0)
 {
 }
 
@@ -31,8 +31,10 @@ RGBFeatureDetection::~RGBFeatureDetection ()
 // Takes a RGB feature pixel location and uses depth information to make it a 3d coordiant
 // this also removes keypoints that have NaN depths
 
-void RGBFeatureDetection::projectFeaturesTo3D (std::vector<cv::KeyPoint>& feature_locations_2d,
-    std::vector<Eigen::Vector4f> & feature_locations_3d, const PointCloudConstPtr point_cloud)
+void RGBFeatureDetection::projectFeaturesTo3D (
+    std::vector<cv::KeyPoint>& feature_locations_2d,
+    std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f> > & feature_locations_3d,
+    const PointCloudConstPtr point_cloud)
 {
   int index = -1;
   for (unsigned int i = 0; i < feature_locations_2d.size (); /*increment at end of loop*/)
@@ -56,7 +58,7 @@ void RGBFeatureDetection::projectFeaturesTo3D (std::vector<cv::KeyPoint>& featur
   }
 }
 
-void RGBFeatureDetection::detectFeatures(const cv::Mat& input_image,
+void RGBFeatureDetection::detectFeatures (const cv::Mat& input_image,
     std::vector<cv::KeyPoint>& keypoints)
 {
   // convert to black and white
@@ -72,7 +74,7 @@ void RGBFeatureDetection::detectFeatures(const cv::Mat& input_image,
   detector->detect (image_greyscale, keypoints);
 }
 
-void RGBFeatureDetection::extractFeatures(const cv::Mat& input_image,
+void RGBFeatureDetection::extractFeatures (const cv::Mat& input_image,
     std::vector<cv::KeyPoint>& keypoints, cv::Mat& descriptors)
 {
   // convert to black and white

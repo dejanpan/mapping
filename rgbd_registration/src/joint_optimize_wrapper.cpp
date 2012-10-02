@@ -16,8 +16,9 @@
 #include <pcl/filters/filter.h>
 
 Eigen::Matrix4f performJointOptimization (PointCloudConstPtr source_cloud_ptr,
-    PointCloudConstPtr target_cloud_ptr, std::vector<Eigen::Vector4f>& source_feature_3d_locations,
-    std::vector<Eigen::Vector4f>& target_feature_3d_locations,
+    PointCloudConstPtr target_cloud_ptr, std::vector<Eigen::Vector4f, Eigen::aligned_allocator<
+        Eigen::Vector4f> >& source_feature_3d_locations, std::vector<Eigen::Vector4f,
+        Eigen::aligned_allocator<Eigen::Vector4f> >& target_feature_3d_locations,
     Eigen::Matrix4f& initial_transformation)
 {
   //ICP cannot handle points with NaN values
@@ -54,7 +55,7 @@ Eigen::Matrix4f performJointOptimization (PointCloudConstPtr source_cloud_ptr,
   icp_wdf.setMaxCorrespondenceDistance (ps->get<double> ("max_correspondence_dist"));
   icp_wdf.setMaximumIterations (ps->get<int> ("max_iterations"));
   icp_wdf.setTransformationEpsilon (ps->get<double> ("transformation_epsilon"));
-  icp_wdf.setEuclideanFitnessEpsilon (ps->get<double> ("euclidean_fitness_epsilon"));  //1
+  icp_wdf.setEuclideanFitnessEpsilon (ps->get<double> ("euclidean_fitness_epsilon")); //1
   // Set TransformationEstimationWDF as ICP transform estimator
   icp_wdf.setTransformationEstimation (initial_transform_WDF);
 
@@ -78,13 +79,14 @@ Eigen::Matrix4f performJointOptimization (PointCloudConstPtr source_cloud_ptr,
   ROS_INFO_STREAM(
       "[performJointOptimization] Has converged? = " << icp_wdf.hasConverged () << std::endl << " fitness score (SSD): " << icp_wdf.getFitnessScore (1000) << " \n Final Transformation: \n" << icp_wdf.getFinalTransformation());
 
-  if (ps->get<bool>("save_all_pointclouds"))
+  if (ps->get<bool> ("save_all_pointclouds"))
   {
-    writePCDToFile("source_cloud.pcd", source_cloud_normals_ptr);
-    writePCDToFile("target_cloud.pcd", target_cloud_normals_ptr);
-    writePCDToFile("source_cloud_features.pcd", source_cloud_normals_ptr, source_indices);
-    writePCDToFile("target_cloud_features.pcd", target_cloud_normals_ptr, target_indices);
-    transformAndWriteToFile(source_cloud_normals_ptr, source_indices, icp_wdf.getFinalTransformation());
+    writePCDToFile ("source_cloud.pcd", source_cloud_normals_ptr);
+    writePCDToFile ("target_cloud.pcd", target_cloud_normals_ptr);
+    writePCDToFile ("source_cloud_features.pcd", source_cloud_normals_ptr, source_indices);
+    writePCDToFile ("target_cloud_features.pcd", target_cloud_normals_ptr, target_indices);
+    transformAndWriteToFile (source_cloud_normals_ptr, source_indices,
+        icp_wdf.getFinalTransformation ());
   }
 
   return icp_wdf.getFinalTransformation ();

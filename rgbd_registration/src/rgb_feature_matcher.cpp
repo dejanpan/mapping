@@ -94,8 +94,10 @@ cv::Mat RGBFeatureMatcher::restoreCVMatFromPointCloud (PointCloudConstPtr cloud_
   return restored_image;
 }
 
-bool RGBFeatureMatcher::getMatches (std::vector<Eigen::Vector4f>& source_inlier_3d_locations,
-    std::vector<Eigen::Vector4f>& target_inlier_3d_locations, Eigen::Matrix4f& ransac_trafo)
+bool RGBFeatureMatcher::getMatches (std::vector<Eigen::Vector4f, Eigen::aligned_allocator<
+    Eigen::Vector4f> >& source_inlier_3d_locations, std::vector<Eigen::Vector4f,
+    Eigen::aligned_allocator<Eigen::Vector4f> >& target_inlier_3d_locations,
+    Eigen::Matrix4f& ransac_trafo)
 {
   if (source_image_.empty () || target_image_.empty ())
   {
@@ -106,7 +108,8 @@ bool RGBFeatureMatcher::getMatches (std::vector<Eigen::Vector4f>& source_inlier_
   RGBFeatureDetection RGB_feature_detector;
   std::vector<cv::KeyPoint> source_keypoints, target_keypoints;
   cv::Mat source_descriptors, target_descriptors;
-  std::vector<Eigen::Vector4f> source_feature_3d_locations, target_feature_3d_locations;
+  std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f> >
+      source_feature_3d_locations, target_feature_3d_locations;
 
   RGB_feature_detector.detectFeatures (source_image_, source_keypoints);
   RGB_feature_detector.detectFeatures (target_image_, target_keypoints);
