@@ -1,0 +1,119 @@
+This is the collection of TODOS that shall 1 day converge into 1 single launch file:
+
+============Run exploration and next best view:==============
+roslaunch /etc/ros/cturtle/robot.launch
+roslaunch cloud_tools point_cloud_assembler_with_filter.launch
+roslaunch autonomous_mapping localization.launch
+roslaunch autonomous_mapping autonomous_exploration.launch 
+roslaunch autonomous_mapping  next_best_view.launch
+rostopic pub /robot_pose geometry_msgs/Pose """
+position:
+   x: -0.636
+   y: 1.011
+   z: 0.05 
+orientation:
+   x: -0.014
+   y: 0.013
+   z: -0.060
+   w: 1.0
+"""
+
+OR
+
+bash scripts/send_to_pose*.sh
+=============================================================
+
+
+============Get Kitchen URDF Model:==========================
+roslaunch ias_kitchen_defs ias_kitchen_model.launch
+In Rviz add RobotModel display type and set Robot Description to:
+/ias_kitchen/kitchen_description
+Set TF Prefix to:
+/ias_kitchen
+Open the drawer:
+rostopic pub /ias_kitchen/joint_states sensor_msgs/JointState '{name : [sink_block_drawer_sink_col1_top_joint], position: [0.5]}'
+Open the fridge:
+rostopipub /ias_kitchen/joint_states sensor_msgs/JointState '{name : [fridge_block_fridge_joint], position : [1.57]}'
+=============================================================
+
+
+=============Run registration================================
+Works at the moment on bags only.
+source diamondback
+rosbag play your_bag.bag --topics /autonomous_exploration/pointcloud
+roslaunch pointcloud_registration pointcloud_registration_node.launch
+
+Save your pcd:
+rosrun pcl_ros pointcloud_to_pcd /input:=/merged_pointcloud
+=============================================================
+
+
+=============Segment through interaction=====================
+apply patched to ias_drawer_executive and autonomous_mapping pkg - patches are in autonomous_mapping/patches
+ 
+roslaunch /etc/ros/robot.launch
+roslaunch ias_drawer_executive wopcl.launch
+on account ruehr: roslaunch ias_drawer_executive pcl.launch
+rosrun ias_drawer_executive operate_handle_server
+rosrun ias_drawer_executive segment_furniture_interactive 
+rosrun point_cloud_converter point_cloud_converter /points_in:=/shoulder_cloud
+rosrun SnapMapICP SnapMapICP
+rosrun autonomous_mapping segment_difference /cloud_pcd:=/points2_out
+=============================================================
+
+
+========================= TODO ==============================
+
+* get rid of everything which is makeShared() related
+
+* change everything from `PointCloud<Type>` to `PointCloud<Type>::Ptr` or `PointCloud<Type>::ConstPtr`
+
+* separate normal segmentation and segmentation by color and fixture
+    * segmentation_of_pointclouds.cpp
+    * segmentation_by_color_and_fixtures_of_pointclouds.cpp
+
+=============================================================
+
+
+============ Run segmentation of point cloud ================
+
+// The -cam parameters will change depending on the screen size and resolution //
+// Also do not forget to set the right point type by commenting/uncommneting the type definitions //  
+
+// PointXYZINormal //
+bin/segmentation_of_pointcloud data/XYZINormal/september2010scan_iros2011.pcd -cam 4.89471,31.6552/-1.6893,-0.277547,1.37496/-11.5189,-6.93031,13.1611/0.579109,0.40143,0.709568/1678,975/1,95 -step 1 -clean 0 -verbose 1 -size_of_points 3 -height_of_floor 0.050 -height_of_ceiling 0.100 -height_of_walls 0.750 -minimum_plane_inliers  500 -minimum_size_of_plane_cluster  500 -plane_inliers_clustering_tolerance 0.100 -plane_threshold 0.025 -epsilon_angle 0.025 -minimum_size_of_handle_cluster 25 -handle_clustering_tolerance 0.050 
+
+// PointXYZRGB //
+bin/segmentation_of_pointcloud data/XYZRGB/high_res_rgb_right_of_oven.pcd -cam 0.533235,17.1353/-1.04379,-0.199339,1.87354/-5.5437,1.6997,4.00678/0.425201,-0.009129,0.905053/1678,973/2,71 -step 1 -clean 0 -verbose 1 -size_of_points 2 -height_of_floor 0.050 -height_of_ceiling 0.100 -height_of_walls 0.750 -minimum_plane_inliers 5000 -minimum_size_of_plane_cluster 2500 -plane_inliers_clustering_tolerance 0.100 -plane_threshold 0.025 -epsilon_angle 0.025 -minimum_size_of_handle_cluster 100 -handle_clustering_tolerance 0.050 -cluster_tolerance 0.025 -fixture_cluster_tolerance 0.025 -center_radius 0.085 -init_radius 0.035 -color_radius 0.050 -std_limit 2 -min_pts_per_cluster 100 -fixture_min_pts_per_cluster 100
+
+// PointXYZ //
+bin/segmentation_of_pointcloud data/XYZ/26_August_ICS_no_downsample_12.pcd -cam 2.31627,21.8921/-1.98768,6.95951,0.00483929/-5.18987,11.9165,9.78745/0.52898,-0.67454,0.514953/1678,1023/1682,46 -step 1 -clean 0 -verbose 1 -size_of_points 2 -height_of_floor 0.050 -height_of_ceiling 0.100 -height_of_walls 0.800 -minimum_plane_inliers 3000 -minimum_size_of_plane_cluster 1500 -plane_inliers_clustering_tolerance 0.050 -plane_threshold 0.075 -epsilon_angle 0.075 -minimum_size_of_handle_cluster 25 -handle_clustering_tolerance 0.050 
+
+=============================================================
+
+
+==================== Run handle removal =====================
+
+bin/handle_removal data/segments/00.pcd -cam 3.67558,8.15058/0.432341,0.705564,0.552034/-3.28993,0.908519,4.92203/0.761482,0.0487219,0.646352/1680,977/0,71 -step 1 -clean 1 -verbose 1 -size_of_points 3 -maximum_plane_iterations 1000 -minimum_plane_inliers 1000 -minimum_size_of_plane_cluster 2500 -plane_inliers_clustering_tolerance 0.025 -plane_threshold 0.050 -epsilon_angle 0.050 -minimum_size_of_handle_cluster 100 -handle_clustering_tolerance 0.050
+
+=============================================================
+
+
+================== Run visualize segments ===================
+
+bin/visualize_segments data/segments/*.pcd -cam 3.23961,6.68576/0.441631,0.730633,0.669062/-4.23399,0.329129,1.09392/0.0898138,0.00794977,0.995927/1678,973/2,71 -step 1 -clean 1 -verbose 1 -size_of_hull 6 -size_of_projected 1
+
+=============================================================
+
+
+===================== Bosch data sets =======================
+
+bin/segmentation_of_pointcloud data/bosch/kitchen2_p1_mls_reg_combined.pcd -cam 1.9474,13.1864/1.37179,-0.354526,1.11025/-4.24674,2.15234,4.2685/0.436771,-0.140495,0.888534/1678,977/2,71 -step 1 -clean 0 -verbose 1 -size_of_points 3 -height_of_floor 0.075 -height_of_ceiling 0.125 -height_of_walls 0.750 -minimum_plane_inliers 3000 -minimum_size_of_plane_cluster 1500 -plane_inliers_clustering_tolerance 0.050 -plane_threshold 0.075 -epsilon_angle 0.075 -find_box_model 0 -detect_handels 0
+
+bin/segmentation_of_pointcloud data/bosch/base/kitchen1_base_link.pcd -cam 3.26053,10.5816/1.39636,-0.328261,1.14421/-4.5499,-0.214542,4.67348/0.510396,-9.32433e-05,0.859939/1678,977/2,71 -step 1 -clean 0 -verbose 1 -size_of_points 10 -height_of_floor 0.050 -height_of_ceiling 0.050 -height_of_walls 0.900 -minimum_plane_inliers 1000 -minimum_size_of_plane_cluster 500 -plane_inliers_clustering_tolerance 0.075 -plane_threshold 0.075 -epsilon_angle 0.075 -find_box_model 0 -detect_handels 0
+
+bin/segmentation_of_pointcloud data/bosch/base/kitchen3_base_link.pcd -cam 3.26053,10.5816/1.37372,-0.0134505,1.09592/-4.57254,0.100269,4.62519/0.510396,-9.32433e-05,0.859939/1678,977/2,71 -step 1 -clean 0 -verbose 1 -size_of_points 10 -height_of_floor 0.050 -height_of_ceiling 0.050 -height_of_walls 0.900 -minimum_plane_inliers 1000 -minimum_size_of_plane_cluster 500 -plane_inliers_clustering_tolerance 0.075 -plane_threshold 0.075 -epsilon_angle 0.075 -find_box_model 0 -detect_handels 0
+
+bin/segmentation_of_pointcloud data/bosch/base/kitchen4_base_link.pcd -cam 2.99971,11.2335/1.34845,-0.522851,1.03446/-5.0411,0.723588,3.3683/0.334227,-0.0490163,0.941217/1678,977/2,71 -step 1 -clean 0 -verbose 1 -size_of_points 10 -height_of_floor 0.050 -height_of_ceiling 0.050 -height_of_walls 0.850 -minimum_plane_inliers 1000 -minimum_size_of_plane_cluster 500 -plane_inliers_clustering_tolerance 0.075 -plane_threshold 0.075 -epsilon_angle 0.075 -find_box_model 0 -detect_handels 0
+
+=============================================================

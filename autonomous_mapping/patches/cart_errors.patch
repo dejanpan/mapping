@@ -1,0 +1,31 @@
+diff --git a/highlevel/ias_drawer_executive/src/OperateHandleController.cpp b/highlevel/ias_drawer_executive/src/OperateHandleController.cpp
+index 3df61bb..c2ec8c6 100644
+--- a/highlevel/ias_drawer_executive/src/OperateHandleController.cpp
++++ b/highlevel/ias_drawer_executive/src/OperateHandleController.cpp
+@@ -320,7 +320,7 @@ int OperateHandleController::operateHandle(int arm_, tf::Stamped<tf::Pose> aM, i
+     tf::Stamped<tf::Pose> nextPose = desiredPose;
+ 
+     double dx, dy, dz;
+-    double maxK = 18;//8;
++    double maxK = 22;//8;
+     double lastlength = 0;
+     //int firstbad = 2;
+ 
+@@ -400,7 +400,7 @@ int OperateHandleController::operateHandle(int arm_, tf::Stamped<tf::Pose> aM, i
+ 
+         btVector3 carterr = arm->cartError();
+         ROS_ERROR("cartesian error JNT %f XXX  DIFF %f %f %f DISTANCE %f", arm->time_to_target, carterr.x(),carterr.y(), carterr.y(), carterr.length());
+-        if (carterr.length() > 0.035)
++        if (carterr.length() > 0.2)
+         {
+             ROS_ERROR("SLIPPED OFF: CART ERROR JOINT ");
+             break;
+@@ -408,7 +408,7 @@ int OperateHandleController::operateHandle(int arm_, tf::Stamped<tf::Pose> aM, i
+ 
+         btVector3 carterr1 = (actPose1.getOrigin() - nextPose.getOrigin());
+         ROS_ERROR("cartesian error REL %f XXX  DIFF %f %f %f DISTANCE %f", arm->time_to_target, carterr1.x(),carterr1.y(), carterr1.y(), carterr1.length());
+-        if (carterr1.length() > 0.035)
++        if (carterr1.length() > 0.2)
+         {
+             ROS_ERROR("SLIPPED OFF: CART ERROR POSE DIFF");
+             break;

@@ -1,0 +1,25 @@
+<!-- PCL Features library component -->
+<library path="lib/libNextBestView">
+  <class name="autonomous_mapping/NextBestView" type="autonomous_mapping::NextBestView" base_class_type="nodelet::Nodelet">
+    <description>
+	none
+    </description>
+  </class>
+
+</library>
+<library path="lib/libAutonomousExploration">
+  <class name="autonomous_mapping/AutonomousExploration" type="autonomous_exploration::AutonomousExploration" base_class_type="nodelet::Nodelet">
+    <description>
+	none
+    </description>
+  </class>
+
+</library>
+<library path="lib/libDistanceFilter">
+  <class name="autonomous_mapping/DistanceFilter" type="distance_filter::DistanceFilter" base_class_type="nodelet::Nodelet">
+    <description>
+	none
+    </description>
+  </class>
+
+</library>

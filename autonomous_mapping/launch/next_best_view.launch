@@ -1,0 +1,39 @@
+<launch>
+
+  <node name="map_server" pkg="map_server" type="map_server"
+        args="$(find ias_maps)/ias_karlstrasse_20100830.yaml"
+        respawn="false" output="log"/>
+  
+  <!-- PCL Manager -->
+  <node pkg="nodelet" type="nodelet" name="next_best_view_pcl_manager" args="manager" output="screen" /> <!--launch-prefix="xterm -e gdb -args"-->
+
+  <!-- Run a passthrough filter to downsample and delimit in x direction -->
+  <!--node pkg="nodelet" type="nodelet" name="nbv_downsample" args="load pcl/VoxelGrid next_best_view_pcl_manager" output="screen">
+    <remap from="~input" to="/autonomous_exploration/pointcloud"/>
+    <remap from="~output" to="/nbv_cloud"/>
+    <rosparam>
+      leaf_size: 0.02
+      filter_field_name: z
+      filter_limit_min: -1.0
+      filter_limit_max: 100.0
+    </rosparam>
+  </node-->
+
+   <!--<node pkg="point_cloud_converter" type="point_cloud_converter" name="point_cloud_converter" output="screen" respawn="false">-->
+   <!--<remap from="/points_in" to="/autonomous_exploration/pointcloud"/>--> 
+   <!--</node>--> 
+
+  <node pkg="nodelet" type="nodelet" name="next_best_view" output="screen"  args="load autonomous_mapping/NextBestView next_best_view_pcl_manager" >
+    <param name="laser_frame" value="/laser_tilt_link"/>
+    <param name="octree_resolution" value="0.2"/>
+    <param name="octree_maxrange" value="-1"/>
+    <param name="input_cloud_topic" value="/output_nbv_cloud"/>
+    <param name="visualize_octree" value="true"/>
+    <param name="min_pts_per_cluster" value="15"/>
+    <param name="tolerance" value="0.4"/>
+    <param name="eps_angle" value="0.4"/>
+    <param name="normal_search_radius" value="0.5"/>
+    <param name="boundary_angle_threshold" value="3.2"/>
+  </node>
+
+</launch>
