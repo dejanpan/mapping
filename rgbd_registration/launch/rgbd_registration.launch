@@ -4,8 +4,8 @@
 <launch>
    <node pkg="rgbd_registration" type="joint_optimization" name="rgbd_registration" cwd="node" required="false" output="screen" launch-prefix="$(find rgbd_registration)/exec_in_dir.sh results ">
     <!-- Input data settings-->
-    <param name="config/source_cloud_filename" value="../pcds/roboearth_0.pcd" />
-    <param name="config/target_cloud_filename" value="../pcds/roboearth_1.pcd" />
+    <param name="config/source_cloud_filename" value="../pcds/structure_texture/07.pcd" />
+    <param name="config/target_cloud_filename" value="../pcds/structure_texture/08.pcd" />
 
     <!-- Visual Features -->
     <param name="config/feature_extractor" value="SIFT"/> <!-- SIFT or SURF -->
@@ -15,7 +15,7 @@
     <!-- RANSAC parameters -->
     
     <!-- minimum 'good' feature points used to match frames -->
-    <param name="config/minimum_inliers" value="50"/>
+    <param name="config/minimum_inliers" value="30"/>
     
     <!-- inlier distance for feature points -->
     <param name="config/max_dist_for_inliers" value="0.03"/>
@@ -30,7 +30,7 @@
     <param name="config/save_all_pointclouds" value="true"/>
       
     <!-- display the features and matches before and after ransac -->
-    <param name="config/show_feature_matching" value="false"/>
+    <param name="config/show_feature_matching" value="true"/>
       
     <!-- joint icp settings -->
       

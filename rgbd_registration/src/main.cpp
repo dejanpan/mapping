@@ -37,8 +37,8 @@ int main (int argc, char** argv)
   reader.read (source_filename, *source_cloud_ptr);
   reader.read (target_filename, *target_cloud_ptr);
 
-  // Extract 2d RGB features and project them into 3d.  Use Ransac to filter out outliers and
-  // obtain a transformation between the 2 point clouds
+  // Extract 2d RGB features, match them between two frames and project them into 3d.  Use Ransac
+  // to filter out outliers and obtain a transformation between the 2 point clouds
   std::vector<Eigen::Vector4f> source_feature_3d_locations, target_feature_3d_locations;
   Eigen::Matrix4f ransac_trafo, joint_opt_trafo;
   RGBFeatureMatcher point_cloud_matcher (source_cloud_ptr, target_cloud_ptr);

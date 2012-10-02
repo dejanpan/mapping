@@ -9,6 +9,11 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 #  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
 #set(ROS_BUILD_TYPE RelWithDebInfo)
 
+################ CMAKE PARAMETERS ###################
+
+set(USE_SIFT_GPU        0)
+set(DOWNLOAD_TESTDATA   1)
+
 rosbuild_init()
 
 #set the default path for built executables to the "bin" directory
@@ -28,18 +33,16 @@ LINK_DIRECTORIES(${LIBRARY_OUTPUT_PATH})
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 
+#IF (${DOWNLOAD_TESTDATA})
+	rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/pcds.tar.gz pcds.tar.gz e42ee8b5dd80dbeb1ec7f0d1fefd95d9)
+	rosbuild_untar_file(pcds.tar.gz pcds ALL)
+	#execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_SOURCE_DIR}/pcds.tar.gz 
+	#	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+#ENDIF (${DOWNLOAD_TESTDATA})
 
-rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/roboearth_0.pcd pcds/roboearth_0.pcd 8944ac283544c8349f6cade6bbf5ac78)
-rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/roboearth_1.pcd pcds/roboearth_1.pcd 4170df1b473b0709c2251dc40bad6bb7)
-rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/roboearth_2.pcd pcds/roboearth_2.pcd 0164f1b01567f637cb0956f6f3a3df40)
-rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/roboearth_3.pcd pcds/roboearth_3.pcd 0014eb663fabf4fe56b555244bee21b3)
-rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/roboearth_4.pcd pcds/roboearth_4.pcd de98b3298aac778cfd0b2626627082ed)
-rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/roboearth_5.pcd pcds/roboearth_5.pcd f579676755a20cc7f3e71ac47746ffb0)
-rosbuild_download_data (http://ias.cs.tum.edu/~kidson/pcds/roboearth_6.pcd pcds/roboearth_6.pcd 3b71b68b7f3fd6b6af904ef719852eea)
 
 ############# SiftGPU ###################
 
-set(USE_SIFT_GPU        0)
 set(ENV{SIFT_GPU_MODE}		2) #CUDA = 1, GLSL = 2
 set(ENV{SIFT_GPU_CUDA_PATH}	/usr/local/cuda)	
 
@@ -95,6 +98,5 @@ src/joint_optimize_wrapper.cpp
 )
 
 rosbuild_add_executable(joint_optimization src/main.cpp ${ADDITIONAL_SOURCES})
-
 
 target_link_libraries(joint_optimization ${SIFT_GPU_LIB} ${OpenCV_LIBS})

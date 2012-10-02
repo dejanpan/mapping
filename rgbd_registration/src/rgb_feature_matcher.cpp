@@ -157,6 +157,7 @@ bool RGBFeatureMatcher::getMatches (std::vector<Eigen::Vector4f>& source_inlier_
         std::vector<char> (), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
     cv::imshow ("Good Matches", img_matches);
     cv::moveWindow ("Good Matches", -10, 500);
+    ROS_WARN("[RGBFeatureMatcher] Displaying feature matches.  Please press any key on the image to continue........");
     cv::waitKey (0);
     cv::destroyAllWindows ();
   }

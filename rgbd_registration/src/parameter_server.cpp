@@ -34,14 +34,14 @@ void ParameterServer::defaultConfig() {
     config["target_cloud_filename"]           = std::string("../pcds/node_4.pcd");
 
     // ----------RGB feature extraction------------
-    config["feature_extractor"]               = std::string("SURF");
-    config["feature_descriptor"]              = std::string("SURF");
+    config["feature_extractor"]               = std::string("SIFT");
+    config["feature_descriptor"]              = std::string("SIFT");
     config["descriptor_matcher"]              = std::string("FLANN");
-	  config["minimum_inliers"]                 = static_cast<int> (50);
+	  config["minimum_inliers"]                 = static_cast<int> (30);
     config["max_dist_for_inliers"]            = static_cast<double> (0.03);
     config["ransac_iterations"]               = static_cast<int> (1000);
-    config["save_features_image"]             = static_cast<bool> (false);
-    config["show_feature_matching"]           = static_cast<bool> (false);
+    config["save_features_image"]             = static_cast<bool> (true);
+    config["show_feature_matching"]           = static_cast<bool> (true);
     config["save_all_pointclouds"]            = static_cast<bool> (true);
 
     // --------------ICP settings------------------
