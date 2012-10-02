@@ -38,11 +38,11 @@
 #ifndef PCL_FEATURES_SGF8_H_
 #define PCL_FEATURES_SGF8_H_
 
-#include <pcl/features/feature.h>
-#include <pcl/features/sgf5.h>
-#include <pcl/features/sgf7.h>
+#include <pcl17/features/feature.h>
+#include <pcl17/features/sgf5.h>
+#include <pcl17/features/sgf7.h>
 
-namespace pcl
+namespace pcl17
 {
   const int SGF8_SIZE = 3;
 
@@ -85,16 +85,16 @@ namespace pcl
 
         // Compute feature 5
         const int sgf5_size = 3;
-        pcl::PointCloud<pcl::Histogram<sgf5_size> >::Ptr sgf5s (new pcl::PointCloud<pcl::Histogram<sgf5_size> > ());
-        pcl::SGF5Estimation<PointInT, pcl::Histogram<sgf5_size> > sgf5;
+        pcl17::PointCloud<pcl17::Histogram<sgf5_size> >::Ptr sgf5s (new pcl17::PointCloud<pcl17::Histogram<sgf5_size> > ());
+        pcl17::SGF5Estimation<PointInT, pcl17::Histogram<sgf5_size> > sgf5;
         sgf5.setInputCloud (cloud);
         sgf5.compute (*sgf5s);
 
 
         // Compute feature 7
         const int sgf7_size = 7;
-        pcl::PointCloud<pcl::Histogram<sgf7_size> >::Ptr sgf7s (new pcl::PointCloud<pcl::Histogram<sgf7_size> > ());
-        pcl::SGF7Estimation<PointInT, pcl::Histogram<sgf7_size> > sgf7;
+        pcl17::PointCloud<pcl17::Histogram<sgf7_size> >::Ptr sgf7s (new pcl17::PointCloud<pcl17::Histogram<sgf7_size> > ());
+        pcl17::SGF7Estimation<PointInT, pcl17::Histogram<sgf7_size> > sgf7;
         sgf7.setInputCloud (cloud);
         sgf7.compute (*sgf7s);
 
@@ -113,7 +113,7 @@ namespace pcl
        * \param[out] output the output point cloud
        */
       void
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &) {}
+      computeFeatureEigen (pcl17::PointCloud<Eigen::MatrixXf> &) {}
   };
 }
 

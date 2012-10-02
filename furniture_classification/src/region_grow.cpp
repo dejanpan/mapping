@@ -5,14 +5,14 @@
  *      Author: vsu
  */
 
-#include <pcl/console/parse.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/search/kdtree.h>
-#include <pcl/surface/mls.h>
-#include <pcl/segmentation/region_growing_rgb.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/filters/voxel_grid.h>
+#include <pcl17/console/parse.h>
+#include <pcl17/io/pcd_io.h>
+#include <pcl17/search/kdtree.h>
+#include <pcl17/surface/mls.h>
+#include <pcl17/segmentation/region_growing_rgb.h>
+#include <pcl17/features/normal_3d.h>
+#include <pcl17/visualization/pcl_visualizer.h>
+#include <pcl17/filters/voxel_grid.h>
 
 int main(int argc, char **argv)
 {
@@ -27,28 +27,28 @@ int main(int argc, char **argv)
   float distance_thresh = 0.01;
   float angle_thresh = 0.01;
 
-  pcl::console::parse_argument(argc, argv, "-input_file", filename);
-  pcl::console::parse_argument(argc, argv, "-distance_thresh", distance_thresh);
-  pcl::console::parse_argument(argc, argv, "-angle_thresh", distance_thresh);
+  pcl17::console::parse_argument(argc, argv, "-input_file", filename);
+  pcl17::console::parse_argument(argc, argv, "-distance_thresh", distance_thresh);
+  pcl17::console::parse_argument(argc, argv, "-angle_thresh", distance_thresh);
 
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_orig(new pcl::PointCloud<pcl::PointXYZRGBA>);
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
-  pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>());
-  pcl::io::loadPCDFile(filename, *cloud);
+  pcl17::PointCloud<pcl17::PointXYZRGBA>::Ptr cloud_orig(new pcl17::PointCloud<pcl17::PointXYZRGBA>);
+  pcl17::PointCloud<pcl17::PointXYZRGBA>::Ptr cloud(new pcl17::PointCloud<pcl17::PointXYZRGBA>);
+  pcl17::PointCloud<pcl17::Normal>::Ptr cloud_normals(new pcl17::PointCloud<pcl17::Normal>());
+  pcl17::io::loadPCDFile(filename, *cloud);
 
   std::cerr << "Loaded file" << std::endl;
 
-  //pcl::VoxelGrid<pcl::PointXYZRGBA> grid;
+  //pcl17::VoxelGrid<pcl17::PointXYZRGBA> grid;
   //grid.setInputCloud(cloud_orig);
   //grid.setLeafSize(0.01f, 0.01f, 0.01f);
   //grid.filter(*cloud);
 
   // Create a KD-Tree
-  pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGBA>);
+  pcl17::search::KdTree<pcl17::PointXYZRGBA>::Ptr tree(new pcl17::search::KdTree<pcl17::PointXYZRGBA>);
 
   std::cerr << "Created tree" << std::endl;
 
-  pcl::NormalEstimation<pcl::PointXYZRGBA, pcl::Normal> ne;
+  pcl17::NormalEstimation<pcl17::PointXYZRGBA, pcl17::Normal> ne;
   ne.setInputCloud(cloud);
   ne.setSearchMethod(tree);
   ne.setRadiusSearch(0.01);
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 
   std::cerr << "Computed normals" << std::endl;
 
-  pcl::RegionGrowingRGB<pcl::PointXYZRGBA> region_growing;
+  pcl17::RegionGrowingRGB<pcl17::PointXYZRGBA> region_growing;
   region_growing.setCloud(cloud);
   region_growing.setNormals(cloud_normals);
   region_growing.setNeighbourSearchMethod(tree);
@@ -76,16 +76,16 @@ int main(int argc, char **argv)
 
   region_growing.segmentPoints();
 
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr segments;
+  pcl17::PointCloud<pcl17::PointXYZRGB>::Ptr segments;
   segments = region_growing.getColoredCloud();
 
-  pcl::io::savePCDFile("result.pcd", *segments);
+  pcl17::io::savePCDFile("result.pcd", *segments);
 
-  pcl::visualization::PCLVisualizer viz;
+  pcl17::visualization::PCLVisualizer viz;
   viz.initCameraParameters();
 
-  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(segments);
-  viz.addPointCloud<pcl::PointXYZRGB> (segments, rgb);
+  pcl17::visualization::PointCloudColorHandlerRGBField<pcl17::PointXYZRGB> rgb(segments);
+  viz.addPointCloud<pcl17::PointXYZRGB> (segments, rgb);
   viz.spin();
 
   return 0;

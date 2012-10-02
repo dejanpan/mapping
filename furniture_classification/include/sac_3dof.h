@@ -1,15 +1,15 @@
 #ifndef SAC_3DOF_H_
 #define SAC_3DOF_H_
 
-#include <pcl/sample_consensus/sac_model.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/common/transforms.h>
-#include <pcl/search/kdtree.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/octree/octree_search.h>
+#include <pcl17/sample_consensus/sac_model.h>
+#include <pcl17/sample_consensus/model_types.h>
+#include <pcl17/filters/passthrough.h>
+#include <pcl17/common/transforms.h>
+#include <pcl17/search/kdtree.h>
+#include <pcl17/io/pcd_io.h>
+#include <pcl17/octree/octree_search.h>
 
-namespace pcl
+namespace pcl17
 {
 
 template<typename PointT>
@@ -58,7 +58,7 @@ template<typename PointT>
       // Select points with the same height
       std::vector<int> idx;
 
-      pcl::PassThrough<PointT> pass;
+      pcl17::PassThrough<PointT> pass;
       pass.setInputCloud(target);
       pass.setIndices(target_idx);
       pass.setFilterFieldName("z");
@@ -89,11 +89,11 @@ template<typename PointT>
       //      transform.translate(Eigen::Vector3f(model_coefficients[0], model_coefficients[1], 0));
       //      transform.rotate(Eigen::AngleAxisf(model_coefficients[2], Eigen::Vector3f(0, 0, 1)));
       //
-      //      //pcl::io::savePCDFileASCII("tmp_inp.pcd", *input_);
-      //      //pcl::io::savePCDFileASCII("tmp_tgt.pcd", *target);
+      //      //pcl17::io::savePCDFileASCII("tmp_inp.pcd", *input_);
+      //      //pcl17::io::savePCDFileASCII("tmp_tgt.pcd", *target);
       //      ///std::cerr << "Transform " << transform.matrix() << std::endl;
-      //      pcl::transformPointCloudWithNormals(*input_, transformed_input, transform);
-      //      //pcl::io::savePCDFileASCII("tmp_res.pcd", transformed_input);
+      //      pcl17::transformPointCloudWithNormals(*input_, transformed_input, transform);
+      //      //pcl17::io::savePCDFileASCII("tmp_res.pcd", transformed_input);
       //      PointT input_point_transformed = transformed_input.points[samples[0]];
       //
       //      //std::cerr << "IPT " << input_point_transformed << std::endl;
@@ -124,7 +124,7 @@ template<typename PointT>
       transform.translate(Eigen::Vector3f(model_coefficients[0], model_coefficients[1], 0));
       transform.rotate(Eigen::AngleAxisf(model_coefficients[2], Eigen::Vector3f(0, 0, 1)));
 
-      pcl::transformPointCloudWithNormals(*target, transformed_input, transform);
+      pcl17::transformPointCloudWithNormals(*target, transformed_input, transform);
 
       std::vector<int> idx;
       std::vector<float> dist;
@@ -162,7 +162,7 @@ template<typename PointT>
 
     virtual SacModel getModelType() const
     {
-      return pcl::SACMODEL_SPHERE;
+      return pcl17::SACMODEL_SPHERE;
     }
 
     inline virtual bool isModelValid(const Eigen::VectorXf &model_coefficients)
@@ -238,10 +238,10 @@ template<typename PointT>
 
     }
 
-    pcl::octree::OctreePointCloudSearch<PointT> octree;
+    pcl17::octree::OctreePointCloudSearch<PointT> octree;
     PointCloudConstPtr target;
     boost::shared_ptr<std::vector<int> > target_idx;
-    pcl::search::KdTree<PointT> target_tree;
+    pcl17::search::KdTree<PointT> target_tree;
 
     float eps;
 

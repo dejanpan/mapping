@@ -35,86 +35,70 @@
  *
  */
 
-#ifndef PCL_FEATURES_SGF3_H_
-#define PCL_FEATURES_SGF3_H_
+#ifndef PCL_FEATURES_SGF2_H_
+#define PCL_FEATURES_SGF2_H_
 
-#include <pcl/features/feature.h>
-#include <pcl/filters/voxel_grid.h>
+#include <pcl17/features/feature.h>
+#include <pcl17/features/normal_3d.h>
+#include <numeric>
 
-namespace pcl {
-const int SGF3_SIZE = 1;
+namespace pcl17 {
+const int SGF2_SIZE = 1;
 
 template<typename PointInT, typename PointOutT>
-class SGF3Estimation: public Feature<PointInT, PointOutT> {
+class SGF2Estimation: public Feature<PointInT, PointOutT> {
 
 public:
 
 	using Feature<PointInT, PointOutT>::feature_name_;
 	using Feature<PointInT, PointOutT>::input_;
 	using Feature<PointInT, PointOutT>::indices_;
+	using Feature<PointInT, PointOutT>::search_parameter_;
 	using Feature<PointInT, PointOutT>::k_;
 
 	typedef typename Feature<PointInT, PointOutT>::PointCloudOut PointCloudOut;
 	typedef typename Feature<PointInT, PointOutT>::PointCloudIn PointCloudIn;
 
 	/** \brief Empty constructor. */
-	SGF3Estimation() {
-		feature_name_ = "SGF3Estimation";
+	SGF2Estimation() {
+		feature_name_ = "SGF2Estimation";
 		k_ = 1;
-		grid_size_ = 0.01f;
 	}
 	;
-
-	void setGridSize(float grid_size) {
-		grid_size_ = grid_size;
-	}
-
-	float setGridSize() {
-		return grid_size_;
-	}
 
 	/////////////////////////////////////////////////////////////////////////////
 	void computeFeature(PointCloudOut &output) {
 
-		// Copy the points specified by the index vector into a new cloud
-		typename PointCloud<PointInT>::Ptr cloud(new PointCloud<PointInT> ());
-		cloud->width = indices_->size();
-		cloud->height = 1;
-		cloud->points.resize(cloud->width * cloud->height);
+		PointCloud<Normal>::Ptr normals(new PointCloud<Normal> ());
+		NormalEstimation<PointInT, Normal> n;
+
+		std::vector<int> nn_indices;
+		std::vector<float> nn_sqr_dists;
+		Eigen::Vector4f parameters;
+		Eigen::VectorXf vec(indices_->size());
+
 		for (size_t idx = 0; idx < indices_->size(); ++idx) {
-			cloud->points[idx] = input_->points[(*indices_)[idx]];
+			float curvature;
+			this->searchForNeighbors((*indices_)[idx], search_parameter_,
+					nn_indices, nn_sqr_dists);
+			n.computePointNormal(*input_, nn_indices, parameters, curvature);
+			vec[idx] = curvature;
 		}
 
-		typename PointCloud<PointInT>::Ptr cloud_filtered(new PointCloud<
-				PointInT> ());
+		output.points[0].histogram[0] = vec.mean();
 
-		// Create the filtering object
-		pcl::VoxelGrid<PointInT> sor;
-		sor.setInputCloud(cloud);
-		sor.setLeafSize(grid_size_, grid_size_, grid_size_);
-		sor.filter(*cloud_filtered);
-
-		// Compute the feature vector
-		int nr_points = cloud_filtered->width * cloud_filtered->height;
-		output.points[0].histogram[0] = nr_points * grid_size_ * grid_size_
-				* grid_size_;
 	}
 	/////////////////////////////////////////////////////////////////////////////
 
 
 private:
 
-	float grid_size_;
-
-	/** \brief Variable to save the cloud's SGF signature. */
-	Eigen::VectorXf sgf_histogram_;
-
 	/** \brief Make the computeFeature (&Eigen::MatrixXf); inaccessible from outside the class
 	 * \param[out] output the output point cloud
 	 */
-	void computeFeatureEigen(pcl::PointCloud<Eigen::MatrixXf> &) {
+	void computeFeatureEigen(pcl17::PointCloud<Eigen::MatrixXf> &) {
 	}
 };
 }
 
-#endif  //#ifndef PCL_FEATURES_SGF3_H_
+#endif  //#ifndef PCL_FEATURES_SGF2_H_

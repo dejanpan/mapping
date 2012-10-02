@@ -38,9 +38,9 @@
 #ifndef PCL_FEATURES_SGF4_H_
 #define PCL_FEATURES_SGF4_H_
 
-#include <pcl/features/feature.h>
+#include <pcl17/features/feature.h>
 
-namespace pcl
+namespace pcl17
 {
   const int SGF4_SIZE = 6;
 
@@ -88,7 +88,7 @@ namespace pcl
         computeCovarianceMatrix (*cloud, centroid3, covariance_matrix);
         EIGEN_ALIGN16 Eigen::Vector3f eigen_values;
         EIGEN_ALIGN16 Eigen::Matrix3f eigen_vectors;
-        pcl::eigen33 (covariance_matrix, eigen_vectors, eigen_values);
+        pcl17::eigen33 (covariance_matrix, eigen_vectors, eigen_values);
 
 
         // Compute the feature vector
@@ -109,7 +109,7 @@ namespace pcl
        * \param[out] output the output point cloud
        */
       void
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &) {}
+      computeFeatureEigen (pcl17::PointCloud<Eigen::MatrixXf> &) {}
   };
 }
 

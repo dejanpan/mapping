@@ -38,11 +38,11 @@
 #ifndef PCL_FEATURES_SGF1_H_
 #define PCL_FEATURES_SGF1_H_
 
-#include <pcl/features/feature.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/features/boundary.h>
+#include <pcl17/features/feature.h>
+#include <pcl17/features/normal_3d.h>
+#include <pcl17/features/boundary.h>
 
-namespace pcl
+namespace pcl17
 {
   const int SGF1_SIZE = 1;
 
@@ -119,7 +119,7 @@ namespace pcl
        * \param[out] output the output point cloud
        */
       void
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &) {}
+      computeFeatureEigen (pcl17::PointCloud<Eigen::MatrixXf> &) {}
   };
 }
 

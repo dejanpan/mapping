@@ -35,53 +35,39 @@
  *
  */
 
-#ifndef PCL_FEATURES_SGF6_H_
-#define PCL_FEATURES_SGF6_H_
+#ifndef PCL_FEATURES_SGF9_H_
+#define PCL_FEATURES_SGF9_H_
 
-#include <pcl/features/feature.h>
+#include <pcl17/features/feature.h>
+#include <pcl17/features/sgf3.h>
 
-namespace pcl
+namespace pcl17
 {
-  const int SGF6_SIZE = 2;
+  const int SGF9_SIZE = 1;
 
   template <typename PointInT, typename PointOutT>
-  class SGF6Estimation : public Feature<PointInT, PointOutT>
+  class SGF9Estimation : public Feature<PointInT, PointOutT>
   {
 
     public:
 
       using Feature<PointInT, PointOutT>::feature_name_;
       using Feature<PointInT, PointOutT>::input_;
+      using Feature<PointInT, PointOutT>::surface_;
       using Feature<PointInT, PointOutT>::indices_;
+      using Feature<PointInT, PointOutT>::search_parameter_;
+      using Feature<PointInT, PointOutT>::tree_;
       using Feature<PointInT, PointOutT>::k_;
 
       typedef typename Feature<PointInT, PointOutT>::PointCloudOut PointCloudOut;
       typedef typename Feature<PointInT, PointOutT>::PointCloudIn  PointCloudIn;
 
       /** \brief Empty constructor. */
-      SGF6Estimation ()
+      SGF9Estimation ()
       {
-        feature_name_ = "SGF6Estimation";
+        feature_name_ = "SGF9Estimation";
         k_ = 1;
-        axis1_ << 0, 0, 1;
-        axis2_ << 1, 0, 0;
       };
-
-      void
-      setAxis1(Eigen::Vector3f axis)
-      {
-        axis1_[0] = axis[0];
-        axis1_[1] = axis[1];
-        axis1_[2] = axis[2];
-      }
-
-      void
-      setAxis2(Eigen::Vector3f axis)
-      {
-        axis2_[0] = axis[0];
-        axis2_[1] = axis[1];
-        axis2_[2] = axis[2];
-      }
 
 
       /////////////////////////////////////////////////////////////////////////////
@@ -99,6 +85,14 @@ namespace pcl
         }
 
 
+        // Compute feature 3
+        const int sgf3_size = 1;
+        pcl17::PointCloud<pcl17::Histogram<sgf3_size> >::Ptr sgf3s (new pcl17::PointCloud<pcl17::Histogram<sgf3_size> > ());
+        pcl17::SGF3Estimation<PointInT, pcl17::Histogram<sgf3_size> > sgf3;
+        sgf3.setInputCloud (cloud);
+        sgf3.compute (*sgf3s);
+
+
         // Compute eigenvectors and eigenvalues
         EIGEN_ALIGN16 Eigen::Matrix3f covariance_matrix;
         Eigen::Vector4f centroid3;
@@ -106,31 +100,27 @@ namespace pcl
         computeCovarianceMatrix (*cloud, centroid3, covariance_matrix);
         EIGEN_ALIGN16 Eigen::Vector3f eigen_values;
         EIGEN_ALIGN16 Eigen::Matrix3f eigen_vectors;
-        pcl::eigen33 (covariance_matrix, eigen_vectors, eigen_values);
+        pcl17::eigen33 (covariance_matrix, eigen_vectors, eigen_values);
 
 
-        // The eigenvector corresponding to the smallest eigenvalue
-        Eigen::Vector3f e (eigen_vectors (0, 0), eigen_vectors (1, 0), eigen_vectors (2, 0));
+        // Compute the volume of the oriented bounding box
+        float box_vol = 8 * eigen_values[0] * eigen_values[1] * eigen_values[2];
 
 
         // Compute the feature vector
-        output.points[0].histogram[0] = acos (e.dot(axis1_) / axis1_.norm ());
-        output.points[0].histogram[1] = acos (e.dot(axis2_) / axis1_.norm ());
+        output.points[0].histogram[0] = box_vol != 0 ? sgf3s->points[0].histogram[0] / box_vol : 0;
       }
       /////////////////////////////////////////////////////////////////////////////
 
 
     private:
 
-      Eigen::Vector3f axis1_;
-      Eigen::Vector3f axis2_;
-
       /** \brief Make the computeFeature (&Eigen::MatrixXf); inaccessible from outside the class
        * \param[out] output the output point cloud
        */
       void
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &) {}
+      computeFeatureEigen (pcl17::PointCloud<Eigen::MatrixXf> &) {}
   };
 }
 
-#endif  //#ifndef PCL_FEATURES_SGF6_H_
+#endif  //#ifndef PCL_FEATURES_SGF9_H_

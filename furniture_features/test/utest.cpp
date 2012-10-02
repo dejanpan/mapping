@@ -12,19 +12,19 @@
  *      Author: vsu
  */
 
-#include <pcl/features/sgfall.h>
+#include <pcl17/features/sgfall.h>
 #include <gtest/gtest.h>
 
 TEST(Feature1NumberOfBoundaryPoints, SquareTest)
 {
 
 	int square_size = 5;
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(
-			new pcl::PointCloud<pcl::PointXYZ>);
+	pcl17::PointCloud<pcl17::PointXYZ>::Ptr cloud(
+			new pcl17::PointCloud<pcl17::PointXYZ>);
 
 	for (int i = 0; i < square_size; i++) {
 		for (int j = 0; j < square_size; j++) {
-			pcl::PointXYZ point;
+			pcl17::PointXYZ point;
 			point.x = i;
 			point.y = j;
 			point.z = 1.0f;
@@ -42,11 +42,11 @@ TEST(Feature1NumberOfBoundaryPoints, SquareTest)
 		(*indicesptr).push_back(i);
 	}
 
-	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<
-			pcl::PointXYZ>());
-	pcl::PointCloud<pcl::Histogram<pcl::SGF1_SIZE> >::Ptr sgf1s(
-			new pcl::PointCloud<pcl::Histogram<pcl::SGF1_SIZE> >());
-	pcl::SGF1Estimation<pcl::PointXYZ, pcl::Histogram<pcl::SGF1_SIZE> > sgf1;
+	pcl17::search::KdTree<pcl17::PointXYZ>::Ptr tree(new pcl17::search::KdTree<
+			pcl17::PointXYZ>());
+	pcl17::PointCloud<pcl17::Histogram<pcl17::SGF1_SIZE> >::Ptr sgf1s(
+			new pcl17::PointCloud<pcl17::Histogram<pcl17::SGF1_SIZE> >());
+	pcl17::SGF1Estimation<pcl17::PointXYZ, pcl17::Histogram<pcl17::SGF1_SIZE> > sgf1;
 	sgf1.setInputCloud(cloud);
 	sgf1.setIndices(indicesptr);
 	sgf1.setSearchMethod(tree);

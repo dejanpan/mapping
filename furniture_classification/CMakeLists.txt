@@ -21,43 +21,35 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
-#common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
 
+add_definitions(-DEIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET)
 
-#find_package(PCL 1.7 REQUIRED)
-#include_directories(${PCL_INCLUDE_DIRS})
-#link_directories(${PCL_LIBRARY_DIRS})
-#add_definitions(${PCL_DEFINITIONS})
+find_package(Eigen REQUIRED)
+include_directories(${EIGEN_INCLUDE_DIRS})
 
-#message("PCL_LIBRARIES - ${PCL_LIBRARIES}")
-
+include_directories(/usr/include/vtk-5.6)
 include_directories ("/usr/include/openni/")
 
 rosbuild_add_executable(scan src/scan.cpp)
 rosbuild_link_boost(scan system filesystem)
 target_link_libraries(scan vtkCommon vtkIO vtkFiltering vtkGraphics vtkRendering)
-#target_link_libraries(scan pcl_common pcl_io pcl_visualization)
+target_link_libraries(scan pcl_common pcl_io pcl_visualization)
 
 rosbuild_add_executable(convert src/convert.cpp)
 rosbuild_link_boost(convert system filesystem)
+target_link_libraries(convert pcl_common pcl_io pcl_segmentation pcl_surface pcl_filters)
+
+#rosbuild_add_gtest(utest test/utest.cpp)
+#target_link_libraries(utest training)
 
 
-rosbuild_add_gtest(utest test/utest.cpp)
-target_link_libraries(utest training)
-
-#rosbuild_add_executable(sac_test src/sac_test.cpp)
-#target_link_libraries(sac_test vtkCommon vtkIO vtkFiltering vtkGraphics vtkRendering)
-
-rosbuild_add_executable(region_grow src/region_grow.cpp)
-target_link_libraries(region_grow vtkCommon vtkIO vtkFiltering vtkGraphics vtkRendering)
+#rosbuild_add_executable(region_grow src/region_grow.cpp)
+#target_link_libraries(region_grow vtkCommon vtkIO vtkFiltering vtkGraphics vtkRendering)
 
 
 rosbuild_add_library(furniture_classification src/pcl/classification/PHVObjectClassifier.cpp)
 rosbuild_link_boost(furniture_classification system filesystem)
-target_link_libraries(furniture_classification yaml-cpp)
+target_link_libraries(furniture_classification yaml-cpp pcl_common pcl_io pcl_visualization pcl_segmentation pcl_surface pcl_filters pcl_search pcl_octree pcl_features rostime)
 
 rosbuild_add_executable(train src/train.cpp)
 target_link_libraries(train furniture_classification)
@@ -66,11 +58,12 @@ rosbuild_link_boost(train system filesystem)
 rosbuild_add_executable(classify src/classify.cpp)
 target_link_libraries(classify furniture_classification)
 rosbuild_link_boost(classify system filesystem)
-#target_link_libraries(classify pcl_common pcl_io pcl_visualization pcl_segmentation pcl_surface pcl_filters pcl_search pcl_octree)
+
 
 rosbuild_add_executable(classify_live src/classify_live.cpp)
 target_link_libraries(classify_live furniture_classification)
 target_link_libraries(classify_live vtkCommon vtkIO vtkFiltering vtkGraphics)
+rosbuild_link_boost(classify_live thread)
 
 rosbuild_add_executable(eval_clustering src/eval_clustering.cpp)
 target_link_libraries(eval_clustering furniture_classification)

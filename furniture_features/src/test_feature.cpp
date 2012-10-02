@@ -5,20 +5,20 @@
  *      Author: vsu
  */
 
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/features/esf.h>
+#include <pcl17/io/pcd_io.h>
+#include <pcl17/point_cloud.h>
+#include <pcl17/point_types.h>
+#include <pcl17/features/esf.h>
 
 int main(){
 
-  pcl::PointCloud<pcl::PointNormal> pn;
-  pcl::io::loadPCDFile("../furniture_classification/data/debug/Cluster0/Segment10.pcd",pn);
+  pcl17::PointCloud<pcl17::PointNormal> pn;
+  pcl17::io::loadPCDFile("../furniture_classification/data/debug/Cluster0/Segment10.pcd",pn);
 
-  pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640> e;
+  pcl17::ESFEstimation<pcl17::PointNormal, pcl17::ESFSignature640> e;
   e.setInputCloud(pn.makeShared());
 
-  pcl::PointCloud<pcl::ESFSignature640> pc;
+  pcl17::PointCloud<pcl17::ESFSignature640> pc;
   e.compute(pc);
 
   std::cerr << pc.size() << std::endl;

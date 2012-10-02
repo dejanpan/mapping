@@ -5,15 +5,18 @@
  *      Author: vsu
  */
 
-#include <pcl/point_types.h>
-#include <pcl/features/sgfall.h>
-#include <pcl/classification/PHVObjectClassifier.h>
-#include <pcl/classification/impl/PHVObjectClassifier.hpp>
-#include <pcl/features/esf.h>
-#include <pcl/features/vfh.h>
+#define EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET
+
+#include <pcl17/point_types.h>
+#include <pcl17/features/sgfall.h>
+#include <pcl17/classification/PHVObjectClassifier.h>
+#include <pcl17/classification/impl/PHVObjectClassifier.hpp>
+#include <pcl17/features/esf.h>
+#include <pcl17/features/vfh.h>
 
 
 
-template class pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, pcl::Histogram<pcl::SGFALL_SIZE> >;
-template class pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, pcl::ESFSignature640>;
-template class pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, pcl::VFHSignature308>;
+
+template class pcl17::PHVObjectClassifier<pcl17::PointXYZ, pcl17::PointNormal, pcl17::Histogram<pcl17::SGFALL_SIZE> >;
+template class pcl17::PHVObjectClassifier<pcl17::PointXYZ, pcl17::PointNormal, pcl17::ESFSignature640>;
+template class pcl17::PHVObjectClassifier<pcl17::PointXYZ, pcl17::PointNormal, pcl17::VFHSignature308>;

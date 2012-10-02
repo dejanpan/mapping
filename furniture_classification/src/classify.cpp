@@ -12,17 +12,18 @@
  *      Author: vsu
  */
 
-#include <pcl/console/parse.h>
-#include <pcl/sample_consensus/ransac.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/octree/octree.h>
-#include <pcl/classification/PHVObjectClassifier.h>
-#include <pcl/features/sgfall.h>
+#include <pcl17/console/print.h>
+#include <pcl17/console/parse.h>
+#include <pcl17/sample_consensus/ransac.h>
+#include <pcl17/filters/passthrough.h>
+#include <pcl17/octree/octree.h>
+#include <pcl17/classification/PHVObjectClassifier.h>
+#include <pcl17/features/sgfall.h>
 #include <sac_3dof.h>
 #include <set>
-#include <pcl/io/pcd_io.h>
+#include <pcl17/io/pcd_io.h>
 #include <ransac_simple.h>
-#include <pcl/features/vfh.h>
+#include <pcl17/features/vfh.h>
 
 template<class FeatureType, class FeatureEstimatorType>
   void classify(string database_dir, string scene_file_name)
@@ -36,27 +37,27 @@ template<class FeatureType, class FeatureEstimatorType>
     std::string debug_folder = scene_name + "_debug/";
     std::string output_dir = scene_name + "_result/";
 
-    pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, FeatureType> oc;
+    pcl17::PHVObjectClassifier<pcl17::PointXYZ, pcl17::PointNormal, FeatureType> oc;
 
-    typename pcl::Feature<pcl::PointNormal, FeatureType>::Ptr feature_estimator(new FeatureEstimatorType);
+    typename pcl17::Feature<pcl17::PointNormal, FeatureType>::Ptr feature_estimator(new FeatureEstimatorType);
     oc.setFeatureEstimator(feature_estimator);
 
-    oc.setDebug(false);
+    oc.setDebug(true);
     oc.setDatabaseDir(database_dir);
     oc.loadFromFile();
 
     oc.setDebugFolder(debug_folder);
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl17::PointCloud<pcl17::PointXYZ>::Ptr cloud(new pcl17::PointCloud<pcl17::PointXYZ>);
 
-    pcl::io::loadPCDFile(scene_file_name, *cloud);
+    pcl17::io::loadPCDFile(scene_file_name, *cloud);
     oc.setScene(cloud, 2.4);
 
     oc.classify();
 
-    map<string, vector<pcl::PointCloud<pcl::PointNormal>::Ptr> > objects = oc.getFoundObjects();
+    map<string, vector<pcl17::PointCloud<pcl17::PointNormal>::Ptr> > objects = oc.getFoundObjects();
 
-    typedef typename map<string, vector<pcl::PointCloud<pcl::PointNormal>::Ptr> >::value_type vt;
+    typedef typename map<string, vector<pcl17::PointCloud<pcl17::PointNormal>::Ptr> >::value_type vt;
 
     boost::filesystem::path out_path(output_dir);
 
@@ -73,7 +74,7 @@ template<class FeatureType, class FeatureEstimatorType>
       std::stringstream ss;
       ss << output_dir << v.first << i << ".pcd";
       std::cerr << "Writing to file " << ss.str() << std::endl;
-      pcl::io::savePCDFileASCII(ss.str(), *v.second[i]);
+      pcl17::io::savePCDFileASCII(ss.str(), *v.second[i]);
     }
   }
 
@@ -84,7 +85,7 @@ int main(int argc, char** argv)
 
   if (argc < 5)
   {
-    PCL_INFO ("Usage %s -scene_file_name /dir/with/pointclouds -database_dir /where/to/put/database [options]\n", argv[0]);
+    PCL17_INFO ("Usage %s -scene_file_name /dir/with/pointclouds -database_dir /where/to/put/database [options]\n", argv[0]);
     return -1;
   }
 
@@ -92,26 +93,26 @@ int main(int argc, char** argv)
   std::string scene_file_name;
   std::string features = "sgf";
 
-  pcl::console::parse_argument(argc, argv, "-database_dir", database_dir);
-  pcl::console::parse_argument(argc, argv, "-scene_file_name", scene_file_name);
+  pcl17::console::parse_argument(argc, argv, "-database_dir", database_dir);
+  pcl17::console::parse_argument(argc, argv, "-scene_file_name", scene_file_name);
 
-  pcl::console::parse_argument(argc, argv, "-features", features);
+  pcl17::console::parse_argument(argc, argv, "-features", features);
 
   if (features == "sgf")
   {
-    classify<pcl::Histogram<pcl::SGFALL_SIZE>,
-        pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<pcl::SGFALL_SIZE> > > (database_dir, scene_file_name
+    classify<pcl17::Histogram<pcl17::SGFALL_SIZE>,
+        pcl17::SGFALLEstimation<pcl17::PointNormal, pcl17::Histogram<pcl17::SGFALL_SIZE> > > (database_dir, scene_file_name
 
     );
   }
   else if (features == "esf")
   {
-    classify<pcl::ESFSignature640, pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640> > (database_dir,
+    classify<pcl17::ESFSignature640, pcl17::ESFEstimation<pcl17::PointNormal, pcl17::ESFSignature640> > (database_dir,
                                                                                                  scene_file_name);
   }
   else if (features == "vfh")
   {
-    classify<pcl::VFHSignature308, pcl::VFHEstimation<pcl::PointNormal, pcl::PointNormal, pcl::VFHSignature308> > (
+    classify<pcl17::VFHSignature308, pcl17::VFHEstimation<pcl17::PointNormal, pcl17::PointNormal, pcl17::VFHSignature308> > (
                                                                                                                    database_dir,
                                                                                                                    scene_file_name);
   }

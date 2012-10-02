@@ -8,7 +8,8 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/simple_features</url>
-  <depend package="pcl" />
+  <depend package="pcl17" />
+  <rosdep name="eigen"/>
   
   <export>
   	<cpp cflags="-I${prefix}/include/" />

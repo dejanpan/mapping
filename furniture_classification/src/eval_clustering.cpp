@@ -12,17 +12,18 @@
  *      Author: vsu
  */
 
-#include <pcl/console/parse.h>
-#include <pcl/sample_consensus/ransac.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/octree/octree.h>
-#include <pcl/classification/PHVObjectClassifier.h>
-#include <pcl/features/sgfall.h>
+#include <pcl17/console/parse.h>
+#include <pcl17/console/print.h>
+#include <pcl17/sample_consensus/ransac.h>
+#include <pcl17/filters/passthrough.h>
+#include <pcl17/octree/octree.h>
+#include <pcl17/classification/PHVObjectClassifier.h>
+#include <pcl17/features/sgfall.h>
 #include <sac_3dof.h>
 #include <set>
-#include <pcl/io/pcd_io.h>
+#include <pcl17/io/pcd_io.h>
 #include <ransac_simple.h>
-#include <pcl/features/vfh.h>
+#include <pcl17/features/vfh.h>
 
 template<class FeatureType, class FeatureEstimatorType>
   void eval_clustering(string database_dir, string scans_dir,const  std::string & extermal_classifier_file)
@@ -32,9 +33,9 @@ template<class FeatureType, class FeatureEstimatorType>
     for (float lmt = 0.0f; lmt <= 1.0f; lmt += 0.1f)
     {
 
-      pcl::PHVObjectClassifier<pcl::PointXYZ, pcl::PointNormal, FeatureType> oc;
+      pcl17::PHVObjectClassifier<pcl17::PointXYZ, pcl17::PointNormal, FeatureType> oc;
 
-      typename pcl::Feature<pcl::PointNormal, FeatureType>::Ptr feature_estimator(new FeatureEstimatorType);
+      typename pcl17::Feature<pcl17::PointNormal, FeatureType>::Ptr feature_estimator(new FeatureEstimatorType);
       oc.setFeatureEstimator(feature_estimator);
 
       oc.setDatabaseDir(database_dir);
@@ -43,7 +44,7 @@ template<class FeatureType, class FeatureEstimatorType>
       oc.setDebugFolder(debug_folder);
       oc.setDebug(false);
 
-      pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+      pcl17::PointCloud<pcl17::PointXYZ>::Ptr cloud(new pcl17::PointCloud<pcl17::PointXYZ>);
 
       //int iter = 0;
 
@@ -65,7 +66,7 @@ template<class FeatureType, class FeatureEstimatorType>
           {
             //std::cerr << "Processing scan number " << iter << std::endl;
             //iter++;
-            pcl::io::loadPCDFile(v.c_str(), *cloud);
+            pcl17::io::loadPCDFile(v.c_str(), *cloud);
             oc.setScene(cloud, 2.4);
 
             if(extermal_classifier_file == "")
@@ -102,7 +103,7 @@ int main(int argc, char** argv)
 
   if (argc < 5)
   {
-    PCL_INFO ("Usage %s -scans_dir /dir/with/scans -database_dir /where/to/put/database [options]\n", argv[0]);
+    PCL17_INFO ("Usage %s -scans_dir /dir/with/scans -database_dir /where/to/put/database [options]\n", argv[0]);
     return -1;
   }
 
@@ -111,27 +112,27 @@ int main(int argc, char** argv)
   std::string features = "sgf";
   std::string extermal_classifier_file = "";
 
-  pcl::console::parse_argument(argc, argv, "-database_dir", database_dir);
-  pcl::console::parse_argument(argc, argv, "-scans_dir", scans_dir);
-  pcl::console::parse_argument(argc, argv, "-features", features);
-  pcl::console::parse_argument(argc, argv, "-extermal_classifier_file", extermal_classifier_file);
+  pcl17::console::parse_argument(argc, argv, "-database_dir", database_dir);
+  pcl17::console::parse_argument(argc, argv, "-scans_dir", scans_dir);
+  pcl17::console::parse_argument(argc, argv, "-features", features);
+  pcl17::console::parse_argument(argc, argv, "-extermal_classifier_file", extermal_classifier_file);
 
   if (features == "sgf")
   {
-    eval_clustering<pcl::Histogram<pcl::SGFALL_SIZE>, pcl::SGFALLEstimation<pcl::PointNormal, pcl::Histogram<
-        pcl::SGFALL_SIZE> > > (database_dir, scans_dir, extermal_classifier_file
+    eval_clustering<pcl17::Histogram<pcl17::SGFALL_SIZE>, pcl17::SGFALLEstimation<pcl17::PointNormal, pcl17::Histogram<
+        pcl17::SGFALL_SIZE> > > (database_dir, scans_dir, extermal_classifier_file
 
     );
   }
   else if (features == "esf")
   {
-    eval_clustering<pcl::ESFSignature640, pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640> > (database_dir,
+    eval_clustering<pcl17::ESFSignature640, pcl17::ESFEstimation<pcl17::PointNormal, pcl17::ESFSignature640> > (database_dir,
                                                                                                         scans_dir,
                                                                                                         extermal_classifier_file);
   }
   else if (features == "vfh")
   {
-    eval_clustering<pcl::VFHSignature308, pcl::VFHEstimation<pcl::PointNormal, pcl::PointNormal, pcl::VFHSignature308> > (
+    eval_clustering<pcl17::VFHSignature308, pcl17::VFHEstimation<pcl17::PointNormal, pcl17::PointNormal, pcl17::VFHSignature308> > (
                                                                                                                           database_dir,
                                                                                                                           scans_dir,
                                                                                                                           extermal_classifier_file);

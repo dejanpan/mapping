@@ -8,25 +8,25 @@
 #ifndef PHVOBJECTCLASSIFIER_H_
 #define PHVOBJECTCLASSIFIER_H_
 
-#include <pcl/point_types.h>
-#include <pcl/features/feature.h>
-#include <pcl/search/flann_search.h>
-#include <pcl/search/impl/flann_search.hpp>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/kdtree/impl/kdtree_flann.hpp>
-#include <pcl/surface/mls.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/segmentation/region_growing.h>
-#include <pcl/common/transforms.h>
+#include <pcl17/point_types.h>
+#include <pcl17/features/feature.h>
+#include <pcl17/search/flann_search.h>
+#include <pcl17/search/impl/flann_search.hpp>
+#include <pcl17/kdtree/kdtree_flann.h>
+#include <pcl17/kdtree/impl/kdtree_flann.hpp>
+#include <pcl17/surface/mls.h>
+#include <pcl17/io/pcd_io.h>
+#include <pcl17/filters/voxel_grid.h>
+#include <pcl17/segmentation/region_growing.h>
+#include <pcl17/common/transforms.h>
 
-#include <pcl/ModelCoefficients.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/features/feature.h>
+#include <pcl17/ModelCoefficients.h>
+#include <pcl17/io/pcd_io.h>
+#include <pcl17/point_types.h>
+#include <pcl17/sample_consensus/method_types.h>
+#include <pcl17/sample_consensus/model_types.h>
+#include <pcl17/segmentation/sac_segmentation.h>
+#include <pcl17/features/feature.h>
 
 #include <ransac_simple.h>
 #include <sac_3dof.h>
@@ -44,7 +44,7 @@ using std::string;
 using std::vector;
 using std::set;
 
-namespace pcl
+namespace pcl17
 {
 
 template<class PointT, class PointNormalT, class FeatureT>
@@ -52,19 +52,19 @@ template<class PointT, class PointNormalT, class FeatureT>
   {
   public:
 
-    typedef typename pcl::PointCloud<PointT> PointCloud;
-    typedef typename pcl::PointCloud<PointT>::Ptr PointCloudPtr;
-    typedef typename pcl::PointCloud<PointT>::ConstPtr PointCloudConstPtr;
+    typedef typename pcl17::PointCloud<PointT> PointCloud;
+    typedef typename pcl17::PointCloud<PointT>::Ptr PointCloudPtr;
+    typedef typename pcl17::PointCloud<PointT>::ConstPtr PointCloudConstPtr;
 
-    typedef typename pcl::search::KdTree<PointT> PointTree;
-    typedef typename pcl::search::KdTree<PointT>::Ptr PointTreePtr;
+    typedef typename pcl17::search::KdTree<PointT> PointTree;
+    typedef typename pcl17::search::KdTree<PointT>::Ptr PointTreePtr;
 
-    typedef typename pcl::search::KdTree<PointNormalT> PointNormalTree;
-    typedef typename pcl::search::KdTree<PointNormalT>::Ptr PointNormalTreePtr;
+    typedef typename pcl17::search::KdTree<PointNormalT> PointNormalTree;
+    typedef typename pcl17::search::KdTree<PointNormalT>::Ptr PointNormalTreePtr;
 
-    typedef typename pcl::PointCloud<PointNormalT> PointNormalCloud;
-    typedef typename pcl::PointCloud<PointNormalT>::Ptr PointNormalCloudPtr;
-    typedef typename pcl::PointCloud<PointNormalT>::ConstPtr PointNormalCloudConstPtr;
+    typedef typename pcl17::PointCloud<PointNormalT> PointNormalCloud;
+    typedef typename pcl17::PointCloud<PointNormalT>::Ptr PointNormalCloudPtr;
+    typedef typename pcl17::PointCloud<PointNormalT>::ConstPtr PointNormalCloudConstPtr;
 
     typedef typename Feature<PointNormalT, FeatureT>::Ptr FeatureEstimatorType;
     typedef typename boost::shared_ptr<MovingLeastSquares<PointT, PointNormalT> > MovingLeastSquaresType;
@@ -81,7 +81,7 @@ template<class PointT, class PointNormalT, class FeatureT>
           debug_folder_(""), mls_(new MovingLeastSquares<PointT, PointNormalT> )
     {
 
-      typedef pcl::PointCloud<FeatureT> PointFeatureCloud;
+      typedef pcl17::PointCloud<FeatureT> PointFeatureCloud;
       database_features_cloud_.reset(new PointFeatureCloud);
     }
     virtual ~PHVObjectClassifier()
@@ -174,7 +174,7 @@ template<class PointT, class PointNormalT, class FeatureT>
     {
       std::vector<int> idx;
 
-      pcl::PassThrough<PointT> pass;
+      pcl17::PassThrough<PointT> pass;
       pass.setInputCloud(model);
       pass.setFilterFieldName("x");
       pass.setFilterLimits(-cut_off_distance, cut_off_distance);
@@ -183,7 +183,7 @@ template<class PointT, class PointNormalT, class FeatureT>
       PointCloudPtr model_cut(new PointCloud(*model, idx));
 
       scene_ = estimateNormalsAndSubsample(model_cut);
-      pcl::getMinMax3D<PointNormalT>(*scene_, min_scene_bound_, max_scene_bound_);
+      pcl17::getMinMax3D<PointNormalT>(*scene_, min_scene_bound_, max_scene_bound_);
     }
 
     PointNormalCloudPtr getScene()
@@ -220,29 +220,29 @@ template<class PointT, class PointNormalT, class FeatureT>
 
   protected:
 
-    typename pcl::PointCloud<PointNormalT>::Ptr
-    estimateNormalsAndSubsample(typename pcl::PointCloud<PointT>::ConstPtr cloud_orig);
+    typename pcl17::PointCloud<PointNormalT>::Ptr
+    estimateNormalsAndSubsample(typename pcl17::PointCloud<PointT>::ConstPtr cloud_orig);
     void getSegmentsFromCloud(PointNormalCloudPtr cloud_with_normals,
-                              vector<boost::shared_ptr<vector<int> > > & segment_indices, pcl::PointCloud<
-                                  pcl::PointXYZRGBNormal>::Ptr & colored_segments);
+                              vector<boost::shared_ptr<vector<int> > > & segment_indices, pcl17::PointCloud<
+                                  pcl17::PointXYZRGBNormal>::Ptr & colored_segments);
     void appendFeaturesFromCloud(PointNormalCloudPtr & cloud, const string & class_name, const int i);
     void normalizeFeatures(std::vector<FeatureT> & features);
     void normalizeFeaturesWithCurrentMinMax(std::vector<FeatureT> & features);
     void clusterFeatures(vector<FeatureT> & cluster_centers, vector<int> & cluster_labels);
     void vote();
-    Eigen::MatrixXf projectVotesToGrid(const pcl::PointCloud<pcl::PointXYZI> & model_centers, int & grid_center_x,
+    Eigen::MatrixXf projectVotesToGrid(const pcl17::PointCloud<pcl17::PointXYZI> & model_centers, int & grid_center_x,
                                        int & grid_center_y);
-    typename pcl::PointCloud<PointT>::Ptr findLocalMaximaInGrid(Eigen::MatrixXf grid, float window_size);
+    typename pcl17::PointCloud<PointT>::Ptr findLocalMaximaInGrid(Eigen::MatrixXf grid, float window_size);
     vector<boost::shared_ptr<std::vector<int> > >
-        findVotedSegments(typename pcl::PointCloud<PointT>::Ptr local_maxima_, const string & class_name,
+        findVotedSegments(typename pcl17::PointCloud<PointT>::Ptr local_maxima_, const string & class_name,
                           float window_size);
     void fitModelsWithRansac(vector<boost::shared_ptr<std::vector<int> > > & voted_segments_, const string class_name,
                              RandomSampleConsensusSimple<PointNormalT> & ransac, vector<PointNormalCloudPtr> & result_,
                              vector<float> & scores_);
     void generateVisibilityScore(vector<PointNormalCloudPtr> & result_, vector<float> & scores_);
-    bool intersectXY(const pcl::PointCloud<PointNormalT> & cloud1, const pcl::PointCloud<PointNormalT> & cloud2);
-    vector<typename pcl::PointCloud<PointNormalT>::Ptr> removeIntersecting(vector<
-        typename pcl::PointCloud<PointNormalT>::Ptr> & result_, vector<float> & scores_);
+    bool intersectXY(const pcl17::PointCloud<PointNormalT> & cloud1, const pcl17::PointCloud<PointNormalT> & cloud2);
+    vector<typename pcl17::PointCloud<PointNormalT>::Ptr> removeIntersecting(vector<
+        typename pcl17::PointCloud<PointNormalT>::Ptr> & result_, vector<float> & scores_);
     typename Eigen::ArrayXXi getLocalMaximaGrid(Eigen::MatrixXf & grid, float window_size);
 
   public:
@@ -272,7 +272,7 @@ template<class PointT, class PointNormalT, class FeatureT>
     MovingLeastSquaresType mls_;
 
     DatabaseType database_;
-    typename pcl::PointCloud<FeatureT>::Ptr database_features_cloud_;
+    typename pcl17::PointCloud<FeatureT>::Ptr database_features_cloud_;
 
     ModelMapType class_name_to_partial_views_map_;
     ModelMapType class_name_to_full_models_map_;
@@ -285,7 +285,7 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     PointNormalCloudPtr scene_;
     PointNormalT min_scene_bound_, max_scene_bound_;
-    map<string, pcl::PointCloud<pcl::PointXYZI> > votes_;
+    map<string, pcl17::PointCloud<pcl17::PointXYZI> > votes_;
     map<string, vector<int> > voted_segment_idx_;
 
     map<string, float> ransac_result_threshold_;
@@ -309,7 +309,7 @@ template<class FeatureT>
   }
 
 template<class PT, class PNT, class FT>
-  YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PHVObjectClassifier<PT, PNT, FT> & h)
+  YAML::Emitter& operator <<(YAML::Emitter& out, const pcl17::PHVObjectClassifier<PT, PNT, FT> & h)
   {
 
     out << YAML::BeginMap;
@@ -384,7 +384,7 @@ template<class PT, class PNT, class FT>
     out << YAML::Value;
     out << YAML::BeginMap;
 
-    typedef typename pcl::PHVObjectClassifier<PT, PNT, FT>::ModelMapValueType M;
+    typedef typename pcl17::PHVObjectClassifier<PT, PNT, FT>::ModelMapValueType M;
 
     BOOST_FOREACH(M v, h.class_name_to_full_models_map_)
 {    out << YAML::Key << v.first;
@@ -394,7 +394,7 @@ template<class PT, class PNT, class FT>
     {
       std::stringstream ss;
       ss << "models/" << v.first << i << ".pcd";
-      pcl::io::savePCDFileASCII(h.database_dir_ + ss.str(), *v.second[i]);
+      pcl17::io::savePCDFileASCII(h.database_dir_ + ss.str(), *v.second[i]);
       out << ss.str();
 
     }
@@ -409,7 +409,7 @@ template<class PT, class PNT, class FT>
 }
 
 template<int N>
-YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::Histogram<N> & h)
+YAML::Emitter& operator <<(YAML::Emitter& out, const pcl17::Histogram<N> & h)
 {
   out << YAML::Flow << YAML::BeginSeq;
   for (int j = 0; j < N; j++)
@@ -421,7 +421,7 @@ YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::Histogram<N> & h)
 }
 
 template<int N>
-void operator >>(const YAML::Node& node, pcl::Histogram<N> & h)
+void operator >>(const YAML::Node& node, pcl17::Histogram<N> & h)
 {
   for (int j = 0; j < N; j++)
   {
@@ -429,7 +429,7 @@ void operator >>(const YAML::Node& node, pcl::Histogram<N> & h)
   }
 }
 
-YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::ESFSignature640 & h)
+YAML::Emitter& operator <<(YAML::Emitter& out, const pcl17::ESFSignature640 & h)
 {
   out << YAML::BeginSeq;
   for (int j = 0; j < 640; j++)
@@ -440,7 +440,7 @@ YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::ESFSignature640 & h)
   return out;
 }
 
-void operator >>(const YAML::Node& node, pcl::ESFSignature640 & h)
+void operator >>(const YAML::Node& node, pcl17::ESFSignature640 & h)
 {
   for (int j = 0; j < 640; j++)
   {
@@ -448,7 +448,7 @@ void operator >>(const YAML::Node& node, pcl::ESFSignature640 & h)
   }
 }
 
-YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::VFHSignature308 & h)
+YAML::Emitter& operator <<(YAML::Emitter& out, const pcl17::VFHSignature308 & h)
 {
   out << YAML::Flow << YAML::BeginSeq;
   for (int j = 0; j < 308; j++)
@@ -459,7 +459,7 @@ YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::VFHSignature308 & h)
   return out;
 }
 
-void operator >>(const YAML::Node& node, pcl::VFHSignature308 & h)
+void operator >>(const YAML::Node& node, pcl17::VFHSignature308 & h)
 {
   for (int j = 0; j < 308; j++)
   {
@@ -467,7 +467,7 @@ void operator >>(const YAML::Node& node, pcl::VFHSignature308 & h)
   }
 }
 
-YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PointCloud<pcl::ESFSignature640> & cloud)
+YAML::Emitter& operator <<(YAML::Emitter& out, const pcl17::PointCloud<pcl17::ESFSignature640> & cloud)
 {
   out << YAML::Flow << YAML::BeginSeq;
   for (size_t i = 0; i < cloud.points.size(); i++)
@@ -479,13 +479,13 @@ YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PointCloud<pcl::ESFSig
   return out;
 }
 
-void operator >>(const YAML::Node& node, pcl::PointCloud<pcl::ESFSignature640> & cloud)
+void operator >>(const YAML::Node& node, pcl17::PointCloud<pcl17::ESFSignature640> & cloud)
 {
   cloud.clear();
 
   for (size_t i = 0; i < node.size(); i++)
   {
-    pcl::ESFSignature640 point;
+    pcl17::ESFSignature640 point;
     node[i]["cluster_center"] >> point;
     cloud.points.push_back(point);
 
@@ -496,7 +496,7 @@ void operator >>(const YAML::Node& node, pcl::PointCloud<pcl::ESFSignature640> &
   cloud.is_dense = true;
 }
 
-YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PointCloud<pcl::VFHSignature308> & cloud)
+YAML::Emitter& operator <<(YAML::Emitter& out, const pcl17::PointCloud<pcl17::VFHSignature308> & cloud)
 {
   out << YAML::BeginSeq;
   for (size_t i = 0; i < cloud.points.size(); i++)
@@ -508,13 +508,13 @@ YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PointCloud<pcl::VFHSig
   return out;
 }
 
-void operator >>(const YAML::Node& node, pcl::PointCloud<pcl::VFHSignature308> & cloud)
+void operator >>(const YAML::Node& node, pcl17::PointCloud<pcl17::VFHSignature308> & cloud)
 {
   cloud.clear();
 
   for (size_t i = 0; i < node.size(); i++)
   {
-    pcl::VFHSignature308 point;
+    pcl17::VFHSignature308 point;
     node[i]["cluster_center"] >> point;
     cloud.points.push_back(point);
 
@@ -526,7 +526,7 @@ void operator >>(const YAML::Node& node, pcl::PointCloud<pcl::VFHSignature308> &
 }
 
 template<typename PointT>
-YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PointCloud<PointT> & cloud)
+YAML::Emitter& operator <<(YAML::Emitter& out, const pcl17::PointCloud<PointT> & cloud)
 {
   out << YAML::BeginSeq;
   for (size_t i = 0; i < cloud.points.size(); i++)
@@ -540,7 +540,7 @@ YAML::Emitter& operator <<(YAML::Emitter& out, const pcl::PointCloud<PointT> & c
 }
 
 template<typename PointT>
-void operator >>(const YAML::Node& node, pcl::PointCloud<PointT> & cloud)
+void operator >>(const YAML::Node& node, pcl17::PointCloud<PointT> & cloud)
 {
   cloud.clear();
 
@@ -561,15 +561,15 @@ void operator >>(const YAML::Node& node, pcl::PointCloud<PointT> & cloud)
 
 template<class PointT, class FeatureT>
 YAML::Emitter& operator <<(YAML::Emitter& out,const
-    map<FeatureT, map<string, pcl::PointCloud<PointT> > > & database)
+    map<FeatureT, map<string, pcl17::PointCloud<PointT> > > & database)
 {
   out << YAML::BeginSeq;
 
-  for (typename map<FeatureT, map<string, pcl::PointCloud<PointT> > >::const_iterator it =
+  for (typename map<FeatureT, map<string, pcl17::PointCloud<PointT> > >::const_iterator it =
       database.begin(); it != database.end(); it++)
   {
     FeatureT cluster_center = it->first;
-    map<string, pcl::PointCloud<PointT> > class_centroid_map = it->second;
+    map<string, pcl17::PointCloud<PointT> > class_centroid_map = it->second;
 
     out << YAML::BeginMap;
     out << YAML::Key << "cluster_center";
@@ -578,11 +578,11 @@ YAML::Emitter& operator <<(YAML::Emitter& out,const
     out << YAML::Key << "classes";
     out << YAML::Value << YAML::BeginSeq;
 
-    for (typename map<string, pcl::PointCloud<PointT> >::const_iterator it2 =
+    for (typename map<string, pcl17::PointCloud<PointT> >::const_iterator it2 =
         class_centroid_map.begin(); it2 != class_centroid_map.end(); it2++)
     {
       std::string class_name = it2->first;
-      pcl::PointCloud<PointT> centroids = it2->second;
+      pcl17::PointCloud<PointT> centroids = it2->second;
       out << YAML::BeginMap << YAML::Key << "class_name";
       out << YAML::Value << class_name;
       out << YAML::Key << "centroids";
@@ -601,7 +601,7 @@ YAML::Emitter& operator <<(YAML::Emitter& out,const
 }
 
 template<class PointT, class FeatureT>
-void operator >>(const YAML::Node& node, map<FeatureT, map<string, pcl::PointCloud<PointT> > > & database)
+void operator >>(const YAML::Node& node, map<FeatureT, map<string, pcl17::PointCloud<PointT> > > & database)
 {
   for (size_t i = 0; i < node.size(); i++)
   {
@@ -618,7 +618,7 @@ void operator >>(const YAML::Node& node, map<FeatureT, map<string, pcl::PointClo
 }
 
 template<class PT, class PNT, class FT>
-void operator >>(const YAML::Node& node, pcl::PHVObjectClassifier<PT, PNT, FT> & h)
+void operator >>(const YAML::Node& node, pcl17::PHVObjectClassifier<PT, PNT, FT> & h)
 {
   node["subsampling_resolution"] >> h.subsampling_resolution_;
   node["mls_polynomial_fit"] >> h.mls_polynomial_fit_;
@@ -660,7 +660,7 @@ void operator >>(const YAML::Node& node, pcl::PHVObjectClassifier<PT, PNT, FT> &
     for(size_t i=0; i<v.second.size(); i++)
     {
       typename PointCloud<PNT>::Ptr cloud(new PointCloud<PNT>);
-      pcl::io::loadPCDFile(h.database_dir_ + v.second[i], *cloud);
+      pcl17::io::loadPCDFile(h.database_dir_ + v.second[i], *cloud);
       h.class_name_to_full_models_map_[v.first].push_back(cloud);
 
     }
@@ -670,12 +670,12 @@ void operator >>(const YAML::Node& node, pcl::PHVObjectClassifier<PT, PNT, FT> &
 }
 
 template<int N>
-void operator >>(const YAML::Node& node, pcl::PointCloud<pcl::Histogram<N> > & feature_cloud)
+void operator >>(const YAML::Node& node, pcl17::PointCloud<pcl17::Histogram<N> > & feature_cloud)
 {
 
   for (size_t i = 0; i < node.size(); i++)
   {
-    pcl::Histogram<N> cluster_center;
+    pcl17::Histogram<N> cluster_center;
     node[i]["cluster_center"] >> cluster_center;
     feature_cloud.points.push_back(cluster_center);
   }

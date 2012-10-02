@@ -35,37 +35,33 @@
  *
  */
 
-#ifndef PCL_FEATURES_SGF9_H_
-#define PCL_FEATURES_SGF9_H_
+#ifndef PCL_FEATURES_SGF5_H_
+#define PCL_FEATURES_SGF5_H_
 
-#include <pcl/features/feature.h>
-#include <pcl/features/sgf3.h>
+#include <pcl17/features/feature.h>
 
-namespace pcl
+namespace pcl17
 {
-  const int SGF9_SIZE = 1;
+  const int SGF5_SIZE = 3;
 
   template <typename PointInT, typename PointOutT>
-  class SGF9Estimation : public Feature<PointInT, PointOutT>
+  class SGF5Estimation : public Feature<PointInT, PointOutT>
   {
 
     public:
 
       using Feature<PointInT, PointOutT>::feature_name_;
       using Feature<PointInT, PointOutT>::input_;
-      using Feature<PointInT, PointOutT>::surface_;
       using Feature<PointInT, PointOutT>::indices_;
-      using Feature<PointInT, PointOutT>::search_parameter_;
-      using Feature<PointInT, PointOutT>::tree_;
       using Feature<PointInT, PointOutT>::k_;
 
       typedef typename Feature<PointInT, PointOutT>::PointCloudOut PointCloudOut;
       typedef typename Feature<PointInT, PointOutT>::PointCloudIn  PointCloudIn;
 
       /** \brief Empty constructor. */
-      SGF9Estimation ()
+      SGF5Estimation ()
       {
-        feature_name_ = "SGF9Estimation";
+        feature_name_ = "SGF5Estimation";
         k_ = 1;
       };
 
@@ -85,14 +81,6 @@ namespace pcl
         }
 
 
-        // Compute feature 3
-        const int sgf3_size = 1;
-        pcl::PointCloud<pcl::Histogram<sgf3_size> >::Ptr sgf3s (new pcl::PointCloud<pcl::Histogram<sgf3_size> > ());
-        pcl::SGF3Estimation<PointInT, pcl::Histogram<sgf3_size> > sgf3;
-        sgf3.setInputCloud (cloud);
-        sgf3.compute (*sgf3s);
-
-
         // Compute eigenvectors and eigenvalues
         EIGEN_ALIGN16 Eigen::Matrix3f covariance_matrix;
         Eigen::Vector4f centroid3;
@@ -100,15 +88,37 @@ namespace pcl
         computeCovarianceMatrix (*cloud, centroid3, covariance_matrix);
         EIGEN_ALIGN16 Eigen::Vector3f eigen_values;
         EIGEN_ALIGN16 Eigen::Matrix3f eigen_vectors;
-        pcl::eigen33 (covariance_matrix, eigen_vectors, eigen_values);
+        pcl17::eigen33 (covariance_matrix, eigen_vectors, eigen_values);
+        Eigen::Vector3f e1 (eigen_vectors (0, 0), eigen_vectors (1, 0), eigen_vectors (2, 0));
+        Eigen::Vector3f e2 (eigen_vectors (0, 1), eigen_vectors (1, 1), eigen_vectors (2, 1));
+        Eigen::Vector3f e3 (eigen_vectors (0, 2), eigen_vectors (1, 2), eigen_vectors (2, 2));
 
 
-        // Compute the volume of the oriented bounding box
-        float box_vol = 8 * eigen_values[0] * eigen_values[1] * eigen_values[2];
+        // Project the cloud onto the eigenvectors
+        typename PointCloud<PointXYZ>::Ptr proj_cloud (new PointCloud<PointXYZ> ());
+        proj_cloud->width = cloud->width * cloud->height;
+        proj_cloud->height = 1;
+        proj_cloud->points.resize (proj_cloud->width * proj_cloud->height);
+        for (size_t idx = 0; idx < cloud->width * cloud->height; ++idx)
+        {
+          Eigen::Vector3f curr_point (cloud->points[idx].x, cloud->points[idx].y, cloud->points[idx].z);
+          proj_cloud->points[idx].x = curr_point.dot (e1);
+          proj_cloud->points[idx].y = curr_point.dot (e2);
+          proj_cloud->points[idx].z = curr_point.dot (e3);
+        }
+
+
+        // Compute the variances of the projected cloud
+        EIGEN_ALIGN16 Eigen::Matrix3f proj_cov;
+        Eigen::Vector4f proj_cent;
+        compute3DCentroid (*proj_cloud, proj_cent);
+        computeCovarianceMatrix (*cloud, proj_cent, proj_cov);
 
 
         // Compute the feature vector
-        output.points[0].histogram[0] = box_vol != 0 ? sgf3s->points[0].histogram[0] / box_vol : 0;
+        output.points[0].histogram[0] = proj_cov (0, 0);
+        output.points[0].histogram[1] = proj_cov (1, 1);
+        output.points[0].histogram[2] = proj_cov (2, 2);
       }
       /////////////////////////////////////////////////////////////////////////////
 
@@ -119,8 +129,8 @@ namespace pcl
        * \param[out] output the output point cloud
        */
       void
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &) {}
+      computeFeatureEigen (pcl17::PointCloud<Eigen::MatrixXf> &) {}
   };
 }
 
-#endif  //#ifndef PCL_FEATURES_SGF9_H_
+#endif  //#ifndef PCL_FEATURES_SGF5_H_

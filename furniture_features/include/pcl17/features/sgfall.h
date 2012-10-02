@@ -38,20 +38,20 @@
 #ifndef PCL_FEATURES_SGFALL_H_
 #define PCL_FEATURES_SGFALL_H_
 
-#include <pcl/features/feature.h>
-#include <pcl/features/sgf1.h>
-#include <pcl/features/sgf2.h>
-#include <pcl/features/sgf3.h>
-#include <pcl/features/sgf4.h>
-#include <pcl/features/sgf5.h>
-#include <pcl/features/sgf6.h>
-#include <pcl/features/sgf7.h>
-#include <pcl/features/sgf8.h>
-#include <pcl/features/sgf9.h>
-//#include <pcl/features/rsd.h>
-#include <pcl/features/esf.h>
+#include <pcl17/features/feature.h>
+#include <pcl17/features/sgf1.h>
+#include <pcl17/features/sgf2.h>
+#include <pcl17/features/sgf3.h>
+#include <pcl17/features/sgf4.h>
+#include <pcl17/features/sgf5.h>
+#include <pcl17/features/sgf6.h>
+#include <pcl17/features/sgf7.h>
+#include <pcl17/features/sgf8.h>
+#include <pcl17/features/sgf9.h>
+//#include <pcl17/features/rsd.h>
+#include <pcl17/features/esf.h>
 
-namespace pcl
+namespace pcl17
 {
 const int SGFALL_SIZE = 25;
 
@@ -92,166 +92,166 @@ template<typename PointInT, typename PointOutT>
       /////////////////////////////////////////////////////////////////////////////////////
       // Feature 1
 
-      pcl::PointCloud<pcl::Histogram<pcl::SGF1_SIZE> >::Ptr
+      pcl17::PointCloud<pcl17::Histogram<pcl17::SGF1_SIZE> >::Ptr
                                                             sgf1s(
-                                                                  new pcl::PointCloud<pcl::Histogram<pcl::SGF1_SIZE> >());
-      pcl::SGF1Estimation<PointInT, pcl::Histogram<pcl::SGF1_SIZE> > sgf1;
+                                                                  new pcl17::PointCloud<pcl17::Histogram<pcl17::SGF1_SIZE> >());
+      pcl17::SGF1Estimation<PointInT, pcl17::Histogram<pcl17::SGF1_SIZE> > sgf1;
       sgf1.setInputCloud(input_);
       sgf1.setIndices(indices_);
       sgf1.setSearchMethod(tree_);
       sgf1.setKSearch(k_);
       sgf1.compute(*sgf1s);
 
-      for (int n = 0; n < pcl::SGF1_SIZE; ++n)
+      for (int n = 0; n < pcl17::SGF1_SIZE; ++n)
       {
         sgfs.points[0].histogram[feature_counter + n] = sgf1s->points[0].histogram[n];
       }
-      feature_counter += pcl::SGF1_SIZE;
+      feature_counter += pcl17::SGF1_SIZE;
 
       /////////////////////////////////////////////////////////////////////////////////////
       // Feature 2
 
-      pcl::PointCloud<pcl::Histogram<pcl::SGF2_SIZE> >::Ptr
+      pcl17::PointCloud<pcl17::Histogram<pcl17::SGF2_SIZE> >::Ptr
                                                             sgf2s(
-                                                                  new pcl::PointCloud<pcl::Histogram<pcl::SGF2_SIZE> >());
-      pcl::SGF2Estimation<PointInT, pcl::Histogram<pcl::SGF2_SIZE> > sgf2;
+                                                                  new pcl17::PointCloud<pcl17::Histogram<pcl17::SGF2_SIZE> >());
+      pcl17::SGF2Estimation<PointInT, pcl17::Histogram<pcl17::SGF2_SIZE> > sgf2;
       sgf2.setInputCloud(input_);
       sgf2.setIndices(indices_);
       sgf2.setKSearch(k_);
       sgf2.compute(*sgf2s);
 
-      for (int n = 0; n < pcl::SGF2_SIZE; ++n)
+      for (int n = 0; n < pcl17::SGF2_SIZE; ++n)
       {
         sgfs.points[0].histogram[feature_counter + n] = sgf2s->points[0].histogram[n];
       }
-      feature_counter += pcl::SGF2_SIZE;
+      feature_counter += pcl17::SGF2_SIZE;
 
       /////////////////////////////////////////////////////////////////////////////////////
       // Feature 3
 
-      pcl::PointCloud<pcl::Histogram<pcl::SGF3_SIZE> >::Ptr
+      pcl17::PointCloud<pcl17::Histogram<pcl17::SGF3_SIZE> >::Ptr
                                                             sgf3s(
-                                                                  new pcl::PointCloud<pcl::Histogram<pcl::SGF3_SIZE> >());
-      pcl::SGF3Estimation<PointInT, pcl::Histogram<pcl::SGF3_SIZE> > sgf3;
+                                                                  new pcl17::PointCloud<pcl17::Histogram<pcl17::SGF3_SIZE> >());
+      pcl17::SGF3Estimation<PointInT, pcl17::Histogram<pcl17::SGF3_SIZE> > sgf3;
       sgf3.setInputCloud(input_);
       sgf3.setIndices(indices_);
       sgf3.compute(*sgf3s);
 
-      for (int n = 0; n < pcl::SGF3_SIZE; ++n)
+      for (int n = 0; n < pcl17::SGF3_SIZE; ++n)
       {
         sgfs.points[0].histogram[feature_counter + n] = sgf3s->points[0].histogram[n];
       }
-      feature_counter += pcl::SGF3_SIZE;
+      feature_counter += pcl17::SGF3_SIZE;
 
       /////////////////////////////////////////////////////////////////////////////////////
       // Feature 4
 
-      pcl::PointCloud<pcl::Histogram<pcl::SGF4_SIZE> >::Ptr
+      pcl17::PointCloud<pcl17::Histogram<pcl17::SGF4_SIZE> >::Ptr
                                                             sgf4s(
-                                                                  new pcl::PointCloud<pcl::Histogram<pcl::SGF4_SIZE> >());
-      pcl::SGF4Estimation<PointInT, pcl::Histogram<pcl::SGF4_SIZE> > sgf4;
+                                                                  new pcl17::PointCloud<pcl17::Histogram<pcl17::SGF4_SIZE> >());
+      pcl17::SGF4Estimation<PointInT, pcl17::Histogram<pcl17::SGF4_SIZE> > sgf4;
       sgf4.setInputCloud(input_);
       sgf4.setIndices(indices_);
       sgf4.compute(*sgf4s);
 
-      for (int n = 0; n < pcl::SGF4_SIZE; ++n)
+      for (int n = 0; n < pcl17::SGF4_SIZE; ++n)
       {
         sgfs.points[0].histogram[feature_counter + n] = sgf4s->points[0].histogram[n];
       }
-      feature_counter += pcl::SGF4_SIZE;
+      feature_counter += pcl17::SGF4_SIZE;
 
       /////////////////////////////////////////////////////////////////////////////////////
       // Feature 5
 
-      pcl::PointCloud<pcl::Histogram<pcl::SGF5_SIZE> >::Ptr
+      pcl17::PointCloud<pcl17::Histogram<pcl17::SGF5_SIZE> >::Ptr
                                                             sgf5s(
-                                                                  new pcl::PointCloud<pcl::Histogram<pcl::SGF5_SIZE> >());
-      pcl::SGF5Estimation<PointInT, pcl::Histogram<pcl::SGF5_SIZE> > sgf5;
+                                                                  new pcl17::PointCloud<pcl17::Histogram<pcl17::SGF5_SIZE> >());
+      pcl17::SGF5Estimation<PointInT, pcl17::Histogram<pcl17::SGF5_SIZE> > sgf5;
       sgf5.setInputCloud(input_);
       sgf5.setIndices(indices_);
       sgf5.compute(*sgf5s);
 
-      for (int n = 0; n < pcl::SGF5_SIZE; ++n)
+      for (int n = 0; n < pcl17::SGF5_SIZE; ++n)
       {
         sgfs.points[0].histogram[feature_counter + n] = sgf5s->points[0].histogram[n];
       }
-      feature_counter += pcl::SGF5_SIZE;
+      feature_counter += pcl17::SGF5_SIZE;
 
       /////////////////////////////////////////////////////////////////////////////////////
       // Feature 6
 
-      pcl::PointCloud<pcl::Histogram<pcl::SGF6_SIZE> >::Ptr
+      pcl17::PointCloud<pcl17::Histogram<pcl17::SGF6_SIZE> >::Ptr
                                                             sgf6s(
-                                                                  new pcl::PointCloud<pcl::Histogram<pcl::SGF6_SIZE> >());
-      pcl::SGF6Estimation<PointInT, pcl::Histogram<pcl::SGF6_SIZE> > sgf6;
+                                                                  new pcl17::PointCloud<pcl17::Histogram<pcl17::SGF6_SIZE> >());
+      pcl17::SGF6Estimation<PointInT, pcl17::Histogram<pcl17::SGF6_SIZE> > sgf6;
       sgf6.setInputCloud(input_);
       sgf6.setIndices(indices_);
       sgf6.compute(*sgf6s);
 
-      for (int n = 0; n < pcl::SGF6_SIZE; ++n)
+      for (int n = 0; n < pcl17::SGF6_SIZE; ++n)
       {
         sgfs.points[0].histogram[feature_counter + n] = sgf6s->points[0].histogram[n];
       }
-      feature_counter += pcl::SGF6_SIZE;
+      feature_counter += pcl17::SGF6_SIZE;
 
       /////////////////////////////////////////////////////////////////////////////////////
       // Feature 7
 
-      pcl::PointCloud<pcl::Histogram<pcl::SGF7_SIZE> >::Ptr
+      pcl17::PointCloud<pcl17::Histogram<pcl17::SGF7_SIZE> >::Ptr
                                                             sgf7s(
-                                                                  new pcl::PointCloud<pcl::Histogram<pcl::SGF7_SIZE> >());
-      pcl::SGF7Estimation<PointInT, pcl::Histogram<pcl::SGF7_SIZE> > sgf7;
+                                                                  new pcl17::PointCloud<pcl17::Histogram<pcl17::SGF7_SIZE> >());
+      pcl17::SGF7Estimation<PointInT, pcl17::Histogram<pcl17::SGF7_SIZE> > sgf7;
       sgf7.setInputCloud(input_);
       sgf7.setIndices(indices_);
       sgf7.compute(*sgf7s);
 
-      for (int n = 0; n < pcl::SGF7_SIZE; ++n)
+      for (int n = 0; n < pcl17::SGF7_SIZE; ++n)
       {
         sgfs.points[0].histogram[feature_counter + n] = sgf7s->points[0].histogram[n];
       }
-      feature_counter += pcl::SGF7_SIZE;
+      feature_counter += pcl17::SGF7_SIZE;
 
       /////////////////////////////////////////////////////////////////////////////////////
       // Feature 8
 
-      pcl::PointCloud<pcl::Histogram<pcl::SGF8_SIZE> >::Ptr
+      pcl17::PointCloud<pcl17::Histogram<pcl17::SGF8_SIZE> >::Ptr
                                                             sgf8s(
-                                                                  new pcl::PointCloud<pcl::Histogram<pcl::SGF8_SIZE> >());
-      pcl::SGF8Estimation<PointInT, pcl::Histogram<pcl::SGF8_SIZE> > sgf8;
+                                                                  new pcl17::PointCloud<pcl17::Histogram<pcl17::SGF8_SIZE> >());
+      pcl17::SGF8Estimation<PointInT, pcl17::Histogram<pcl17::SGF8_SIZE> > sgf8;
       sgf8.setInputCloud(input_);
       sgf8.setIndices(indices_);
       sgf8.compute(*sgf8s);
 
-      for (int n = 0; n < pcl::SGF8_SIZE; ++n)
+      for (int n = 0; n < pcl17::SGF8_SIZE; ++n)
       {
         sgfs.points[0].histogram[feature_counter + n] = sgf8s->points[0].histogram[n];
       }
-      feature_counter += pcl::SGF8_SIZE;
+      feature_counter += pcl17::SGF8_SIZE;
 
       /////////////////////////////////////////////////////////////////////////////////////
       // Feature 9
 
-      pcl::PointCloud<pcl::Histogram<pcl::SGF9_SIZE> >::Ptr
+      pcl17::PointCloud<pcl17::Histogram<pcl17::SGF9_SIZE> >::Ptr
                                                             sgf9s(
-                                                                  new pcl::PointCloud<pcl::Histogram<pcl::SGF9_SIZE> >());
-      pcl::SGF9Estimation<PointInT, pcl::Histogram<pcl::SGF9_SIZE> > sgf9;
+                                                                  new pcl17::PointCloud<pcl17::Histogram<pcl17::SGF9_SIZE> >());
+      pcl17::SGF9Estimation<PointInT, pcl17::Histogram<pcl17::SGF9_SIZE> > sgf9;
       sgf9.setInputCloud(input_);
       sgf9.setIndices(indices_);
       sgf9.compute(*sgf9s);
 
-      for (int n = 0; n < pcl::SGF9_SIZE; ++n)
+      for (int n = 0; n < pcl17::SGF9_SIZE; ++n)
       {
         sgfs.points[0].histogram[feature_counter + n] = sgf9s->points[0].histogram[n];
       }
-      feature_counter += pcl::SGF9_SIZE;
+      feature_counter += pcl17::SGF9_SIZE;
 
       /////////////////////////////////////////////////////////////////////////////////////
       // Feature ESF
 
 
-//      pcl::PointCloud<pcl::ESFSignature640> pc;
+//      pcl17::PointCloud<pcl17::ESFSignature640> pc;
 //
-//      pcl::ESFEstimation<pcl::PointNormal, pcl::ESFSignature640> e;
+//      pcl17::ESFEstimation<pcl17::PointNormal, pcl17::ESFSignature640> e;
 //      e.setInputCloud(input_);
 //      e.setIndices(indices_);
 //      e.compute(pc);
@@ -271,7 +271,7 @@ template<typename PointInT, typename PointOutT>
     /** \brief Make the computeFeature (&Eigen::MatrixXf); inaccessible from outside the class
      * \param[out] output the output point cloud
      */
-    void computeFeatureEigen(pcl::PointCloud<Eigen::MatrixXf> &)
+    void computeFeatureEigen(pcl17::PointCloud<Eigen::MatrixXf> &)
     {
     }
   };

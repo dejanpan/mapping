@@ -7,7 +7,7 @@
 
 #include <training.h>
 #include <sac_3dof.h>
-#include <pcl/io/io.h>
+#include <pcl17/io/io.h>
 #include <gtest/gtest.h>
 
 // Runs clustering with the same number of points as number of clusters

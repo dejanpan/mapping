@@ -12,7 +12,7 @@ plt.ylabel('Recall')
 l = []
 
 for file in os.listdir('.'):
-    if fnmatch.fnmatch(file, 'res.sgf.*.txt'):
+    if fnmatch.fnmatch(file, 'res.sgf.40.*.txt'):
         f = file.split('.')
 	print file
 	data = np.loadtxt(file, dtype=np.float32)
