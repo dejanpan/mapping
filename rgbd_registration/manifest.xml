@@ -1,6 +1,6 @@
 <package>
   <description brief="rgbd_registration">
-   This package aligns two point clouds with RGB by together by combining 2D RGB feature matching and Iterative Closest Point (ICP) algorithm in one "Joint Optimization" step. It is not a SLAM system, it simply aligns two point clouds at a time.
+   This package aligns two point clouds together by combining 2D RGB feature matching and a modified Iterative Closest Point (ICP) algorithm in one "Joint Optimization" step. It is not a SLAM system, it simply aligns two point clouds at a time.
 
   </description>
   <author>Ross Kidson</author>
