@@ -196,7 +196,7 @@ template<class PointT, class PointNormalT, class FeatureT>
       database_[cluster_center][classname].height = 1;
       database_[cluster_center][classname].is_dense = true;
 
-      ransac_result_threshold_[classname] = 0.5;
+      ransac_result_threshold_[classname] = 0.03;
 
       if (debug_)
       {
@@ -473,7 +473,7 @@ template<class PointT, class PointNormalT, class FeatureT>
     icp.setMaximumIterations(40);
     //icp.setTransformationEpsilon(0);
     //icp.setMaxCorrespondenceDistance(0.1);
-    //icp.setRANSACOutlierRejectionThreshold(5);
+    icp.setRANSACOutlierRejectionThreshold(5);
     icp.setEuclideanFitnessEpsilon(0);
 
     //pcl17::IterativeClosestPoint<PointNormalT, PointNormalT> icp;
@@ -515,7 +515,7 @@ template<class PointT, class PointNormalT, class FeatureT>
           icp.align(*Final);
 
           double score = icp.getFitnessScore();
-          std::cerr << i << " " << j << " " << score << std::endl;
+          //std::cerr << i << " " << j << " " << score << std::endl;
           if (score < min_fittness)
           {
             best_fit = Final;
