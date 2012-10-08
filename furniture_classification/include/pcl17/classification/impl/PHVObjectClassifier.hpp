@@ -46,7 +46,7 @@ template<class FeatureT>
 
 template<class PointT, class PointNormalT, class FeatureT>
   void pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::clusterFeatures(vector<FeatureT> & cluster_centers,
-                                                                                 vector<int> & cluster_labels)
+                                                                                   vector<int> & cluster_labels)
   {
     int featureLength = sizeof(features_[0].histogram) / sizeof(float);
 
@@ -104,26 +104,134 @@ template<class PointT, class PointNormalT, class FeatureT>
   {
 
     BOOST_FOREACH(ModelMapValueType &v, class_name_to_partial_views_map_)
-{    int view_num_counter = 0;
+    { int view_num_counter = 0;
 
-    for(size_t i=0; i<v.second.size(); i++)
+      for(size_t i=0; i<v.second.size(); i++)
+      {
+        appendFeaturesFromCloud(v.second[i], v.first, view_num_counter);
+        view_num_counter++;
+
+      }
+
+    }
+
+    // Transform to model centroinds in local coordinate frame of the segment
+    centroids_.getMatrixXfMap() *= -1;
+
+    normalizeFeatures( features_);
+
+    if (debug_)
     {
-      appendFeaturesFromCloud(v.second[i], v.first, view_num_counter);
-      view_num_counter++;
+
+      for (int i = 0; i < num_clusters_; i++)
+      {
+        std::stringstream ss;
+        ss << debug_folder_ << "Cluster" << i << "/";
+
+        boost::filesystem::path output_path(ss.str());
+        if (boost::filesystem::exists(output_path))
+        {
+          boost::filesystem::remove_all(output_path);
+        }
+
+        boost::filesystem::create_directories(output_path);
+      }
+
+      std::ofstream f((debug_folder_ + "features.txt").c_str());
+
+      size_t N = sizeof(features_[0].histogram) / sizeof(float);
+
+      for (size_t i = 0; i < features_.size(); i++)
+      {
+        for (size_t j = 0; j < N; j++)
+        {
+          f << features_[i].histogram[j] << " ";
+        }
+
+        f << "\n";
+
+      }
+
+      f.close();
+
+      std::ofstream f2((debug_folder_ + "classnames.txt").c_str());
+
+      for (size_t i = 0; i < classes_.size(); i++)
+      {
+
+        f2 << classes_[i] << "\n";
+
+      }
+
+      f2.close();
+
+      std::ofstream f3((debug_folder_ + "centroids.txt").c_str());
+
+      for (size_t i = 0; i < centroids_.size(); i++)
+      {
+
+        f3 << centroids_.points[i].x << " " << centroids_.points[i].y << " " << centroids_.points[i].z << "\n";
+
+      }
+
+      f3.close();
+
+    }
+
+    vector<FeatureT> cluster_centers;
+    vector<int> cluster_labels;
+
+    clusterFeatures(cluster_centers, cluster_labels);
+
+    database_.clear();
+
+    for (size_t i = 0; i < cluster_labels.size(); i++)
+    {
+
+      FeatureT cluster_center = cluster_centers[cluster_labels[i]];
+      std::string classname = classes_[i];
+
+      database_[cluster_center][classname].points.push_back(centroids_[i]);
+      database_[cluster_center][classname].width = database_[cluster_center][classname].points.size();
+      database_[cluster_center][classname].height = 1;
+      database_[cluster_center][classname].is_dense = true;
+
+      ransac_result_threshold_[classname] = 0.5;
+
+      if (debug_)
+      {
+        std::stringstream ss;
+        ss << debug_folder_ << "Cluster" << cluster_labels[i] << "/Segment" << i << ".pcd";
+        pcl17::io::savePCDFileASCII(ss.str(), *segment_pointclouds_[i]);
+
+      }
 
     }
 
   }
 
-  // Transform to model centroinds in local coordinate frame of the segment
-  centroids_.getMatrixXfMap() *= -1;
-
-  normalizeFeatures(features_);
-
-  if(debug_)
+template<class PointT, class PointNormalT, class FeatureT>
+  void pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::computeExternalClassifier(const std::string & labels)
   {
 
-    for(int i=0; i<num_clusters_; i++)
+    BOOST_FOREACH(ModelMapValueType &v, class_name_to_partial_views_map_)
+    { int view_num_counter = 0;
+
+      for(size_t i=0; i<v.second.size(); i++)
+      {
+        appendFeaturesFromCloud(v.second[i], v.first, view_num_counter);
+        view_num_counter++;
+
+      }
+
+    }
+
+    // Transform to model centroinds in local coordinate frame of the segment
+    centroids_.getMatrixXfMap() *= -1;
+
+    normalizeFeatures( features_);
+
+    for (int i = 0; i < num_clusters_; i++)
     {
       std::stringstream ss;
       ss << debug_folder_ << "Cluster" << i << "/";
@@ -137,13 +245,13 @@ template<class PointT, class PointNormalT, class FeatureT>
       boost::filesystem::create_directories(output_path);
     }
 
-    std::ofstream f((debug_folder_+"features.txt").c_str());
+    std::ofstream f((debug_folder_ + "features.txt").c_str());
 
-    size_t N = sizeof(features_[0].histogram)/sizeof(float);
+    size_t N = sizeof(features_[0].histogram) / sizeof(float);
 
-    for(size_t i=0; i<features_.size(); i++)
+    for (size_t i = 0; i < features_.size(); i++)
     {
-      for(size_t j=0; j<N; j++)
+      for (size_t j = 0; j < N; j++)
       {
         f << features_[i].histogram[j] << " ";
       }
@@ -154,9 +262,9 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     f.close();
 
-    std::ofstream f2((debug_folder_+"classnames.txt").c_str());
+    std::ofstream f2((debug_folder_ + "classnames.txt").c_str());
 
-    for(size_t i=0; i<classes_.size(); i++)
+    for (size_t i = 0; i < classes_.size(); i++)
     {
 
       f2 << classes_[i] << "\n";
@@ -165,9 +273,9 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     f2.close();
 
-    std::ofstream f3((debug_folder_+"centroids.txt").c_str());
+    std::ofstream f3((debug_folder_ + "centroids.txt").c_str());
 
-    for(size_t i=0; i<centroids_.size(); i++)
+    for (size_t i = 0; i < centroids_.size(); i++)
     {
 
       f3 << centroids_.points[i].x << " " << centroids_.points[i].y << " " << centroids_.points[i].z << "\n";
@@ -176,247 +284,278 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     f3.close();
 
-  }
+    vector<int> cluster_labels;
+    set<int> unique_cluster_labels;
+    vector<FeatureT> cluster_centers;
 
-  vector<FeatureT> cluster_centers;
-  vector<int> cluster_labels;
+    std::ifstream f4(labels.c_str());
 
-  clusterFeatures(cluster_centers, cluster_labels);
+    pcl17::PointCloud<FeatureT> mat;
+    vector<float> bias;
 
-  database_.clear();
+    int feature_size = sizeof(features_[0].histogram) / sizeof(float);
 
-  for (size_t i = 0; i < cluster_labels.size(); i++)
-  {
+    std::string line;
+    while (std::getline(f4, line))
+    //while(f4)
 
-    FeatureT cluster_center = cluster_centers[cluster_labels[i]];
-    std::string classname = classes_[i];
-
-    database_[cluster_center][classname].points.push_back(centroids_[i]);
-    database_[cluster_center][classname].width
-    = database_[cluster_center][classname].points.size();
-    database_[cluster_center][classname].height = 1;
-    database_[cluster_center][classname].is_dense = true;
-
-    ransac_result_threshold_[classname] = 0.5;
-
-    if(debug_)
     {
-      std::stringstream ss;
-      ss << debug_folder_ << "Cluster" << cluster_labels[i] << "/Segment" << i << ".pcd";
-      pcl17::io::savePCDFileASCII(ss.str(), *segment_pointclouds_[i]);
+
+      // now we'll use a stringstream to separate the fields out of the line
+      //std::stringstream ss( line );
+      //std::string field;
+      FeatureT ff;
+      //int i=0;
+
+
+      std::vector<std::string> st;
+      boost::split(st, line, boost::is_any_of(","), boost::token_compress_on);
+
+      //std::cerr << "Feature size " << feature_size << " Vector size " << st.size() <<  std::endl;
+
+      bias.push_back(atof(st[0].c_str()));
+
+      //while (std::getline( ss, field, ',' ))
+      for (size_t i = 0; i < feature_size; i++)
+      {
+        // for each field we wish to convert it to a double
+        // (since we require that the CSV contains nothing but floating-point values)
+
+        //std::stringstream fs( field );
+        //float v = 0;
+        //fs >> v;
+        //float v;
+        //char tmp;
+        //f4 >> v;
+        //f4 >> tmp;
+        //std::cerr << i << " " << st[i] << std::endl;
+        ff.histogram[i] = atof(st[i + 1].c_str());
+        //i++;
+      }
+      mat.points.push_back(ff);
+      mat.width = mat.points.size();
+      mat.height = 1;
+    }
+
+    //std::cerr << "Matrix:\n" << mat << std::endl;
+
+    //  while(f4)
+    //  {
+    //    FeatureT ff;
+    //    for(int i=0; i<feature_size; i++)
+    //    {
+    //      if (f4.peek() == ',')
+    //      {
+    //        f4.ignore();
+    //      }
+    //      f4 >> ff.histogram[i];
+    //    }
+    //    mat.push_back(ff);
+    //  }
+    //
+    //  std::ofstream f5("mat.txt");
+    //  for(int i=0; i<mat.points.size(); i++)
+    //  {
+    //    for(int j=0; j<feature_size; i++)
+    //    {
+    //      f5 << mat.points[i].histogram[j] << ",";
+    //    }
+    //    f5 << "\n";
+    //  }
+    //  f5.close();
+
+    //TODO check code
+
+    int cluster_size = mat.size();
+    num_clusters_ = cluster_size;
+
+    for (size_t i = 0; i < features_.size(); i++)
+    {
+      Eigen::ArrayXf res = Eigen::ArrayXf::Zero(cluster_size);
+
+      for (size_t j = 0; j < cluster_size; j++)
+      {
+        res[j] += bias[j];
+        for (size_t k = 0; k < feature_size; k++)
+        {
+          res[j] += mat[j].histogram[k] * features_[i].histogram[k];
+        }
+      }
+
+      int cluster_idx;
+      res.maxCoeff(&cluster_idx);
+      //std::cerr << "Cluster number " << cluster_idx << std::endl;
+      FeatureT ff;
+
+      for (size_t k = 0; k < feature_size; k++)
+      {
+        ff.histogram[k] = 0;
+      }
+
+      ff.histogram[0] = cluster_idx;
+
+      database_[ff][classes_[i]].push_back(centroids_.points[i]);
+      ransac_result_threshold_[classes_[i]] = 0.5;
+
+      if (debug_)
+      {
+        std::stringstream ss;
+        ss << debug_folder_ << "Cluster" << cluster_idx << "/Segment" << i << ".pcd";
+        pcl17::io::savePCDFileASCII(ss.str(), *segment_pointclouds_[i]);
+
+      }
 
     }
 
-  }
+    external_classifier_ = labels;
 
-}
+  }
 
 template<class PointT, class PointNormalT, class FeatureT>
-  void pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::computeExternalClassifier(const std::string & labels)
+  furniture_classification::Hypothesis::Ptr pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::generate_hypothesis(
+                                                                                                                            std::map<
+                                                                                                                                std::string,
+                                                                                                                                pcl17::PointCloud<
+                                                                                                                                    pcl17::PointXYZ>::Ptr> & votes_map)
   {
 
-    BOOST_FOREACH(ModelMapValueType &v, class_name_to_partial_views_map_)
-{    int view_num_counter = 0;
+    features_.clear();
+    centroids_.clear();
+    classes_.clear();
 
-    for(size_t i=0; i<v.second.size(); i++)
+    votes_.clear();
+    voted_segment_idx_.clear();
+
+    appendFeaturesFromCloud(scene_, "Scene", 0);
+    normalizeFeaturesWithCurrentMinMax( features_);
+    vote();
+
+    furniture_classification::Hypothesis::Ptr hp(new furniture_classification::Hypothesis);
+
+    for (std::map<std::string, pcl17::PointCloud<pcl17::PointXYZI> >::const_iterator it = votes_.begin(); it
+        != votes_.end(); it++)
     {
-      appendFeaturesFromCloud(v.second[i], v.first, view_num_counter);
-      view_num_counter++;
 
-    }
+      int grid_center_x, grid_center_y;
+      Eigen::MatrixXf grid = projectVotesToGrid(it->second, grid_center_x, grid_center_y);
 
-  }
+      PointCloudPtr local_maxima_ = findLocalMaximaInGrid(grid, window_size_);
+      local_maxima_->header.frame_id = "/base_link";
+      votes_map[it->first] = local_maxima_;
 
-  // Transform to model centroinds in local coordinate frame of the segment
-  centroids_.getMatrixXfMap() *= -1;
-
-  normalizeFeatures(features_);
-
-  for(int i=0; i<num_clusters_; i++)
-  {
-    std::stringstream ss;
-    ss << debug_folder_ << "Cluster" << i << "/";
-
-    boost::filesystem::path output_path(ss.str());
-    if (boost::filesystem::exists(output_path))
-    {
-      boost::filesystem::remove_all(output_path);
-    }
-
-    boost::filesystem::create_directories(output_path);
-  }
-
-  std::ofstream f((debug_folder_+"features.txt").c_str());
-
-  size_t N = sizeof(features_[0].histogram)/sizeof(float);
-
-  for(size_t i=0; i<features_.size(); i++)
-  {
-    for(size_t j=0; j<N; j++)
-    {
-      f << features_[i].histogram[j] << " ";
-    }
-
-    f << "\n";
-
-  }
-
-  f.close();
-
-  std::ofstream f2((debug_folder_+"classnames.txt").c_str());
-
-  for(size_t i=0; i<classes_.size(); i++)
-  {
-
-    f2 << classes_[i] << "\n";
-
-  }
-
-  f2.close();
-
-  std::ofstream f3((debug_folder_+"centroids.txt").c_str());
-
-  for(size_t i=0; i<centroids_.size(); i++)
-  {
-
-    f3 << centroids_.points[i].x << " " << centroids_.points[i].y << " " << centroids_.points[i].z << "\n";
-
-  }
-
-  f3.close();
-
-  vector<int> cluster_labels;
-  set<int> unique_cluster_labels;
-  vector<FeatureT> cluster_centers;
-
-  std::ifstream f4(labels.c_str());
-
-  pcl17::PointCloud<FeatureT> mat;
-  vector<float> bias;
-
-  int feature_size = sizeof(features_[0].histogram)/sizeof(float);
-
-  std::string line;
-  while (std::getline( f4, line ))
-  //while(f4)
-
-  {
-
-    // now we'll use a stringstream to separate the fields out of the line
-    //std::stringstream ss( line );
-    //std::string field;
-    FeatureT ff;
-    //int i=0;
-
-
-    std::vector<std::string> st;
-    boost::split(st, line, boost::is_any_of(","), boost::token_compress_on);
-
-    //std::cerr << "Feature size " << feature_size << " Vector size " << st.size() <<  std::endl;
-
-    bias.push_back(atof(st[0].c_str()));
-
-    //while (std::getline( ss, field, ',' ))
-    for(size_t i=0; i<feature_size; i++)
-    {
-      // for each field we wish to convert it to a double
-      // (since we require that the CSV contains nothing but floating-point values)
-
-      //std::stringstream fs( field );
-      //float v = 0;
-      //fs >> v;
-      //float v;
-      //char tmp;
-      //f4 >> v;
-      //f4 >> tmp;
-      //std::cerr << i << " " << st[i] << std::endl;
-      ff.histogram[i] = atof(st[i+1].c_str());
-      //i++;
-    }
-    mat.points.push_back( ff );
-    mat.width = mat.points.size();
-    mat.height = 1;
-  }
-
-  //std::cerr << "Matrix:\n" << mat << std::endl;
-
-  //  while(f4)
-  //  {
-  //    FeatureT ff;
-  //    for(int i=0; i<feature_size; i++)
-  //    {
-  //      if (f4.peek() == ',')
-  //      {
-  //        f4.ignore();
-  //      }
-  //      f4 >> ff.histogram[i];
-  //    }
-  //    mat.push_back(ff);
-  //  }
-  //
-  //  std::ofstream f5("mat.txt");
-  //  for(int i=0; i<mat.points.size(); i++)
-  //  {
-  //    for(int j=0; j<feature_size; i++)
-  //    {
-  //      f5 << mat.points[i].histogram[j] << ",";
-  //    }
-  //    f5 << "\n";
-  //  }
-  //  f5.close();
-
-  //TODO check code
-
-  int cluster_size = mat.size();
-  num_clusters_ = cluster_size;
-
-  for(size_t i=0; i<features_.size(); i++)
-  {
-    Eigen::ArrayXf res = Eigen::ArrayXf::Zero(cluster_size);
-
-    for(size_t j=0; j<cluster_size; j++)
-    {
-      res[j] += bias[j];
-      for(size_t k=0; k<feature_size; k++)
+      for (int i = 0; i < local_maxima_->points.size(); i++)
       {
-        res[j] += mat[j].histogram[k] * features_[i].histogram[k];
+        geometry_msgs::Pose2D p;
+        p.x = local_maxima_->points[i].x;
+        p.y = local_maxima_->points[i].y;
+        hp->poses.push_back(p);
+        hp->classes.push_back(it->first);
       }
-    }
-
-    int cluster_idx;
-    res.maxCoeff(&cluster_idx);
-    //std::cerr << "Cluster number " << cluster_idx << std::endl;
-    FeatureT ff;
-
-    for(size_t k=0; k<feature_size; k++)
-    {
-      ff.histogram[k] = 0;
-    }
-
-    ff.histogram[0] = cluster_idx;
-
-    database_[ff][classes_[i]].push_back(centroids_.points[i]);
-    ransac_result_threshold_[classes_[i]] = 0.5;
-
-    if(debug_)
-    {
-      std::stringstream ss;
-      ss << debug_folder_ << "Cluster" << cluster_idx << "/Segment" << i << ".pcd";
-      pcl17::io::savePCDFileASCII(ss.str(), *segment_pointclouds_[i]);
 
     }
 
+    return hp;
   }
 
-  external_classifier_ = labels;
+template<class PointT, class PointNormalT, class FeatureT>
+  typename pcl17::PointCloud<PointNormalT>::Ptr pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::fit_objects(
+                                                                                                                        furniture_classification::Hypothesis::ConstPtr hp)
+  {
 
-}
+    pcl17::IterativeClosestPoint<PointNormalT, PointNormalT> icp;
+    //create point to plane transformationEstimation object
+    boost::shared_ptr<pcl17::registration::TransformationEstimationLM<PointNormalT, PointNormalT> >
+                                                                                                              transformEstPointToPlane(
+                                                                                                                                       new pcl17::registration::TransformationEstimationLM<
+                                                                                                                                           PointNormalT,
+                                                                                                                                           PointNormalT>());
+    icp.setTransformationEstimation(transformEstPointToPlane);
+    icp.setMaximumIterations(40);
+    //icp.setTransformationEpsilon(0);
+    //icp.setMaxCorrespondenceDistance(0.1);
+    //icp.setRANSACOutlierRejectionThreshold(5);
+    icp.setEuclideanFitnessEpsilon(0);
+
+    //pcl17::IterativeClosestPoint<PointNormalT, PointNormalT> icp;
+    icp.setInputTarget(scene_);
+
+    PointNormalCloudPtr res(new PointNormalCloud);
+    //res->header.frame_id = "/base_link";
+
+    std::map<std::string, vector<PointNormalCloudPtr> > result_vector_map;
+    std::map<std::string, vector<float> > scores_map;
+
+    for (int i = 0; i < hp->poses.size(); i++)
+    {
+
+      PointNormalCloudPtr best_fit(new PointNormalCloud);
+      double min_fittness = std::numeric_limits<double>::max();
+
+      for (int j = 0; j < class_name_to_full_models_map_[hp->classes[i]].size(); j++)
+      {
+
+        for (int angle_idx = 0; angle_idx < num_angles_; angle_idx++)
+        {
+
+          double angle = (angle_idx * 2 * M_PI) / num_angles_;
+
+          PointNormalCloudPtr cloud_transformed(new PointNormalCloud);
+
+          Eigen::Affine3f transform;
+          transform.setIdentity();
+          Eigen::Translation<float, 3> translation(hp->poses[i].x, hp->poses[i].y, 0);
+          Eigen::AngleAxis<float> rotation(angle, Eigen::Vector3f(0, 0, 1));
+          transform *= rotation;
+          transform *= translation;
+
+          pcl17::transformPointCloud(*class_name_to_full_models_map_[hp->classes[i]][j], *cloud_transformed, transform);
+
+          icp.setInputSource(cloud_transformed);
+          PointNormalCloudPtr Final(new PointNormalCloud);
+          icp.align(*Final);
+
+          double score = icp.getFitnessScore();
+          std::cerr << i << " " << j << " " << score << std::endl;
+          if (score < min_fittness)
+          {
+            best_fit = Final;
+            min_fittness = score;
+          }
+
+        }
+      }
+
+      if (min_fittness < ransac_result_threshold_[hp->classes[i]])
+      {
+        result_vector_map[hp->classes[i]].push_back(best_fit);
+        scores_map[hp->classes[i]].push_back(min_fittness);
+      }
+
+    }
+
+    typename std::map<std::string, vector<PointNormalCloudPtr> >::iterator it;
+
+    for (it = result_vector_map.begin(); it != result_vector_map.end(); it++)
+    {
+
+      vector<PointNormalCloudPtr> result_vector = removeIntersecting(it->second, scores_map[it->first]);
+
+      for (int i = 0; i < result_vector.size(); i++)
+      {
+        *res += *result_vector[i];
+      }
+
+    }
+
+    return res;
+
+  }
 
 template<class PointT, class PointNormalT, class FeatureT>
   void pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::classify()
   {
     appendFeaturesFromCloud(scene_, "Scene", 0);
-    normalizeFeaturesWithCurrentMinMax(features_);
+    normalizeFeaturesWithCurrentMinMax( features_);
     vote();
 
     RandomSampleConsensusSimple<PointNormalT> ransac(subsampling_resolution_ * 2);
@@ -450,42 +589,42 @@ template<class PointT, class PointNormalT, class FeatureT>
       vector<float> scores;
 
       BOOST_FOREACH(PointNormalCloudPtr & full_model, class_name_to_full_models_map_[it->first])
-{      PointNormalT minp, maxp;
-      pcl17::getMinMax3D<PointNormalT>(*full_model, minp, maxp);
-      float window_size = std::max((maxp.x - minp.x),(maxp.y - minp.y))/2;
+      { PointNormalT minp, maxp;
+        pcl17::getMinMax3D<PointNormalT>(*full_model, minp, maxp);
+        float window_size = std::max((maxp.x - minp.x),(maxp.y - minp.y))/2;
 
-      std::cerr << "Window size " << window_size << std::endl;
+        std::cerr << "Window size " << window_size << std::endl;
 
-      ransac.setModel(full_model);
+        ransac.setModel(full_model);
 
-      PointCloudPtr local_maxima_ = findLocalMaximaInGrid(grid, window_size);
+        PointCloudPtr local_maxima_ = findLocalMaximaInGrid(grid, window_size);
 
-      if (debug_ && !local_maxima_->empty())
-      pcl17::io::savePCDFileASCII(debug_folder_ + it->first + "_local_maxima.pcd", *local_maxima_);
+        if (debug_ && !local_maxima_->empty())
+        pcl17::io::savePCDFileASCII(debug_folder_ + it->first + "_local_maxima.pcd", *local_maxima_);
 
-      vector<boost::shared_ptr<std::vector<int> > > voted_segments;
-      voted_segments = findVotedSegments(local_maxima_, it->first, window_size);
+        vector<boost::shared_ptr<std::vector<int> > > voted_segments;
+        voted_segments = findVotedSegments(local_maxima_, it->first, window_size);
 
-      fitModelsWithRansac(voted_segments, it->first, ransac, result, scores);
+        fitModelsWithRansac(voted_segments, it->first, ransac, result, scores);
+
+      }
+
+      //generateVisibilityScore(result, scores);
+      result = removeIntersecting(result, scores);
+
+      found_objects_[it->first] = result;
 
     }
 
-    //generateVisibilityScore(result, scores);
-    result = removeIntersecting(result, scores);
-
-    found_objects_[it->first] = result;
-
   }
-
-}
 
 template<class PointT, class PointNormalT, class FeatureT>
   void pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::eval_clustering(const std::string & classname,
-                                                                                 const float search_radius, double &tp,
-                                                                                 double &fn, double &fp)
+                                                                                   const float search_radius,
+                                                                                   double &tp, double &fn, double &fp)
   {
     appendFeaturesFromCloud(scene_, "Scene", 0);
-    normalizeFeaturesWithCurrentMinMax(features_);
+    normalizeFeaturesWithCurrentMinMax( features_);
     vote();
 
     for (std::map<std::string, pcl17::PointCloud<pcl17::PointXYZI> >::const_iterator it = votes_.begin(); it
@@ -498,8 +637,8 @@ template<class PointT, class PointNormalT, class FeatureT>
       int grid_center_x, grid_center_y;
       Eigen::MatrixXf grid = projectVotesToGrid(it->second, grid_center_x, grid_center_y);
 
-      BOOST_FOREACH(PointNormalCloudPtr & full_model, class_name_to_full_models_map_[it->first])
-{      PointNormalT minp, maxp;
+BOOST_FOREACH    (PointNormalCloudPtr & full_model, class_name_to_full_models_map_[it->first])
+    { PointNormalT minp, maxp;
       pcl17::getMinMax3D<PointNormalT>(*full_model, minp, maxp);
       float window_size = std::max((maxp.x - minp.x),(maxp.y - minp.y))/2;
 
@@ -538,20 +677,19 @@ template<class PointT, class PointNormalT, class FeatureT>
 
 template<class PointT, class PointNormalT, class FeatureT>
   void pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::eval_clustering_external(
-                                                                                          const std::string & classname,
-                                                                                          const float search_radius,
-                                                                                          double &tp, double &fn,
-                                                                                          double &fp,
-                                                                                          const std::string & matrix)
+                                                                                            const std::string & classname,
+                                                                                            const float search_radius,
+                                                                                            double &tp, double &fn,
+                                                                                            double &fp,
+                                                                                            const std::string & matrix)
   {
 
-  features_.clear();
-  classes_.clear();
-  centroids_.clear();
-
+    features_.clear();
+    classes_.clear();
+    centroids_.clear();
 
     appendFeaturesFromCloud(scene_, "Scene", 0);
-    normalizeFeaturesWithCurrentMinMax(features_);
+    normalizeFeaturesWithCurrentMinMax( features_);
     vote_external(matrix);
 
     for (std::map<std::string, pcl17::PointCloud<pcl17::PointXYZI> >::const_iterator it = votes_.begin(); it
@@ -564,8 +702,8 @@ template<class PointT, class PointNormalT, class FeatureT>
       int grid_center_x, grid_center_y;
       Eigen::MatrixXf grid = projectVotesToGrid(it->second, grid_center_x, grid_center_y);
 
-      BOOST_FOREACH(PointNormalCloudPtr & full_model, class_name_to_full_models_map_[it->first])
-{      PointNormalT minp, maxp;
+BOOST_FOREACH    (PointNormalCloudPtr & full_model, class_name_to_full_models_map_[it->first])
+    { PointNormalT minp, maxp;
       pcl17::getMinMax3D<PointNormalT>(*full_model, minp, maxp);
       float window_size = std::max((maxp.x - minp.x),(maxp.y - minp.y))/2;
 
@@ -604,8 +742,8 @@ template<class PointT, class PointNormalT, class FeatureT>
 
 template<class PointT, class PointNormalT, class FeatureT>
   typename pcl17::PointCloud<PointNormalT>::Ptr pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::estimateNormalsAndSubsample(
-                                                                                                                                    typename pcl17::PointCloud<
-                                                                                                                                        PointT>::ConstPtr cloud_orig)
+                                                                                                                                        typename pcl17::PointCloud<
+                                                                                                                                            PointT>::ConstPtr cloud_orig)
   {
 
     //std::vector<int> idx;
@@ -643,8 +781,8 @@ template<class PointT, class PointNormalT, class FeatureT>
     {
 
       pcl17::flipNormalTowardsViewpoint(cloud_downsampled->points[i], so[0], so[1], so[2],
-                                      cloud_downsampled->points[i].normal_x, cloud_downsampled->points[i].normal_y,
-                                      cloud_downsampled->points[i].normal_z);
+                                        cloud_downsampled->points[i].normal_x, cloud_downsampled->points[i].normal_y,
+                                        cloud_downsampled->points[i].normal_z);
     }
 
     //cloud_downsampled->is_dense = false;
@@ -659,11 +797,11 @@ template<class PointT, class PointNormalT, class FeatureT>
 
 template<class PointT, class PointNormalT, class FeatureT>
   void pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::getSegmentsFromCloud(
-                                                                                      PointNormalCloudPtr cloud_with_normals,
-                                                                                      vector<boost::shared_ptr<vector<
-                                                                                          int> > > & segment_indices,
-                                                                                      pcl17::PointCloud<
-                                                                                          pcl17::PointXYZRGBNormal>::Ptr & colored_segments)
+                                                                                        PointNormalCloudPtr cloud_with_normals,
+                                                                                        vector<boost::shared_ptr<
+                                                                                            vector<int> > > & segment_indices,
+                                                                                        pcl17::PointCloud<
+                                                                                            pcl17::PointXYZRGBNormal>::Ptr & colored_segments)
   {
 
     segment_indices.clear();
@@ -678,16 +816,16 @@ template<class PointT, class PointNormalT, class FeatureT>
     vector<pcl17::PointIndices> segment_indices_all;
 
     pcl17::RegionGrowing<PointT, pcl17::Normal> region_growing;
-    region_growing.setMinClusterSize (min_points_in_segment_);
+    region_growing.setMinClusterSize(min_points_in_segment_);
     //region_growing.setMaxClusterSize (10000);
-    region_growing.setSearchMethod (tree);
-    region_growing.setNumberOfNeighbours (30);
-    region_growing.setInputCloud (cloud);
+    region_growing.setSearchMethod(tree);
+    region_growing.setNumberOfNeighbours(30);
+    region_growing.setInputCloud(cloud);
     //region_growing.setIndices (indices);
-    region_growing.setInputNormals (normals);
-    region_growing.setSmoothnessThreshold (rg_smoothness_threshold_);
+    region_growing.setInputNormals(normals);
+    region_growing.setSmoothnessThreshold(rg_smoothness_threshold_);
     region_growing.setResidualThreshold(rg_residual_threshold_);
-    region_growing.setCurvatureThreshold (1.0);
+    region_growing.setCurvatureThreshold(1.0);
     region_growing.setCurvatureTestFlag(false);
     region_growing.setSmoothModeFlag(false);
     region_growing.setResidualTestFlag(true);
@@ -696,53 +834,53 @@ template<class PointT, class PointNormalT, class FeatureT>
     region_growing.extract(segment_indices_all);
 
     BOOST_FOREACH(pcl17::PointIndices & i, segment_indices_all)
-{    if((int)i.indices.size() > min_points_in_segment_)
-    {
-      boost::shared_ptr<vector<int> > indices(new vector<int>);
-      *indices = i.indices;
-      segment_indices.push_back(indices);
+    { if((int)i.indices.size() > min_points_in_segment_)
+      {
+        boost::shared_ptr<vector<int> > indices(new vector<int>);
+        *indices = i.indices;
+        segment_indices.push_back(indices);
+      }
     }
+
+    if (debug_)
+    {
+      pcl17::PointCloud<pcl17::PointXYZRGB>::Ptr colored_segments_all;
+      colored_segments_all = region_growing.getColoredCloud();
+
+      vector<int> valid_segment_indices;
+
+      BOOST_FOREACH(boost::shared_ptr<vector<int> > & i, segment_indices)
+      {
+        valid_segment_indices.insert(valid_segment_indices.begin(), i->begin(), i->end());
+      }
+
+      colored_segments.reset(new pcl17::PointCloud<pcl17::PointXYZRGBNormal>);
+
+      for (size_t j = 0; j < valid_segment_indices.size(); j++)
+      {
+        pcl17::PointXYZRGBNormal p;
+        int i = valid_segment_indices[j];
+        p.x = colored_segments_all->points[i].x;
+        p.y = colored_segments_all->points[i].y;
+        p.z = colored_segments_all->points[i].z;
+        p.normal_x = normals->points[i].normal_x;
+        p.normal_y = normals->points[i].normal_y;
+        p.normal_z = normals->points[i].normal_z;
+        p.rgb = colored_segments_all->points[i].rgb;
+        colored_segments->push_back(p);
+      }
+
+      colored_segments->sensor_origin_ = cloud_with_normals->sensor_origin_;
+      colored_segments->sensor_orientation_ = cloud_with_normals->sensor_orientation_;
+
+    }
+
   }
-
-  if(debug_)
-  {
-    pcl17::PointCloud<pcl17::PointXYZRGB>::Ptr colored_segments_all;
-    colored_segments_all = region_growing.getColoredCloud();
-
-    vector<int> valid_segment_indices;
-
-    BOOST_FOREACH(boost::shared_ptr<vector<int> > & i, segment_indices)
-    {
-      valid_segment_indices.insert(valid_segment_indices.begin(), i->begin(), i->end());
-    }
-
-    colored_segments.reset(new pcl17::PointCloud<pcl17::PointXYZRGBNormal>);
-
-    for(size_t j=0; j<valid_segment_indices.size(); j++)
-    {
-      pcl17::PointXYZRGBNormal p;
-      int i = valid_segment_indices[j];
-      p.x = colored_segments_all->points[i].x;
-      p.y = colored_segments_all->points[i].y;
-      p.z = colored_segments_all->points[i].z;
-      p.normal_x = normals->points[i].normal_x;
-      p.normal_y = normals->points[i].normal_y;
-      p.normal_z = normals->points[i].normal_z;
-      p.rgb = colored_segments_all->points[i].rgb;
-      colored_segments->push_back(p);
-    }
-
-    colored_segments->sensor_origin_ = cloud_with_normals->sensor_origin_;
-    colored_segments->sensor_orientation_ = cloud_with_normals->sensor_orientation_;
-
-  }
-
-}
 
 template<class PointT, class PointNormalT, class FeatureT>
   void pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::appendFeaturesFromCloud(PointNormalCloudPtr & cloud,
-                                                                                         const string & class_name,
-                                                                                         const int i)
+                                                                                           const string & class_name,
+                                                                                           const int i)
   {
     if (debug_)
     {
@@ -776,46 +914,46 @@ template<class PointT, class PointNormalT, class FeatureT>
     }
 
     BOOST_FOREACH(const boost::shared_ptr<vector<int> > & idx, segment_indices)
-{   // compute deature for segment
-    pcl17::PointCloud<FeatureT> feature;
-    //PointNormalCloudPtr p(new PointNormalCloud(*cloud, *idx));
-    //feature_estimator_->setInputCloud(p);
-    feature_estimator_->setIndices(idx);
-    feature_estimator_->compute(feature);
+    { // compute deature for segment
+      pcl17::PointCloud<FeatureT> feature;
+      //PointNormalCloudPtr p(new PointNormalCloud(*cloud, *idx));
+      //feature_estimator_->setInputCloud(p);
+      feature_estimator_->setIndices(idx);
+      feature_estimator_->compute(feature);
 
-    // Compute centroid of segment
-    Eigen::Vector4f centroid;
-    pcl17::compute3DCentroid(*cloud, *idx, centroid);
-    PointT centroid_point;
-    centroid_point.x = centroid[0];
-    centroid_point.y = centroid[1];
-    centroid_point.z = centroid[2];
+      // Compute centroid of segment
+      Eigen::Vector4f centroid;
+      pcl17::compute3DCentroid(*cloud, *idx, centroid);
+      PointT centroid_point;
+      centroid_point.x = centroid[0];
+      centroid_point.y = centroid[1];
+      centroid_point.z = centroid[2];
 
-    features_.push_back(feature.points[0]);
-    centroids_.points.push_back(centroid_point);
-    classes_.push_back(class_name);
+      features_.push_back(feature.points[0]);
+      centroids_.points.push_back(centroid_point);
+      classes_.push_back(class_name);
 
-    if(debug_)
-    {
-      PointNormalCloudPtr segm(new PointNormalCloud(*cloud, *idx));
-      segment_pointclouds_.push_back(segm);
+      if(debug_)
+      {
+        PointNormalCloudPtr segm(new PointNormalCloud(*cloud, *idx));
+        segment_pointclouds_.push_back(segm);
+      }
+
     }
 
-  }
+    centroids_.width = centroids_.points.size();
+    centroids_.height = 1;
+    centroids_.is_dense = true;
 
-  centroids_.width = centroids_.points.size();
-  centroids_.height = 1;
-  centroids_.is_dense = true;
-
-  // if debug dump partial views and segmentations
-  if(debug_)
-  {
-    std::stringstream ss;
-    ss << debug_folder_ << class_name << i << "_segmentation.pcd";
-    std::cerr << "Writing to file " << ss.str() << std::endl;
-    pcl17::io::savePCDFileASCII(ss.str(), *colored_segments);
+    // if debug dump partial views and segmentations
+    if (debug_)
+    {
+      std::stringstream ss;
+      ss << debug_folder_ << class_name << i << "_segmentation.pcd";
+      std::cerr << "Writing to file " << ss.str() << std::endl;
+      pcl17::io::savePCDFileASCII(ss.str(), *colored_segments);
+    }
   }
-}
 
 template<class PointT, class PointNormalT, class FeatureT>
   void pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::normalizeFeatures(std::vector<FeatureT> & features)
@@ -1001,7 +1139,7 @@ template<class PointT, class PointNormalT, class FeatureT>
         //f4 >> v;
         //f4 >> tmp;
         //std::cerr << i << " " << st[i] << std::endl;
-        ff.histogram[i] = atof(st[i+1].c_str());
+        ff.histogram[i] = atof(st[i + 1].c_str());
         //i++;
       }
       mat.points.push_back(ff);
@@ -1009,30 +1147,30 @@ template<class PointT, class PointNormalT, class FeatureT>
       mat.height = 1;
     }
 
-//    string line;
-//    while (getline(f4, line))
-//    {
-//
-//      // now we'll use a stringstream to separate the fields out of the line
-//      stringstream ss(line);
-//      string field;
-//      FeatureT ff;
-//      int i = 0;
-//
-//      while (getline(ss, field, ','))
-//      {
-//        // for each field we wish to convert it to a double
-//        // (since we require that the CSV contains nothing but floating-point values)
-//        stringstream fs(field);
-//        float v = 0;
-//        fs >> v;
-//        ff.histogram[i] = v;
-//        i++;
-//      }
-//      mat.points.push_back(ff);
-//      mat.width = mat.points.size();
-//      mat.height = 1;
-//    }
+    //    string line;
+    //    while (getline(f4, line))
+    //    {
+    //
+    //      // now we'll use a stringstream to separate the fields out of the line
+    //      stringstream ss(line);
+    //      string field;
+    //      FeatureT ff;
+    //      int i = 0;
+    //
+    //      while (getline(ss, field, ','))
+    //      {
+    //        // for each field we wish to convert it to a double
+    //        // (since we require that the CSV contains nothing but floating-point values)
+    //        stringstream fs(field);
+    //        float v = 0;
+    //        fs >> v;
+    //        ff.histogram[i] = v;
+    //        i++;
+    //      }
+    //      mat.points.push_back(ff);
+    //      mat.width = mat.points.size();
+    //      mat.height = 1;
+    //    }
 
     //pcl17::search::KdTree<FeatureT> feature_search;
     //feature_search.setInputCloud(database_features_cloud_);
@@ -1119,8 +1257,11 @@ template<class PointT, class PointNormalT, class FeatureT>
   }
 
 template<class PointT, class PointNormalT, class FeatureT>
-  Eigen::MatrixXf pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::projectVotesToGrid(const pcl17::PointCloud<
-      pcl17::PointXYZI> & model_centers, int & grid_center_x, int & grid_center_y)
+  Eigen::MatrixXf pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::projectVotesToGrid(
+                                                                                                 const pcl17::PointCloud<
+                                                                                                     pcl17::PointXYZI> & model_centers,
+                                                                                                 int & grid_center_x,
+                                                                                                 int & grid_center_y)
   {
 
     Eigen::MatrixXf grid;
@@ -1147,8 +1288,8 @@ template<class PointT, class PointNormalT, class FeatureT>
 
 template<class PointT, class PointNormalT, class FeatureT>
   typename pcl17::PointCloud<PointT>::Ptr pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::findLocalMaximaInGrid(
-                                                                                                                        Eigen::MatrixXf grid,
-                                                                                                                        float window_size)
+                                                                                                                            Eigen::MatrixXf grid,
+                                                                                                                            float window_size)
   {
 
     PointCloudPtr local_maxima(new PointCloud);
@@ -1207,8 +1348,8 @@ template<class PointT, class PointNormalT, class FeatureT>
 
 template<class PointT, class PointNormalT, class FeatureT>
   typename Eigen::ArrayXXi pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::getLocalMaximaGrid(
-                                                                                                        Eigen::MatrixXf & grid,
-                                                                                                        float window_size)
+                                                                                                          Eigen::MatrixXf & grid,
+                                                                                                          float window_size)
   {
 
     Eigen::ArrayXXi local_max = Eigen::ArrayXXi::Zero(grid.rows(), grid.cols());
@@ -1260,10 +1401,10 @@ template<class PointT, class PointNormalT, class FeatureT>
 
 template<class PointT, class PointNormalT, class FeatureT>
   vector<boost::shared_ptr<std::vector<int> > > pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::findVotedSegments(
-                                                                                                                            typename pcl17::PointCloud<
-                                                                                                                                PointT>::Ptr local_maxima_,
-                                                                                                                            const string & class_name,
-                                                                                                                            float window_size)
+                                                                                                                              typename pcl17::PointCloud<
+                                                                                                                                  PointT>::Ptr local_maxima_,
+                                                                                                                              const string & class_name,
+                                                                                                                              float window_size)
   {
 
     vector<boost::shared_ptr<std::vector<int> > > voted_segments_;
@@ -1338,13 +1479,13 @@ template<class PointT, class PointNormalT, class FeatureT>
 
 template<class PointT, class PointNormalT, class FeatureT>
   void pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::fitModelsWithRansac(
-                                                                                     vector<boost::shared_ptr<
-                                                                                         std::vector<int> > > & voted_segments_,
-                                                                                     const string class_name,
-                                                                                     RandomSampleConsensusSimple<
-                                                                                         PointNormalT> & ransac,
-                                                                                     vector<PointNormalCloudPtr> & result_,
-                                                                                     vector<float> & scores_)
+                                                                                       vector<boost::shared_ptr<
+                                                                                           std::vector<int> > > & voted_segments_,
+                                                                                       const string class_name,
+                                                                                       RandomSampleConsensusSimple<
+                                                                                           PointNormalT> & ransac,
+                                                                                       vector<PointNormalCloudPtr> & result_,
+                                                                                       vector<float> & scores_)
   {
 
     for (size_t i = 0; i < voted_segments_.size(); i++)
@@ -1379,8 +1520,8 @@ template<class PointT, class PointNormalT, class FeatureT>
 
 template<class PointT, class PointNormalT, class FeatureT>
   void pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::generateVisibilityScore(
-                                                                                         vector<PointNormalCloudPtr> & result_,
-                                                                                         vector<float> & scores_)
+                                                                                           vector<PointNormalCloudPtr> & result_,
+                                                                                           vector<float> & scores_)
   {
 
     pcl17::octree::OctreePointCloudSearch<PointNormalT> octree(subsampling_resolution_ * 2.5f);
@@ -1441,8 +1582,8 @@ template<class PointT, class PointNormalT, class FeatureT>
 
 template<class PointT, class PointNormalT, class FeatureT>
   bool pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::intersectXY(
-                                                                             const pcl17::PointCloud<PointNormalT> & cloud1,
-                                                                             const pcl17::PointCloud<PointNormalT> & cloud2)
+                                                                               const pcl17::PointCloud<PointNormalT> & cloud1,
+                                                                               const pcl17::PointCloud<PointNormalT> & cloud2)
   {
 
     PointNormalT min1, max1, min2, max2;
@@ -1472,11 +1613,11 @@ template<class PointT, class PointNormalT, class FeatureT>
 
 template<class PointT, class PointNormalT, class FeatureT>
   vector<typename pcl17::PointCloud<PointNormalT>::Ptr> pcl17::PHVObjectClassifier<PointT, PointNormalT, FeatureT>::removeIntersecting(
-                                                                                                                                   vector<
-                                                                                                                                       typename pcl17::PointCloud<
-                                                                                                                                           PointNormalT>::Ptr> & result_,
-                                                                                                                                   vector<
-                                                                                                                                       float> & scores_)
+                                                                                                                                       vector<
+                                                                                                                                           typename pcl17::PointCloud<
+                                                                                                                                               PointNormalT>::Ptr> & result_,
+                                                                                                                                       vector<
+                                                                                                                                           float> & scores_)
   {
 
     vector<PointNormalCloudPtr> no_intersect_result;

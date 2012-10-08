@@ -27,6 +27,8 @@
 #include <pcl17/sample_consensus/model_types.h>
 #include <pcl17/segmentation/sac_segmentation.h>
 #include <pcl17/features/feature.h>
+#include <pcl17/registration/icp.h>
+#include <pcl17/registration/transformation_estimation_point_to_plane.h>
 
 #include <ransac_simple.h>
 #include <sac_3dof.h>
@@ -38,6 +40,7 @@
 
 #include <map>
 #include <set>
+#include <furniture_classification/Hypothesis.h>
 
 using std::map;
 using std::string;
@@ -74,11 +77,12 @@ template<class PointT, class PointNormalT, class FeatureT>
     typedef typename ModelMapType::value_type ModelMapValueType;
 
     PHVObjectClassifier() :
-      subsampling_resolution_(0.005f), mls_polynomial_fit_(false), mls_polynomial_order_(2), mls_search_radius_(0.05f),
+      subsampling_resolution_(0.02f), mls_polynomial_fit_(false), mls_polynomial_order_(2), mls_search_radius_(0.05f),
           min_points_in_segment_(100), rg_residual_threshold_(0.05f), rg_smoothness_threshold_(40 * M_PI / 180),
           fe_k_neighbours_(10), num_clusters_(40), num_neighbours_(1), cell_size_(0.01), local_maxima_threshold_(0.4f),
-          ransac_distance_threshold_(0.01f), ransac_vis_score_weight_(5), ransac_num_iter_(200), debug_(false),
-          debug_folder_(""), mls_(new MovingLeastSquares<PointT, PointNormalT> )
+          window_size_(0.5), ransac_distance_threshold_(0.01f), ransac_vis_score_weight_(5), ransac_num_iter_(200),
+          icp_treshold_(0.1), num_angles_(6), debug_(false), debug_folder_(""), mls_(new MovingLeastSquares<PointT,
+              PointNormalT> )
     {
 
       typedef pcl17::PointCloud<FeatureT> PointFeatureCloud;
@@ -217,6 +221,9 @@ template<class PointT, class PointNormalT, class FeatureT>
                                   double &fp, const std::string & matrix);
 
     void vote_external(const std::string & matrix);
+    furniture_classification::Hypothesis::Ptr generate_hypothesis(std::map<std::string, pcl17::PointCloud<
+        pcl17::PointXYZ>::Ptr> & votes_map);
+    PointNormalCloudPtr fit_objects(furniture_classification::Hypothesis::ConstPtr hp);
 
   protected:
 
@@ -234,15 +241,15 @@ template<class PointT, class PointNormalT, class FeatureT>
                                        int & grid_center_y);
     typename pcl17::PointCloud<PointT>::Ptr findLocalMaximaInGrid(Eigen::MatrixXf grid, float window_size);
     vector<boost::shared_ptr<std::vector<int> > >
-        findVotedSegments(typename pcl17::PointCloud<PointT>::Ptr local_maxima_, const string & class_name,
-                          float window_size);
+    findVotedSegments(typename pcl17::PointCloud<PointT>::Ptr local_maxima_, const string & class_name,
+                      float window_size);
     void fitModelsWithRansac(vector<boost::shared_ptr<std::vector<int> > > & voted_segments_, const string class_name,
                              RandomSampleConsensusSimple<PointNormalT> & ransac, vector<PointNormalCloudPtr> & result_,
                              vector<float> & scores_);
     void generateVisibilityScore(vector<PointNormalCloudPtr> & result_, vector<float> & scores_);
     bool intersectXY(const pcl17::PointCloud<PointNormalT> & cloud1, const pcl17::PointCloud<PointNormalT> & cloud2);
-    vector<typename pcl17::PointCloud<PointNormalT>::Ptr> removeIntersecting(vector<
-        typename pcl17::PointCloud<PointNormalT>::Ptr> & result_, vector<float> & scores_);
+    vector<typename pcl17::PointCloud<PointNormalT>::Ptr> removeIntersecting(vector<typename pcl17::PointCloud<
+        PointNormalT>::Ptr> & result_, vector<float> & scores_);
     typename Eigen::ArrayXXi getLocalMaximaGrid(Eigen::MatrixXf & grid, float window_size);
 
   public:
@@ -259,10 +266,13 @@ template<class PointT, class PointNormalT, class FeatureT>
     int num_neighbours_;
     float cell_size_;
     float local_maxima_threshold_;
+    float window_size_;
 
     float ransac_distance_threshold_;
     float ransac_vis_score_weight_;
     int ransac_num_iter_;
+    double icp_treshold_;
+    int num_angles_;
 
     bool debug_;
     string debug_folder_;
@@ -368,6 +378,15 @@ template<class PT, class PNT, class FT>
     out << YAML::Key << "ransac_result_threshold";
     out << YAML::Value << h.ransac_result_threshold_;
 
+    out << YAML::Key << "icp_treshold";
+    out << YAML::Value << h.icp_treshold_;
+
+    out << YAML::Key << "num_angles";
+    out << YAML::Value << h.num_angles_;
+
+    out << YAML::Key << "window_size";
+    out << YAML::Value << h.window_size_;
+
     out << YAML::Key << "external_classifier";
     out << YAML::Value << h.external_classifier_;
 
@@ -387,47 +406,47 @@ template<class PT, class PNT, class FT>
     typedef typename pcl17::PHVObjectClassifier<PT, PNT, FT>::ModelMapValueType M;
 
     BOOST_FOREACH(M v, h.class_name_to_full_models_map_)
-{    out << YAML::Key << v.first;
-    out << YAML::Value << YAML::BeginSeq;
+    { out << YAML::Key << v.first;
+      out << YAML::Value << YAML::BeginSeq;
 
-    for(size_t i=0; i<v.second.size(); i++)
-    {
-      std::stringstream ss;
-      ss << "models/" << v.first << i << ".pcd";
-      pcl17::io::savePCDFileASCII(h.database_dir_ + ss.str(), *v.second[i]);
-      out << ss.str();
+      for(size_t i=0; i<v.second.size(); i++)
+      {
+        std::stringstream ss;
+        ss << "models/" << v.first << i << ".pcd";
+        pcl17::io::savePCDFileASCII(h.database_dir_ + ss.str(), *v.second[i]);
+        out << ss.str();
+
+      }
+      out << YAML::EndSeq;
 
     }
-    out << YAML::EndSeq;
+    out << YAML::EndMap;
 
+    out << YAML::EndMap;
+
+    return out;
   }
-  out << YAML::EndMap;
-
-  out << YAML::EndMap;
-
-  return out;
-}
 
 template<int N>
-YAML::Emitter& operator <<(YAML::Emitter& out, const pcl17::Histogram<N> & h)
-{
-  out << YAML::Flow << YAML::BeginSeq;
-  for (int j = 0; j < N; j++)
+  YAML::Emitter& operator <<(YAML::Emitter& out, const pcl17::Histogram<N> & h)
   {
-    out << h.histogram[j];
+    out << YAML::Flow << YAML::BeginSeq;
+    for (int j = 0; j < N; j++)
+    {
+      out << h.histogram[j];
+    }
+    out << YAML::EndSeq << YAML::Block;
+    return out;
   }
-  out << YAML::EndSeq << YAML::Block;
-  return out;
-}
 
 template<int N>
-void operator >>(const YAML::Node& node, pcl17::Histogram<N> & h)
-{
-  for (int j = 0; j < N; j++)
+  void operator >>(const YAML::Node& node, pcl17::Histogram<N> & h)
   {
-    node[j] >> h.histogram[j];
+    for (int j = 0; j < N; j++)
+    {
+      node[j] >> h.histogram[j];
+    }
   }
-}
 
 YAML::Emitter& operator <<(YAML::Emitter& out, const pcl17::ESFSignature640 & h)
 {
@@ -526,136 +545,142 @@ void operator >>(const YAML::Node& node, pcl17::PointCloud<pcl17::VFHSignature30
 }
 
 template<typename PointT>
-YAML::Emitter& operator <<(YAML::Emitter& out, const pcl17::PointCloud<PointT> & cloud)
-{
-  out << YAML::BeginSeq;
-  for (size_t i = 0; i < cloud.points.size(); i++)
+  YAML::Emitter& operator <<(YAML::Emitter& out, const pcl17::PointCloud<PointT> & cloud)
   {
-    out << YAML::Flow << YAML::BeginSeq << cloud.points[i].x << cloud.points[i].y << cloud.points[i].z
-    << YAML::EndSeq << YAML::Block;
-  }
-  out << YAML::EndSeq;
+    out << YAML::BeginSeq;
+    for (size_t i = 0; i < cloud.points.size(); i++)
+    {
+      out << YAML::Flow << YAML::BeginSeq << cloud.points[i].x << cloud.points[i].y << cloud.points[i].z
+          << YAML::EndSeq << YAML::Block;
+    }
+    out << YAML::EndSeq;
 
-  return out;
-}
+    return out;
+  }
 
 template<typename PointT>
-void operator >>(const YAML::Node& node, pcl17::PointCloud<PointT> & cloud)
-{
-  cloud.clear();
-
-  for (size_t i = 0; i < node.size(); i++)
+  void operator >>(const YAML::Node& node, pcl17::PointCloud<PointT> & cloud)
   {
-    PointT point;
-    node[i][0] >> point.x;
-    node[i][1] >> point.y;
-    node[i][2] >> point.z;
-    cloud.points.push_back(point);
+    cloud.clear();
 
+    for (size_t i = 0; i < node.size(); i++)
+    {
+      PointT point;
+      node[i][0] >> point.x;
+      node[i][1] >> point.y;
+      node[i][2] >> point.z;
+      cloud.points.push_back(point);
+
+    }
+
+    cloud.width = cloud.points.size();
+    cloud.height = 1;
+    cloud.is_dense = true;
   }
 
-  cloud.width = cloud.points.size();
-  cloud.height = 1;
-  cloud.is_dense = true;
-}
-
 template<class PointT, class FeatureT>
-YAML::Emitter& operator <<(YAML::Emitter& out,const
-    map<FeatureT, map<string, pcl17::PointCloud<PointT> > > & database)
-{
-  out << YAML::BeginSeq;
-
-  for (typename map<FeatureT, map<string, pcl17::PointCloud<PointT> > >::const_iterator it =
-      database.begin(); it != database.end(); it++)
+  YAML::Emitter& operator <<(YAML::Emitter& out,
+                             const map<FeatureT, map<string, pcl17::PointCloud<PointT> > > & database)
   {
-    FeatureT cluster_center = it->first;
-    map<string, pcl17::PointCloud<PointT> > class_centroid_map = it->second;
+    out << YAML::BeginSeq;
 
-    out << YAML::BeginMap;
-    out << YAML::Key << "cluster_center";
-    out << YAML::Value << cluster_center;
-
-    out << YAML::Key << "classes";
-    out << YAML::Value << YAML::BeginSeq;
-
-    for (typename map<string, pcl17::PointCloud<PointT> >::const_iterator it2 =
-        class_centroid_map.begin(); it2 != class_centroid_map.end(); it2++)
+    for (typename map<FeatureT, map<string, pcl17::PointCloud<PointT> > >::const_iterator it = database.begin(); it
+        != database.end(); it++)
     {
-      std::string class_name = it2->first;
-      pcl17::PointCloud<PointT> centroids = it2->second;
-      out << YAML::BeginMap << YAML::Key << "class_name";
-      out << YAML::Value << class_name;
-      out << YAML::Key << "centroids";
-      out << YAML::Value << centroids;
-      out << YAML::EndMap;
+      FeatureT cluster_center = it->first;
+      map<string, pcl17::PointCloud<PointT> > class_centroid_map = it->second;
 
+      out << YAML::BeginMap;
+      out << YAML::Key << "cluster_center";
+      out << YAML::Value << cluster_center;
+
+      out << YAML::Key << "classes";
+      out << YAML::Value << YAML::BeginSeq;
+
+      for (typename map<string, pcl17::PointCloud<PointT> >::const_iterator it2 = class_centroid_map.begin(); it2
+          != class_centroid_map.end(); it2++)
+      {
+        std::string class_name = it2->first;
+        pcl17::PointCloud<PointT> centroids = it2->second;
+        out << YAML::BeginMap << YAML::Key << "class_name";
+        out << YAML::Value << class_name;
+        out << YAML::Key << "centroids";
+        out << YAML::Value << centroids;
+        out << YAML::EndMap;
+
+      }
+
+      out << YAML::EndSeq;
+
+      out << YAML::EndMap;
     }
 
     out << YAML::EndSeq;
-
-    out << YAML::EndMap;
+    return out;
   }
-
-  out << YAML::EndSeq;
-  return out;
-}
 
 template<class PointT, class FeatureT>
-void operator >>(const YAML::Node& node, map<FeatureT, map<string, pcl17::PointCloud<PointT> > > & database)
-{
-  for (size_t i = 0; i < node.size(); i++)
+  void operator >>(const YAML::Node& node, map<FeatureT, map<string, pcl17::PointCloud<PointT> > > & database)
   {
-    FeatureT cluster_center;
-    node[i]["cluster_center"] >> cluster_center;
-
-    for (size_t j = 0; j < node[i]["classes"].size(); j++)
+    for (size_t i = 0; i < node.size(); i++)
     {
-      std::string class_name;
-      node[i]["classes"][j]["class_name"] >> class_name;
-      node[i]["classes"][j]["centroids"] >> database[cluster_center][class_name];
+      FeatureT cluster_center;
+      node[i]["cluster_center"] >> cluster_center;
+
+      for (size_t j = 0; j < node[i]["classes"].size(); j++)
+      {
+        std::string class_name;
+        node[i]["classes"][j]["class_name"] >> class_name;
+        node[i]["classes"][j]["centroids"] >> database[cluster_center][class_name];
+      }
     }
   }
-}
 
 template<class PT, class PNT, class FT>
-void operator >>(const YAML::Node& node, pcl17::PHVObjectClassifier<PT, PNT, FT> & h)
-{
-  node["subsampling_resolution"] >> h.subsampling_resolution_;
-  node["mls_polynomial_fit"] >> h.mls_polynomial_fit_;
-  node["mls_polynomial_order"] >> h.mls_polynomial_order_;
-  node["mls_search_radius"] >> h.mls_search_radius_;
-  node["min_points_in_segment"] >> h.min_points_in_segment_;
-  node["rg_residual_threshold"] >> h.rg_residual_threshold_;
-  node["rg_smoothness_threshold"] >> h.rg_smoothness_threshold_;
-  node["external_classifier"] >> h.external_classifier_;
+  void operator >>(const YAML::Node& node, pcl17::PHVObjectClassifier<PT, PNT, FT> & h)
+  {
+    node["subsampling_resolution"] >> h.subsampling_resolution_;
+    node["mls_polynomial_fit"] >> h.mls_polynomial_fit_;
+    node["mls_polynomial_order"] >> h.mls_polynomial_order_;
+    node["mls_search_radius"] >> h.mls_search_radius_;
+    node["min_points_in_segment"] >> h.min_points_in_segment_;
+    node["rg_residual_threshold"] >> h.rg_residual_threshold_;
+    node["rg_smoothness_threshold"] >> h.rg_smoothness_threshold_;
+    node["external_classifier"] >> h.external_classifier_;
 
-  node["fe_k_neighbours"] >> h.fe_k_neighbours_;
-  node["num_clusters"] >> h.num_clusters_;
+    node["fe_k_neighbours"] >> h.fe_k_neighbours_;
+    node["num_clusters"] >> h.num_clusters_;
 
-  node["num_neighbours"] >> h.num_neighbours_;
-  node["cell_size"] >> h.cell_size_;
-  node["local_maxima_threshold"] >> h.local_maxima_threshold_;
+    node["num_neighbours"] >> h.num_neighbours_;
+    node["cell_size"] >> h.cell_size_;
+    node["local_maxima_threshold"] >> h.local_maxima_threshold_;
 
-  node["ransac_distance_threshold"] >> h.ransac_distance_threshold_;
-  node["ransac_vis_score_weight"] >> h.ransac_vis_score_weight_;
-  node["ransac_num_iter"] >> h.ransac_num_iter_;
-  node["ransac_result_threshold"] >> h.ransac_result_threshold_;
+    node["ransac_distance_threshold"] >> h.ransac_distance_threshold_;
+    node["ransac_vis_score_weight"] >> h.ransac_vis_score_weight_;
+    node["ransac_num_iter"] >> h.ransac_num_iter_;
+    node["ransac_result_threshold"] >> h.ransac_result_threshold_;
 
-  node["debug"] >> h.debug_;
-  node["debug_folder"] >> h.debug_folder_;
 
-  node["min_feature"] >> h.min_;
-  node["max_feature"] >> h.max_;
+    node["icp_treshold"] >> h.icp_treshold_;
+    node["num_angles"] >> h.num_angles_;
+    node["window_size"] >> h.window_size_;
 
-  node["database"] >> h.database_;
-  node["database"] >> *(h.database_features_cloud_);
 
-  map<string, vector<string> > full_models_locations;
-  node["full_models"] >> full_models_locations;
+    node["debug"] >> h.debug_;
+    node["debug_folder"] >> h.debug_folder_;
 
-  typedef map<string, vector<string> >::value_type vt;
+    node["min_feature"] >> h.min_;
+    node["max_feature"] >> h.max_;
 
-  BOOST_FOREACH(vt &v, full_models_locations)
+    node["database"] >> h.database_;
+    node["database"] >> *(h.database_features_cloud_);
+
+    map<string, vector<string> > full_models_locations;
+    node["full_models"] >> full_models_locations;
+
+    typedef map<string, vector<string> >::value_type vt;
+
+BOOST_FOREACH  (vt &v, full_models_locations)
   {
     for(size_t i=0; i<v.second.size(); i++)
     {

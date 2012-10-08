@@ -9,8 +9,11 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/furniture_classification</url>
   <depend package="pcl17"/>
+  <depend package="pcl17_ros"/>
   <depend package="opencv2"/>
   <depend package="furniture_features"/>
+  <depend package="roscpp"/>
+  <depend package="geometry_msgs"/>
   <rosdep name="yaml-cpp" />
 
 </package>

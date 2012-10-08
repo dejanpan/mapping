@@ -17,7 +17,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #uncomment if you have defined messages
-#rosbuild_genmsg()
+rosbuild_genmsg()
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
@@ -26,9 +26,12 @@ add_definitions(-DEIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET)
 
 find_package(Eigen REQUIRED)
 include_directories(${EIGEN_INCLUDE_DIRS})
+find_package(VTK REQUIRED)
+include(${VTK_USE_FILE})
 
-include_directories(/usr/include/vtk-5.6)
-include_directories ("/usr/include/openni/")
+
+#include_directories(/usr/include/vtk-5.6)
+#include_directories ("/usr/include/openni/")
 
 rosbuild_add_executable(scan src/scan.cpp)
 rosbuild_link_boost(scan system filesystem)
@@ -60,12 +63,18 @@ target_link_libraries(classify furniture_classification)
 rosbuild_link_boost(classify system filesystem)
 
 
-rosbuild_add_executable(classify_live src/classify_live.cpp)
-target_link_libraries(classify_live furniture_classification)
-target_link_libraries(classify_live vtkCommon vtkIO vtkFiltering vtkGraphics)
-rosbuild_link_boost(classify_live thread)
+#rosbuild_add_executable(classify_live src/classify_live.cpp)
+#target_link_libraries(classify_live furniture_classification)
+#target_link_libraries(classify_live vtkCommon vtkIO vtkFiltering vtkGraphics)
+#rosbuild_link_boost(classify_live thread)
 
 rosbuild_add_executable(eval_clustering src/eval_clustering.cpp)
 target_link_libraries(eval_clustering furniture_classification)
 rosbuild_link_boost(eval_clustering system filesystem)
+
+rosbuild_add_executable(generate_hypothesis_node src/generate_hypothesis_node.cpp)
+target_link_libraries(generate_hypothesis_node furniture_classification)
+
+rosbuild_add_executable(fit_models_node src/fit_models_node.cpp)
+target_link_libraries(fit_models_node furniture_classification)
 
