@@ -78,3 +78,8 @@ target_link_libraries(generate_hypothesis_node furniture_classification)
 rosbuild_add_executable(fit_models_node src/fit_models_node.cpp)
 target_link_libraries(fit_models_node furniture_classification)
 
+
+rosbuild_add_executable(scan_test src/scan_test.cpp)
+rosbuild_link_boost(scan_test system filesystem)
+target_link_libraries(scan_test vtkCommon vtkIO vtkFiltering vtkGraphics vtkRendering)
+target_link_libraries(scan_test pcl_common pcl_io pcl_visualization)
