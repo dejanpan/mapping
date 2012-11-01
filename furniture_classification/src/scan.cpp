@@ -346,6 +346,8 @@ int main(int argc, char** argv)
             transform->Translate(distances[distance_index], shift[shift_index], -(height + min_z_value));
             transform->RotateZ(angle);
 
+		/*		
+
             // Render pointcloud
             viz.renderView(640, 480, cloud);
 
@@ -367,8 +369,12 @@ int main(int argc, char** argv)
             PCL17_INFO("Writing %d points to file %s\n", cloud->points.size(), ss.str().c_str());
             pcl17::io::savePCDFile(ss.str(), *cloud_transformed);
 
+		*/
+
             // increment angle by step
             angle += angle_step;
+	
+	
 
           }
 

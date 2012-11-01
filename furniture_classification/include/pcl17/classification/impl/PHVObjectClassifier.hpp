@@ -196,7 +196,7 @@ template<class PointT, class PointNormalT, class FeatureT>
       database_[cluster_center][classname].height = 1;
       database_[cluster_center][classname].is_dense = true;
 
-      ransac_result_threshold_[classname] = 0.03;
+      //ransac_result_threshold_[classname] = 0.01;
 
       if (debug_)
       {
@@ -439,7 +439,12 @@ template<class PointT, class PointNormalT, class FeatureT>
       int grid_center_x, grid_center_y;
       Eigen::MatrixXf grid = projectVotesToGrid(it->second, grid_center_x, grid_center_y);
 
+
+
       PointCloudPtr local_maxima_ = findLocalMaximaInGrid(grid, window_size_);
+
+      //std::cerr << it->first << " " << it->second.size() << std::endl;
+
       local_maxima_->header.frame_id = "/base_link";
       votes_map[it->first] = local_maxima_;
 

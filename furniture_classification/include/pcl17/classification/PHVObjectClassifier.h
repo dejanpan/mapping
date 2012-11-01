@@ -79,14 +79,19 @@ template<class PointT, class PointNormalT, class FeatureT>
     PHVObjectClassifier() :
       subsampling_resolution_(0.02f), mls_polynomial_fit_(false), mls_polynomial_order_(2), mls_search_radius_(0.05f),
           min_points_in_segment_(100), rg_residual_threshold_(0.05f), rg_smoothness_threshold_(40 * M_PI / 180),
-          fe_k_neighbours_(10), num_clusters_(40), num_neighbours_(1), cell_size_(0.01), local_maxima_threshold_(0.4f),
+          fe_k_neighbours_(10), num_clusters_(40), num_neighbours_(1), cell_size_(0.01), local_maxima_threshold_(0.5f),
           window_size_(0.3), ransac_distance_threshold_(0.01f), ransac_vis_score_weight_(5), ransac_num_iter_(200),
-          icp_treshold_(0.03), num_angles_(12), debug_(false), debug_folder_(""), mls_(new MovingLeastSquares<PointT,
+          icp_treshold_(0.03), num_angles_(36), debug_(false), debug_folder_(""), mls_(new MovingLeastSquares<PointT,
               PointNormalT> )
     {
 
       typedef pcl17::PointCloud<FeatureT> PointFeatureCloud;
       database_features_cloud_.reset(new PointFeatureCloud);
+      ransac_result_threshold_["Armchairs"] = 0.01;
+      ransac_result_threshold_["Chairs"] = 0.01;
+      ransac_result_threshold_["Sideboards"] = 0.01;
+      ransac_result_threshold_["Tables:"] = 0.1;
+
     }
     virtual ~PHVObjectClassifier()
     {
