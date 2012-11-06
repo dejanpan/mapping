@@ -88,9 +88,9 @@ template<class PointT, class PointNormalT, class FeatureT>
       typedef pcl17::PointCloud<FeatureT> PointFeatureCloud;
       database_features_cloud_.reset(new PointFeatureCloud);
       ransac_result_threshold_["Armchairs"] = 0.01;
-      ransac_result_threshold_["Chairs"] = 0.01;
+      ransac_result_threshold_["Chairs"] = 0.03;
       ransac_result_threshold_["Sideboards"] = 0.01;
-      ransac_result_threshold_["Tables:"] = 0.1;
+      ransac_result_threshold_["Tables"] = 0.1;
 
     }
     virtual ~PHVObjectClassifier()

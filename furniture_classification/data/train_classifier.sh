@@ -6,12 +6,12 @@
 
 ../bin/scan -input_dir models/ -output_dir scans/ -num_views 1
 
-../src/scan.py --input_dir models/ --output_dir scans/ --tilt -20 --height 2 --noise_std 0.007 --shift 0 --num_views 12
-../src/scan.py --input_dir models/ --output_dir scans/ --tilt -20 --height 1.5 --noise_std 0.007 --shift 0 --num_views 12
-../src/scan.py --input_dir models/ --output_dir scans/ --tilt -20 --height 1.5 --noise_std 0.007 --shift 1.5 --num_views 12
-../src/scan.py --input_dir models/ --output_dir scans/ --tilt -20 --height 1.5 --noise_std 0.007 --shift -1.5 --num_views 12
+../src/scan.py --input_dir models/ --output_dir scans/ --tilt -20 --height 2 --shift 0 --num_views 12 --noise_std 0.003
+#../src/scan.py --input_dir models/ --output_dir scans/ --tilt -20 --height 1.5  --shift 0 --num_views 6 --noise_std 0.003
+#../src/scan.py --input_dir models/ --output_dir scans/ --tilt -20 --height 1.5  --shift 1.5 --num_views 12 --noise_std 0.003
+#../src/scan.py --input_dir models/ --output_dir scans/ --tilt -20 --height 1.5  --shift -1.5 --num_views 12 --noise_std 0.003
 
-../src/scan.py --input_dir models/ --output_dir scans/ --tilt -30 --height 1.3 --noise_std 0.007 --shift 0 --num_views 12 --distance 2
+#../src/scan.py --input_dir models/ --output_dir scans/ --tilt -30 --height 1.3 --noise_std 0.007 --shift 0 --num_views 12 --distance 2
 #../src/scan.py --input_dir models/ --output_dir scans/ --tilt -30 --height 1.3 --noise_std 0.007 --shift 1 --num_views 12 --distance 2
 #../src/scan.py --input_dir models/ --output_dir scans/ --tilt -30 --height 1.3 --noise_std 0.007 --shift -1 --num_views 12 --distance 2
 #../src/scan.py --input_dir models/ --output_dir scans/ --tilt -20 --height 1.3 --noise_std 0.007 --shift 1 --num_views 12 --distance 2
