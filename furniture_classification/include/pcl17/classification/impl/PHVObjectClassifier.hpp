@@ -474,10 +474,10 @@ template<class PointT, class PointNormalT, class FeatureT>
                                                                                                                                        new pcl17::registration::TransformationEstimationLM<
                                                                                                                                            PointNormalT,
                                                                                                                                            PointNormalT>());
-    icp.setTransformationEstimation(transformEstPointToPlane);
+    //icp.setTransformationEstimation(transformEstPointToPlane);
     icp.setMaximumIterations(40);
     //icp.setTransformationEpsilon(0);
-    //icp.setMaxCorrespondenceDistance(0.1);
+    icp.setMaxCorrespondenceDistance(0.1);
     icp.setRANSACOutlierRejectionThreshold(5);
     icp.setEuclideanFitnessEpsilon(0);
 
