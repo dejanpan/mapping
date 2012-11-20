@@ -2,6 +2,6 @@
  <node name="pcd_to_pointcloud" pkg="pcl_ros" args=" $(find furniture_classification)/data/test/scenes/chairAndDesk1.pcd 5" type="pcd_to_pointcloud" />
  <node name="split_hypothesis_node" pkg="furniture_classification" args=" -num_splits 2" type="split_hypothesis_node" />
  <node name="generate_hypothesis_node" pkg="furniture_classification" args=" -database $(find furniture_classification)/data/database/ -features sgf" type="generate_hypothesis_node" />
- <node name="fit_models_node0" pkg="furniture_classification" args=" furniture_hypothesis:=/furniture_hypothesis0 -database $(find furniture_classification)/data/database/ -features sgf" type="fit_models_node" /> 
- <node name="fit_models_node1" pkg="furniture_classification" args=" furniture_hypothesis:=/furniture_hypothesis1 -database $(find furniture_classification)/data/database/ -features sgf" type="fit_models_node" />
+ <node name="fit_models_node0" pkg="furniture_classification" args=" furniture_hypothesis:=/furniture_hypothesis0 fitted_models:=/fitted_models0 -database $(find furniture_classification)/data/database/ -features sgf" type="fit_models_node" /> 
+ <node name="fit_models_node1" pkg="furniture_classification" args=" furniture_hypothesis:=/furniture_hypothesis1 fitted_models:=/fitted_models1 -database $(find furniture_classification)/data/database/ -features sgf" type="fit_models_node" />
 </launch>
