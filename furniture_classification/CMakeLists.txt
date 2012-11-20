@@ -78,6 +78,9 @@ target_link_libraries(generate_hypothesis_node furniture_classification)
 rosbuild_add_executable(fit_models_node src/fit_models_node.cpp)
 target_link_libraries(fit_models_node furniture_classification)
 
+rosbuild_add_executable(split_hypothesis_node src/split_hypothesis_node.cpp)
+target_link_libraries(split_hypothesis_node furniture_classification)
+rosbuild_link_boost(split_hypothesis_node system)
 
 rosbuild_add_executable(scan_test src/scan_test.cpp)
 rosbuild_link_boost(scan_test system filesystem)

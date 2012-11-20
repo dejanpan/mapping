@@ -422,6 +422,7 @@ template<class PointT, class PointNormalT, class FeatureT>
     features_.clear();
     centroids_.clear();
     classes_.clear();
+    votes_map.clear();
 
     votes_.clear();
     voted_segment_idx_.clear();
@@ -437,13 +438,14 @@ template<class PointT, class PointNormalT, class FeatureT>
     {
 
       int grid_center_x, grid_center_y;
+
+      //std::cerr << it->first << " " << it->second.size() << " votes" << std::endl;
+
       Eigen::MatrixXf grid = projectVotesToGrid(it->second, grid_center_x, grid_center_y);
-
-
 
       PointCloudPtr local_maxima_ = findLocalMaximaInGrid(grid, window_size_);
 
-      //std::cerr << it->first << " " << it->second.size() << std::endl;
+      //std::cerr << it->first << " local max " << local_maxima_->size() << std::endl;
 
       local_maxima_->header.frame_id = "/base_link";
       votes_map[it->first] = local_maxima_;
@@ -477,7 +479,8 @@ template<class PointT, class PointNormalT, class FeatureT>
     //icp.setTransformationEstimation(transformEstPointToPlane);
     icp.setMaximumIterations(40);
     //icp.setTransformationEpsilon(0);
-    icp.setMaxCorrespondenceDistance(0.1);
+    icp.setMaxCorrespondenceDistance(0.01);
+
     icp.setRANSACOutlierRejectionThreshold(5);
     icp.setEuclideanFitnessEpsilon(0);
 
@@ -1306,6 +1309,8 @@ template<class PointT, class PointNormalT, class FeatureT>
     float threshold = min + (max - min) * local_maxima_threshold_;
     //float threshold = local_maxima_threshold_;
 
+    //std::cerr << max << " " << min << " " << local_maxima_threshold_ << " " << threshold << std::endl;
+
     int window_size_pixels = window_size / cell_size_;
 
     if (window_size_pixels >= std::min(grid.cols() - 3, grid.rows() - 3))
@@ -1319,20 +1324,20 @@ template<class PointT, class PointNormalT, class FeatureT>
 
     int side = window_size_pixels / 2;
 
-    for (int i = side; i < (grid.rows() - side); i++)
+    for (int i = 0; i < grid.rows(); i++)
     {
-      for (int j = side; j < (grid.cols() - side); j++)
+      for (int j = 0; j < grid.cols(); j++)
       {
 
-        float max;
-        Eigen::MatrixXf window = grid.block(i - side, j - side, window_size_pixels, window_size_pixels);
-        max = window.maxCoeff();
+        //float max;
+        //Eigen::MatrixXf window = grid.block(i - side, j - side, window_size_pixels, window_size_pixels);
+        //max = window.maxCoeff();
 
-        assert(window.cols() == window_size_pixels);
-        assert(window.rows() == window_size_pixels);
+        //assert(window.cols() == window_size_pixels);
+        //assert(window.rows() == window_size_pixels);
 
         // if max of the window is in its center then this point is local maxima
-        if ((max == grid(i, j)) && (max > 0) && (max > threshold))
+        if (/*(max == grid(i, j)) && (max > 0) &&*/ (grid(i, j) > threshold))
         {
           PointT point;
           point.x = i * cell_size_ + min_scene_bound_.x;
