@@ -477,11 +477,9 @@ template<class PointT, class PointNormalT, class FeatureT>
                                                                                                                                            PointNormalT,
                                                                                                                                            PointNormalT>());
     //icp.setTransformationEstimation(transformEstPointToPlane);
-    icp.setMaximumIterations(40);
-    //icp.setTransformationEpsilon(0);
-    icp.setMaxCorrespondenceDistance(0.01);
+    icp.setMaximumIterations(icp_max_iterations_);
+    icp.setMaxCorrespondenceDistance(icp_max_correspondence_distance_);
 
-    icp.setRANSACOutlierRejectionThreshold(5);
     icp.setEuclideanFitnessEpsilon(0);
 
     //pcl17::IterativeClosestPoint<PointNormalT, PointNormalT> icp;
