@@ -86,3 +86,8 @@ rosbuild_add_executable(scan_test src/scan_test.cpp)
 rosbuild_link_boost(scan_test system filesystem)
 target_link_libraries(scan_test vtkCommon vtkIO vtkFiltering vtkGraphics vtkRendering)
 target_link_libraries(scan_test pcl_common pcl_io pcl_visualization)
+
+
+rosbuild_add_executable(convert_node src/convert_node.cpp)
+rosbuild_link_boost(convert_node system filesystem)
+target_link_libraries(convert_node pcl_common pcl_common pcl_io pcl_segmentation pcl_surface pcl_filters)
