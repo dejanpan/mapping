@@ -254,7 +254,7 @@ protected:
 			const pcl17::PointCloud<PointNormalT> & cloud2);
 	vector<typename pcl17::PointCloud<PointNormalT>::Ptr> removeIntersecting(
 			vector<typename pcl17::PointCloud<PointNormalT>::Ptr> & result_,
-			vector<float> & scores_);
+			vector<float> & scores_, vector<float> * selected_scores = NULL);
 	typename Eigen::ArrayXXi getLocalMaximaGrid(Eigen::MatrixXf & grid,
 			float window_size);
 
