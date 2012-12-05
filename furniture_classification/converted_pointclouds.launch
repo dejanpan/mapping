@@ -1,0 +1,6 @@
+<launch>
+ <include file="$(find openni_launch)/launch/openni.launch">
+    <arg name="depth_registration" value="true" />
+ </include>
+ <node name="convert_node" pkg="furniture_classification"  type="convert_node" />
+</launch>

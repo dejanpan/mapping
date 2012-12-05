@@ -41,6 +41,7 @@
 #include <map>
 #include <set>
 #include <furniture_classification/Hypothesis.h>
+#include <furniture_classification/FittedModels.h>
 
 using std::map;
 using std::string;
@@ -217,7 +218,7 @@ public:
 	void vote_external(const std::string & matrix);
 	furniture_classification::Hypothesis::Ptr generate_hypothesis(
 			std::map<std::string, pcl17::PointCloud<pcl17::PointXYZ>::Ptr> & votes_map);
-	PointNormalCloudPtr fit_objects(
+	furniture_classification::FittedModelsPtr fit_objects(
 			furniture_classification::Hypothesis::ConstPtr hp);
 
 protected:

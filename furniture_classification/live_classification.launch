@@ -1,5 +1,8 @@
 <launch>
- <node name="pcd_to_pointcloud" pkg="pcl_ros" args=" $(find furniture_classification)/data/test/scenes/chairAndDesk1.pcd 5" type="pcd_to_pointcloud" />
+ <include file="$(find openni_launch)/launch/openni.launch">
+    <arg name="depth_registration" value="true" />
+ </include>
+ <node name="convert_node" pkg="furniture_classification"  type="convert_node" />
  <node name="split_hypothesis_node" pkg="furniture_classification" args=" -num_splits 2" type="split_hypothesis_node" />
  <node name="generate_hypothesis_node" pkg="furniture_classification" args=" -database $(find furniture_classification)/data/database/ -features sgf" type="generate_hypothesis_node" />
  <node name="fit_models_node0" pkg="furniture_classification" args=" -n 0 -database $(find furniture_classification)/data/database/ -features sgf" type="fit_models_node" /> 

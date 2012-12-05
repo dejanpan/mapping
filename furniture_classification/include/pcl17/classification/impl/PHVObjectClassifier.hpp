@@ -434,9 +434,8 @@ furniture_classification::Hypothesis::Ptr pcl17::PHVObjectClassifier<PointT,
 	return hp;
 }
 
-template<class PointT, class PointNormalT, class FeatureT>
-typename pcl17::PointCloud<PointNormalT>::Ptr pcl17::PHVObjectClassifier<PointT,
-		PointNormalT, FeatureT>::fit_objects(
+template<class PointT, class PointNormalT, class FeatureT> furniture_classification::FittedModelsPtr pcl17::PHVObjectClassifier<
+		PointT, PointNormalT, FeatureT>::fit_objects(
 		furniture_classification::Hypothesis::ConstPtr hp) {
 
 	pcl17::IterativeClosestPoint<PointNormalT, PointNormalT> icp;
@@ -455,7 +454,8 @@ typename pcl17::PointCloud<PointNormalT>::Ptr pcl17::PHVObjectClassifier<PointT,
 	//pcl17::IterativeClosestPoint<PointNormalT, PointNormalT> icp;
 	icp.setInputTarget(scene_);
 
-	PointNormalCloudPtr res(new PointNormalCloud);
+	furniture_classification::FittedModelsPtr res(new furniture_classification::FittedModels);
+	//PointNormalCloudPtr res(new PointNormalCloud);
 	//res->header.frame_id = "/base_link";
 
 	std::map<std::string, vector<PointNormalCloudPtr> > result_vector_map;
@@ -519,7 +519,12 @@ typename pcl17::PointCloud<PointNormalT>::Ptr pcl17::PHVObjectClassifier<PointT,
 				it->second, scores_map[it->first], &scores);
 
 		for (int i = 0; i < result_vector.size(); i++) {
-			*res += *result_vector[i];
+			sensor_msgs::PointCloud2 r;
+			pcl17::toROSMsg(*result_vector[i], r);
+			res->models.push_back(r);
+			res->scores.push_back(scores[i]);
+			res->classes.push_back(it->first);
+			//*res += *result_vector[i];
 		}
 
 	}

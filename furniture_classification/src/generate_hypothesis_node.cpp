@@ -49,6 +49,7 @@ template<class FeatureType, class FeatureEstimatorType>
       std::map<std::string, pcl17::PointCloud<pcl17::PointXYZ>::Ptr>::iterator iter;
       for (iter = votes_map.begin(); iter != votes_map.end(); iter++)
       {
+    	  iter->second->header.frame_id = msg->header.frame_id;
         votes_publisher[iter->first].publish(iter->second);
       }
 

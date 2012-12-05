@@ -15,9 +15,11 @@
 
 class ConvertNode {
 public:
-	ConvertNode(int tilt) {
+	ConvertNode(int tilt, int skip) {
 
 		this->tilt = tilt;
+		this->skip = skip;
+		this->iter = 0;
 		ros::NodeHandle nh;
 
 		pub = nh.advertise<pcl17::PointCloud<pcl17::PointXYZRGB> >("/cloud_pcd",
@@ -29,6 +31,10 @@ public:
 
 	void cloud_cb(
 			const typename pcl17::PointCloud<pcl17::PointXYZRGB>::ConstPtr& cloud) {
+
+		iter++;
+		if(iter != skip) return;
+		iter = 0;
 
 		pcl17::PointCloud<pcl17::PointXYZRGB> cloud_transformed,
 				cloud_aligned, cloud_filtered;
@@ -95,11 +101,15 @@ public:
 
 		pub.publish(cloud_aligned);
 
+
+
 	}
 
 	ros::Publisher pub;
 	ros::Subscriber sub;
 	int tilt;
+	int skip;
+	int iter;
 
 };
 
@@ -107,10 +117,13 @@ int main(int argc, char **argv) {
 
 	int tilt = 30;
 
+	int skip = 30;
+
+	pcl17::console::parse_argument(argc, argv, "-skip", skip);
 	pcl17::console::parse_argument(argc, argv, "-tilt", tilt);
 
 	ros::init(argc, argv, "convert_node");
-	ConvertNode cn(tilt);
+	ConvertNode cn(tilt, skip);
 	ros::spin();
 
 	return 0;

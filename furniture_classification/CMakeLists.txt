@@ -91,3 +91,8 @@ target_link_libraries(scan_test pcl_common pcl_io pcl_visualization)
 rosbuild_add_executable(convert_node src/convert_node.cpp)
 rosbuild_link_boost(convert_node system filesystem)
 target_link_libraries(convert_node pcl_common pcl_common pcl_io pcl_segmentation pcl_surface pcl_filters)
+
+rosbuild_add_executable(filter_node src/filter_node.cpp)
+rosbuild_link_boost(filter_node system)
+target_link_libraries(filter_node pcl_common pcl_common pcl_io pcl_segmentation pcl_surface pcl_filters)
+

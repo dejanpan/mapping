@@ -27,7 +27,7 @@ template<class FeatureType, class FeatureEstimatorType>
       oc.setDebug(false);
 
       ros::NodeHandle nh;
-      pub = nh.advertise<pcl17::PointCloud<pcl17::PointNormal> > ("/fitted_models" + n_str, 1);
+      pub = nh.advertise<furniture_classification::FittedModels> ("/fitted_models" + n_str, 1);
       sub = nh.subscribe<pcl17::PointCloud<pcl17::PointXYZ> > ("/cloud_pcd", 1, &FitModelsNode::cloud_cb,
                                                                this);
 
@@ -45,9 +45,10 @@ template<class FeatureType, class FeatureEstimatorType>
     {
       if(oc.getScene() == NULL) return;
       std::cerr << "Started fitting" << std::endl;
-      pcl17::PointCloud<pcl17::PointNormal>::Ptr res = oc.fit_objects(msg);
-      res->header.frame_id = "/base_link";
-      std::cerr << "Finished fitting with "<< res->points.size() << " points " << std::endl;
+      furniture_classification::FittedModelsPtr res = oc.fit_objects(msg);
+      res->frame_id = oc.getScene()->header.frame_id;
+      //res->header.frame_id = oc.getScene()->header.frame_id;
+      std::cerr << "Finished fitting with "<< res->models.size() << " models " << std::endl;
       pub.publish(res);
 
     }
