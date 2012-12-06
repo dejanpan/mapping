@@ -64,6 +64,7 @@ public:
 			}
 
 			pub.publish(res);
+			fitted.clear();
 
 		}
 
@@ -135,12 +136,6 @@ public:
 };
 
 int main(int argc, char **argv) {
-
-	if (argc < 5) {
-		PCL17_INFO(
-				"Usage %s -database /path/to/database -features sgf | esf | vfh \n", argv[0]);
-		return -1;
-	}
 
 	int n = 0;
 
